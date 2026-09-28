@@ -1,31 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, Bell, Clock, Cpu, Palette, Save, User } from "lucide-react";
-import { useProcurement } from "@/context/ProcurementContext";
+import { useSettings, useUpdateSettings } from "@/lib/query/hooks/settings/useSettings";
 import { ProfileTab } from "./tabs/ProfileTab";
 import { NotificationTab } from "./tabs/NotificationTab";
 import { SystemTab } from "./tabs/SystemTab";
+import { SystemSettings } from "@/types";
 
 export default function SettingsPage() {
-  const { state, updateSettings } = useProcurement();
-  const settings = state.settings;
+  const { data: settings, isLoading } = useSettings();
+  const updateSettingsMutation = useUpdateSettings();
   
-  const [formData, setFormData] = useState({ ...settings });
+  const [formData, setFormData] = useState<SystemSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("umum");
 
+  useEffect(() => {
+    if (settings && !formData) {
+      setFormData(settings);
+    }
+  }, [settings, formData]);
+
   const handleChange = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key as keyof typeof settings]: value }));
+    if (formData) {
+      setFormData({ ...formData, [key]: value });
+    }
   };
 
   const handleSave = () => {
+    if (!formData) return;
     setIsSaving(true);
-    setTimeout(() => {
-      updateSettings(formData);
-      setIsSaving(false);
-      alert("Pengaturan berhasil disimpan.");
-    }, 600);
+    updateSettingsMutation.mutate(formData, {
+      onSuccess: () => {
+        setIsSaving(false);
+        alert("Pengaturan berhasil disimpan.");
+      },
+      onError: () => {
+        setIsSaving(false);
+        alert("Gagal menyimpan pengaturan.");
+      }
+    });
   };
 
   const tabs = [
@@ -33,6 +48,10 @@ export default function SettingsPage() {
     { id: "notifikasi", label: "Notifikasi", icon: Bell },
     { id: "sistem", label: "Pengaturan Sistem", icon: Settings },
   ];
+
+  if (isLoading || !formData) {
+    return <div className="p-8 text-center text-slate-500">Memuat pengaturan...</div>;
+  }
 
   return (
     <div className="space-y-6 pb-12">
@@ -57,8 +76,8 @@ export default function SettingsPage() {
           <div className="bg-white p-6 sm:p-8 lg:p-10 flex flex-col min-w-0 w-full">
             <div className="flex-1 w-full">
               {activeTab === "umum" && <ProfileTab />}
-              {activeTab === "notifikasi" && <NotificationTab formData={formData} handleChange={handleChange} users={state.users} />}
-              {activeTab === "sistem" && <SystemTab formData={formData} handleChange={handleChange} users={state.users} />}
+              {activeTab === "notifikasi" && <NotificationTab formData={formData} handleChange={handleChange} users={[]} />}
+              {activeTab === "sistem" && <SystemTab formData={formData} handleChange={handleChange} users={[]} />}
             </div>
             
             <div className="mt-12 flex justify-end border-t border-slate-100 pt-6 sm:pt-8 w-full">

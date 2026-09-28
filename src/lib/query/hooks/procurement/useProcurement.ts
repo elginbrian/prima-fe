@@ -15,20 +15,27 @@ import {
   type UpdateOperationalStatusPayload,
 } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
+import { dtoToRequest, dtoToMilestone, dtoListToRequests } from "@/lib/adapters/procurement.adapter";
 
 // ─── Procurement D3 ──────────────────────────────────────────────────────
 
 export function useProcurements() {
   return useQuery({
     queryKey: queryKeys.procurement.all(),
-    queryFn: () => procurementApi.getAll().then((r) => r.data),
+    queryFn: () => procurementApi.getAll().then((r) => dtoListToRequests(r.data)),
   });
 }
 
 export function useProcurement(id: string) {
   return useQuery({
     queryKey: queryKeys.procurement.detail(id),
-    queryFn: () => procurementApi.getById(id).then((r) => r.data),
+    queryFn: async () => {
+      const r = await procurementApi.getById(id);
+      return {
+        request: dtoToRequest(r.data),
+        milestones: (r.data.milestones ?? []).map(dtoToMilestone),
+      };
+    },
     enabled: !!id,
   });
 }
@@ -41,34 +48,34 @@ export function useCreateProcurement() {
   });
 }
 
-export function useMoveStage(id: string) {
+export function useMoveStage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: MoveStagePaylod) => procurementApi.moveStage(id, payload),
-    onSuccess: () => {
+    mutationFn: ({ id, payload }: { id: string, payload: MoveStagePaylod }) => procurementApi.moveStage(id, payload),
+    onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
     },
   });
 }
 
-export function useMoveStep(id: string) {
+export function useMoveStep() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: MoveStepPayload) => procurementApi.moveStep(id, payload),
-    onSuccess: () => {
+    mutationFn: ({ id, payload }: { id: string, payload: MoveStepPayload }) => procurementApi.moveStep(id, payload),
+    onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
     },
   });
 }
 
-export function useUpdateOperationalStatus(id: string) {
+export function useUpdateOperationalStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: UpdateOperationalStatusPayload) =>
+    mutationFn: ({ id, payload }: { id: string, payload: UpdateOperationalStatusPayload }) =>
       procurementApi.updateOperationalStatus(id, payload),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
     },
@@ -76,11 +83,12 @@ export function useUpdateOperationalStatus(id: string) {
 }
 
 // ─── Documents D1 ────────────────────────────────────────────────────────
+import { dtoToDocument, dtoToDeadline } from "@/lib/adapters/procurement.adapter";
 
 export function useDocuments(requestId?: string) {
   return useQuery({
     queryKey: requestId ? queryKeys.documents.byRequest(requestId) : queryKeys.documents.all(),
-    queryFn: () => documentsApi.getAll(requestId).then((r) => r.data),
+    queryFn: () => documentsApi.getAll(requestId).then((r) => r.data.map(dtoToDocument)),
   });
 }
 
@@ -116,7 +124,7 @@ export function useUpdateGuarantee() {
 export function useDeadlines(requestId?: string) {
   return useQuery({
     queryKey: requestId ? queryKeys.deadlines.byRequest(requestId) : queryKeys.deadlines.all(),
-    queryFn: () => deadlinesApi.getAll(requestId).then((r) => r.data),
+    queryFn: () => deadlinesApi.getAll(requestId).then((r) => r.data.map(dtoToDeadline)),
   });
 }
 

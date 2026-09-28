@@ -25,25 +25,41 @@ export interface ProcurementRequestDto {
   amount: number;
   stage: string;
   operational_status: string;
+  operational_status_reason?: string;
   current_step: string;
   department: DepartmentDto;
   stage_started_at: string;
   is_urgent: boolean;
   created_at: string;
   updated_at: string;
-  operational_status_reason?: string;
+  milestones?: MilestoneDto[];
+}
+
+export interface MilestoneDto {
+  id: string;
+  request_id: string;
+  step: string;
+  status: string;
+  document_id?: string;
+  date?: string;
+  pic?: BaseUserDto;
+  notes?: string;
 }
 
 export interface CreateProcurementPayload {
   title: string;
   pic_id: string;
+  pic_name: string;
   fpp_id: string;
+  fpp_name: string;
   amount: number;
-  department: string;
+  department_id: string;
+  department_name: string;
   stage?: string;
   current_step?: string;
   is_urgent?: boolean;
 }
+
 
 export interface MoveStagePaylod {
   stage: string;

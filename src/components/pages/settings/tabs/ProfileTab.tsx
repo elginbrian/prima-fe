@@ -1,7 +1,9 @@
-import { useProcurement } from "@/context/ProcurementContext";
+import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 
 export function ProfileTab() {
-  const { state: { currentUser } } = useProcurement();
+  const { data: currentUser } = useCurrentUser();
+
+  if (!currentUser) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">

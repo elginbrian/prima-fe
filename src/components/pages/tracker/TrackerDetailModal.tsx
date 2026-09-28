@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { LayoutList, X, CheckCircle2, FileText, ChevronRight, ChevronDown, ShieldCheck, CalendarClock } from "lucide-react";
 import { ProcurementRequest, ProcurementOperationalStatus, ProcurementStep, DeadlineItem, DocumentItem, GuaranteeItem, HistoryItem, ProcurementMilestone } from "@/types";
+import { useProcurement } from "@/lib/query/hooks/procurement/useProcurement";
 
 import { TrackerDetailModalProps } from "./types";
 
@@ -21,11 +22,16 @@ const PROCUREMENT_STEPS: ProcurementStep[] = [
 ];
 
 export function TrackerDetailModal({
-  selectedRequestId, setSelectedRequestId, request, milestones, docs, guars, slas, history,
+  selectedRequestId, setSelectedRequestId, request: initialRequest, milestones: initialMilestones, docs, guars, slas, history,
   showFullTimeline, setShowFullTimeline, statusReasonDraft, setStatusReasonDraft,
   moveRequestStep, updateRequestOperationalStatus, expandedRelatedId, setExpandedRelatedId,
   router, setAddingDeadlineRequestId, setEditingDeadlineId
 }: TrackerDetailModalProps) {
+  const { data: detailData, isLoading } = useProcurement(selectedRequestId);
+  
+  const request = detailData?.request ?? initialRequest;
+  const milestones = detailData?.milestones ?? initialMilestones;
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedRequestId(null); };
     window.addEventListener('keydown', handleEsc);

@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { TrackerItem, TrackerStage } from "./types";
-import { useProcurement } from "@/context/ProcurementContext";
 import { useRouter } from "next/navigation";
 import type { ProcurementOperationalStatus } from "@/types";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
@@ -13,11 +12,40 @@ import { TrackerDeadlines } from "./TrackerDeadlines";
 import { TrackerDetailModal } from "./TrackerDetailModal";
 import { TrackerStatsPanel } from "./TrackerStatsPanel";
 import { DeadlineEditor, DeadlineCreator, AddRequestModal } from "./TrackerModals";
+import {
+  useProcurements,
+  useCreateProcurement,
+  useMoveStep,
+  useUpdateOperationalStatus,
+  useDeadlines,
+  useDocuments,
+  useUpdateDeadline,
+} from "@/lib/query/hooks/procurement/useProcurement";
+import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
+import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 
 export default function TrackerPage() {
-  const { state, moveRequestStep, updateRequestOperationalStatus, addRequest, addDeadline, updateDeadline } = useProcurement();
   const router = useRouter();
+
+  // 1. Fetch data from BE via React Query hooks
+  const { data: procurementsData, isLoading: isLoadingProcurements } = useProcurements();
+  const { data: documentsData = [] } = useDocuments();
+  const { data: deadlinesData = [] } = useDeadlines();
+  const { data: currentUser } = useCurrentUser();
+  const { data: settings } = useSettings();
+
+  const slaWarningDays = settings?.slaWarningDays ?? 3;
+
+  // 2. Setup mutations
+  const createProcurement = useCreateProcurement();
+  const updateStatus = useUpdateOperationalStatus();
+  const updateStep = useMoveStep();
+  const editDeadline = useUpdateDeadline();
   
+  // Safe defaults while loading
+  const requests = procurementsData ?? [];
+  const deadlinesList = deadlinesData ?? [];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("All");
   const [operationalStatusFilter, setOperationalStatusFilter] = useState<ProcurementOperationalStatus | "All">("All");
@@ -33,24 +61,24 @@ export default function TrackerPage() {
 
   const openRequestDetail = (requestId: string) => {
     setShowFullTimeline(false);
-    setStatusReasonDraft(state.requests.find(request => request.id === requestId)?.operationalStatusReason ?? "");
+    setStatusReasonDraft(requests.find(request => request.id === requestId)?.operationalStatusReason ?? "");
     setSelectedRequestId(requestId);
   };
 
   const timeStatusMap = useMemo(() => {
     const map: Record<string, string> = {};
-    state.deadlines.forEach(d => {
+    deadlinesList.forEach(d => {
       const prev = map[d.requestId];
-      const timing = getDeadlineTiming(d, state.settings.slaWarningDays);
+      const timing = getDeadlineTiming(d, slaWarningDays);
       const rank = { "Overdue": 3, "At Risk": 2, "On Track": 1, "Selesai": 0 } as const;
       if (!prev || rank[timing.status as keyof typeof rank] > rank[prev as keyof typeof rank]) {
         map[d.requestId] = timing.status;
       }
     });
     return map;
-  }, [state.deadlines, state.settings.slaWarningDays]);
+  }, [deadlinesList, slaWarningDays]);
 
-  const items: TrackerItem[] = useMemo(() => state.requests.map(r => ({
+  const items: TrackerItem[] = useMemo(() => requests.map(r => ({
     id: r.id,
     title: r.title,
     pic: r.pic,
@@ -61,12 +89,12 @@ export default function TrackerPage() {
     department: r.department,
     stageStartedAt: r.stageStartedAt,
     isUrgent: r.isUrgent,
-  })), [state.requests]);
+  })), [requests]);
 
-  const deadlines = useMemo(() => state.deadlines.map(deadline => ({
+  const deadlines = useMemo(() => deadlinesList.map(deadline => ({
     ...deadline,
-    ...getDeadlineTiming(deadline, state.settings.slaWarningDays),
-  })), [state.deadlines, state.settings.slaWarningDays]);
+    ...getDeadlineTiming(deadline, slaWarningDays),
+  })), [deadlinesList, slaWarningDays]);
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -94,15 +122,15 @@ export default function TrackerPage() {
 
   const documentsMap = useMemo(() => {
     const map: Record<string, { total: number; valid: number }> = {};
-    state.requests.forEach(req => {
-      const docs = state.documents.filter(d => d.requestId === req.id);
+    requests.forEach(req => {
+      const docs = documentsData.filter(d => d.requestId === req.id);
       map[req.id] = {
         total: docs.length,
         valid: docs.filter(d => d.status === "Lulus Verifikasi").length
       };
     });
     return map;
-  }, [state.requests, state.documents]);
+  }, [requests, documentsData]);
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData("itemId", id);
   };
@@ -114,7 +142,7 @@ export default function TrackerPage() {
   const handleDrop = (e: React.DragEvent, status: TrackerStage) => {
     e.preventDefault();
     const id = e.dataTransfer.getData("itemId");
-    updateRequestOperationalStatus(id, status);
+    updateStatus.mutate({ id, payload: { status } });
   };
 
   return (
@@ -162,42 +190,43 @@ export default function TrackerPage() {
       )}
 
       <TrackerDeadlines 
-        deadlines={deadlines} requests={state.requests}
+        deadlines={deadlines} requests={requests}
         openRequestDetail={openRequestDetail} setEditingDeadlineId={setEditingDeadlineId}
       />
 
       {editingDeadlineId && (() => {
-        const deadline = state.deadlines.find(item => item.id === editingDeadlineId);
+        const deadline = deadlinesList.find(item => item.id === editingDeadlineId);
         if (!deadline) return null;
-        return <DeadlineEditor deadline={deadline} onClose={() => setEditingDeadlineId(null)} onSave={(changes) => { updateDeadline(deadline.id, changes); setEditingDeadlineId(null); }} />;
+        return <DeadlineEditor deadline={deadline} onClose={() => setEditingDeadlineId(null)} onSave={(changes) => { editDeadline.mutate({ id: deadline.id, payload: changes }); setEditingDeadlineId(null); }} />;
       })()}
 
       {addingDeadlineRequestId && (() => {
-        const request = state.requests.find(item => item.id === addingDeadlineRequestId);
+        const request = requests.find(item => item.id === addingDeadlineRequestId);
         if (!request) return null;
-        return <DeadlineCreator requestId={request.id} pic={request.pic} department={request.department} onClose={() => setAddingDeadlineRequestId(null)} onSave={(deadline) => { addDeadline(deadline); setAddingDeadlineRequestId(null); }} />;
+        return <DeadlineCreator requestId={request.id} pic={request.pic} department={request.department} onClose={() => setAddingDeadlineRequestId(null)} onSave={(deadline) => { /* TODO: useCreateDeadline */ setAddingDeadlineRequestId(null); }} />;
       })()}
 
       {selectedRequestId && (() => {
-        const docs = state.documents.filter(d => d.requestId === selectedRequestId);
-        const guars = state.guarantees.filter(d => d.requestId === selectedRequestId);
-        const slas = state.deadlines.filter(d => d.requestId === selectedRequestId).map(deadline => ({ ...deadline, ...getDeadlineTiming(deadline, state.settings.slaWarningDays) }));
-        const history = state.history.filter(item => item.requestId === selectedRequestId);
-        const request = state.requests.find(r => r.id === selectedRequestId);
-        const milestones = state.milestones.filter(m => m.requestId === selectedRequestId);
+        const docs = documentsData.filter(d => d.requestId === selectedRequestId);
+        const guars: import("@/types").GuaranteeItem[] = []; // TODO: implement useGuarantees hook if needed
+        const slas = deadlinesList.filter(d => d.requestId === selectedRequestId).map(deadline => ({ ...deadline, ...getDeadlineTiming(deadline, slaWarningDays) }));
+        const history: import("@/types").HistoryItem[] = []; // TODO: implement useHistory hook if needed
+        const request = requests.find(r => r.id === selectedRequestId);
+        const milestones: import("@/types").ProcurementMilestone[] = []; // Fetched directly inside TrackerDetailModal
         
         return <TrackerDetailModal 
           selectedRequestId={selectedRequestId} setSelectedRequestId={setSelectedRequestId}
           request={request} milestones={milestones} docs={docs} guars={guars} slas={slas} history={history}
           showFullTimeline={showFullTimeline} setShowFullTimeline={setShowFullTimeline}
           statusReasonDraft={statusReasonDraft} setStatusReasonDraft={setStatusReasonDraft}
-          moveRequestStep={moveRequestStep} updateRequestOperationalStatus={updateRequestOperationalStatus}
+          moveRequestStep={(id, step) => updateStep.mutate({ id, payload: { step } })} 
+          updateRequestOperationalStatus={(id, status, reason) => updateStatus.mutate({ id, payload: { status, reason } })}
           expandedRelatedId={expandedRelatedId} setExpandedRelatedId={setExpandedRelatedId}
           router={router} setAddingDeadlineRequestId={setAddingDeadlineRequestId} setEditingDeadlineId={setEditingDeadlineId}
         />;
       })()}
 
-      {showAddModal && <AddRequestModal onClose={() => setShowAddModal(false)} onSave={(req) => { addRequest(req); setShowAddModal(false); }} />}
+      {showAddModal && <AddRequestModal onClose={() => setShowAddModal(false)} onSave={(req) => { createProcurement.mutate(req as any); setShowAddModal(false); }} />}
     </div>
   );
 }

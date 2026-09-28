@@ -13,6 +13,9 @@ export const queryKeys = {
   auth: {
     me: () => ["auth", "me"] as const,
   },
+  settings: {
+    all: () => ["settings"] as const,
+  },
   procurement: {
     all: () => ["procurement"] as const,
     detail: (id: string) => ["procurement", id] as const,
