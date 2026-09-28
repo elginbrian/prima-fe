@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import { AuthMode } from "./types";
+import { useLogin } from "@/lib/query/hooks/auth/useLogin";
+import { useRegister } from "@/lib/query/hooks/auth/useRegister";
+import { ApiError } from "@/lib/api";
 
 const copy = {
   login: {
@@ -27,49 +29,44 @@ const copy = {
 } as const;
 
 export function AuthPage({ mode }: { mode: AuthMode }) {
-  const router = useRouter();
   const content = copy[mode];
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+
+  const mutation = mode === "login" ? loginMutation : registerMutation;
+  const isLoading = mutation.isPending;
+
+  // Surface server-side errors from the mutation
+  const serverError = mutation.error instanceof ApiError
+    ? mutation.error.message
+    : mutation.error
+      ? "Terjadi kesalahan. Coba lagi."
+      : null;
+
+  const errorMessage = formError ?? serverError;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (mode === "register" && password !== confirmation) {
-      setMessage("Konfirmasi kata sandi belum sesuai.");
-      return;
-    }
-
-    setMessage(null);
-    setIsLoading(true);
+    setFormError(null);
 
     const form = event.currentTarget;
     const email = (form.elements.namedItem("email") as HTMLInputElement).value;
-    const name = mode === "register"
-      ? (form.elements.namedItem("name") as HTMLInputElement).value
-      : "";
 
-    try {
-      const { authApi } = await import("@/lib/apiClient");
-
-      if (mode === "login") {
-        const res = await authApi.login(email, password);
-        localStorage.setItem("access_token", res.data.access_token);
-        localStorage.setItem("refresh_token", res.data.refresh_token);
-        localStorage.setItem("current_user", JSON.stringify(res.data.user));
-        router.push("/dashboard/documents");
-      } else {
-        await authApi.register(name, email, password);
-        router.push("/login");
+    if (mode === "register") {
+      if (password !== confirmation) {
+        setFormError("Konfirmasi kata sandi belum sesuai.");
+        return;
       }
-    } catch (err: unknown) {
-      setMessage(err instanceof Error ? err.message : "Terjadi kesalahan. Coba lagi.");
-    } finally {
-      setIsLoading(false);
+      const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+      registerMutation.mutate({ name, email, password });
+    } else {
+      loginMutation.mutate({ email, password });
     }
   };
 
@@ -82,16 +79,15 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
       <main className="flex flex-1 items-center justify-center bg-gradient-to-br from-[#eaf3ff] via-[#f8fbff] to-[#edf6ff] px-4 py-8 sm:px-6">
         <section className="flex w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_-20px_rgba(10,77,140,0.32)]">
           <div className="w-full p-6 sm:p-9 md:w-1/2 md:p-10">
-       
 
             <div className="mb-7 space-y-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">{content.title}</h1>
               <p className="text-base leading-6 text-slate-500">{content.description}</p>
             </div>
 
-            {message && (
+            {errorMessage && (
               <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {message}
+                {errorMessage}
               </div>
             )}
 
@@ -112,7 +108,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                 value={password}
                 onChange={setPassword}
                 visible={showPassword}
-                onToggle={() => setShowPassword((value) => !value)}
+                onToggle={() => setShowPassword((v) => !v)}
               />
 
               {mode === "register" && (
@@ -122,7 +118,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                   value={confirmation}
                   onChange={setConfirmation}
                   visible={showConfirmation}
-                  onToggle={() => setShowConfirmation((value) => !value)}
+                  onToggle={() => setShowConfirmation((v) => !v)}
                 />
               )}
 
@@ -194,7 +190,7 @@ function Field({ label, htmlFor, icon, children }: { label: string; htmlFor: str
 function PasswordField({ label, id, value, onChange, visible, onToggle }: { label: string; id: string; value: string; onChange: (value: string) => void; visible: boolean; onToggle: () => void }) {
   return (
     <Field label={label} htmlFor={id} icon={<LockKeyhole size={19} />}>
-      <input id={id} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} placeholder="••••••••" minLength={8} required className="auth-input pr-11" />
+      <input id={id} type={visible ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} placeholder="••••••••" minLength={8} required className="auth-input pr-11" />
       <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-700" aria-label={visible ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}>
         {visible ? <EyeOff size={19} /> : <Eye size={19} />}
       </button>
