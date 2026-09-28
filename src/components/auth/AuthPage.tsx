@@ -34,8 +34,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (mode === "register" && password !== confirmation) {
@@ -44,7 +45,32 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     }
 
     setMessage(null);
-    router.push(mode === "login" ? "/dashboard/documents" : "/login");
+    setIsLoading(true);
+
+    const form = event.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const name = mode === "register"
+      ? (form.elements.namedItem("name") as HTMLInputElement).value
+      : "";
+
+    try {
+      const { authApi } = await import("@/lib/apiClient");
+
+      if (mode === "login") {
+        const res = await authApi.login(email, password);
+        localStorage.setItem("access_token", res.data.access_token);
+        localStorage.setItem("refresh_token", res.data.refresh_token);
+        localStorage.setItem("current_user", JSON.stringify(res.data.user));
+        router.push("/dashboard/documents");
+      } else {
+        await authApi.register(name, email, password);
+        router.push("/login");
+      }
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Terjadi kesalahan. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -115,8 +141,12 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                 </label>
               )}
 
-              <button type="submit" className="w-full rounded-xl bg-[#0a4d8c] px-4 py-3.5 text-base font-semibold text-white shadow-sm hover:!bg-[#083d6d]">
-                {content.submit}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full rounded-xl bg-[#0a4d8c] px-4 py-3.5 text-base font-semibold text-white shadow-sm hover:!bg-[#083d6d] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Memproses..." : content.submit}
               </button>
             </form>
 
