@@ -39,6 +39,10 @@ function clearTokens(): void {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
   localStorage.removeItem("current_user");
+  // Also expire the cookie so Next.js proxy.ts sees the session as gone
+  if (typeof document !== "undefined") {
+    document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+  }
 }
 
 async function refreshAccessToken(): Promise<string | null> {

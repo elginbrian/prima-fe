@@ -1,17 +1,26 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
-import { ProcurementProvider, useProcurement } from "@/context/ProcurementContext";
+import { ProcurementProvider } from "@/context/ProcurementContext";
 import { SidebarNav } from "@/components/navigation/SidebarNav";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useCurrentUser, useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
 
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { mobileOpen, setMobileOpen } = useSidebar();
-  const { state: { currentUser } } = useProcurement();
+  const { data: currentUser } = useCurrentUser();
+  const logout = useLogout();
   const pathname = usePathname();
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const userLabel = mounted && currentUser
+    ? currentUser.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+    : "";
 
   const getHeaderInfo = (path: string) => {
     if (path.includes("documents/upload")) return { title: "Upload & Ekstraksi Dokumen", subtitle: "Lakukan pemeriksaan kelengkapan dokumen secara cerdas dengan asisten PRIMA AI." };
@@ -47,11 +56,12 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           <DashboardHeader
             title={header.title}
             subtitle={header.subtitle}
-            userLabel={currentUser.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-            userName={currentUser.name}
-            userRole={currentUser.role}
+            userLabel={userLabel}
+            userName={currentUser?.name ?? "—"}
+            userRole={currentUser?.role ?? "—"}
             onOpenSidebar={() => setMobileOpen(true)}
             onCloseSidebar={() => setMobileOpen(false)}
+            onLogout={logout}
           />
         </div>
 

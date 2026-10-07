@@ -4,33 +4,38 @@
  * - Initializes from localStorage for instant first render (no flash)
  * - Fetches fresh data from BE in the background
  * - Returns null when not authenticated (no token)
+ * - Auto-logouts if /auth/me returns an error (token invalid/expired)
  */
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { authApi, type UserDto } from "@/lib/api";
+import { authApi } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
-
-function getStoredUser(): UserDto | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("current_user");
-    return raw ? (JSON.parse(raw) as UserDto) : null;
-  } catch {
-    return null;
-  }
-}
+import { getStoredUser, getAccessToken, clearSession } from "@/lib/api/auth.utils";
 
 export function useCurrentUser() {
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const token = getAccessToken();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: queryKeys.auth.me(),
     queryFn: () => authApi.me().then((r) => r.data),
-    initialData: getStoredUser() ?? undefined,
-    enabled: !!token,          // Only run if token exists
-    staleTime: 1000 * 60 * 5, // 5 min — avoid spamming /me on every mount
+    placeholderData: getStoredUser() ?? undefined,
+    enabled: !!token,
+    staleTime: 1000 * 60 * 5,
+    retry: false, // Don't retry on 401 — just auto-logout
   });
+
+  // TanStack Query v5: onError removed from useQuery options.
+  // Watch isError via useEffect instead.
+  useEffect(() => {
+    if (query.isError) {
+      clearSession();
+      window.location.href = "/login";
+    }
+  }, [query.isError]);
+
+  return query;
 }
 
 /**
@@ -38,9 +43,7 @@ export function useCurrentUser() {
  */
 export function useLogout() {
   return () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("current_user");
+    clearSession();
     window.location.href = "/login";
   };
 }

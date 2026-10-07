@@ -1,32 +1,34 @@
 /**
  * useLogin — mutation hook for POST /auth/login
  *
- * On success: persists tokens + user to localStorage, invalidates /me query
+ * On success: persists tokens + user to localStorage AND cookie, invalidates /me query
  * On error: surfaces ApiError message for the form to display
  */
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { authApi, type LoginPayload, type TokenDto } from "@/lib/api";
+import { useRouter, useSearchParams } from "next/navigation";
+import { authApi, type LoginPayload } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
+import { setSession } from "@/lib/api/auth.utils";
 
 export function useLogin() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   return useMutation({
     mutationFn: (payload: LoginPayload) => authApi.login(payload),
     onSuccess: (res) => {
-      const { access_token, refresh_token, user } = res.data;
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("refresh_token", refresh_token);
-      localStorage.setItem("current_user", JSON.stringify(user));
+      // setSession writes to localStorage AND cookie (for middleware)
+      setSession(res.data);
 
       // Pre-populate /me cache so layout doesn't need to refetch
-      queryClient.setQueryData(queryKeys.auth.me(), user);
+      queryClient.setQueryData(queryKeys.auth.me(), res.data.user);
 
-      router.push("/dashboard/documents");
+      // Redirect to the page user was trying to access, or default
+      const redirect = searchParams.get("redirect") ?? "/dashboard/overview";
+      router.push(redirect);
     },
   });
 }
