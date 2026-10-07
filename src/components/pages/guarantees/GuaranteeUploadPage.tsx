@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, DragEvent } from "react";
+import { useState, useEffect, DragEvent } from "react";
 import { UploadCloud, FileText, X, ArrowRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
-import { useUploadGuaranteeWithFile } from "@/lib/query/hooks/procurement/useGuarantees";
+import { useUploadGuaranteeWithFile, useExtractGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 
@@ -12,12 +13,15 @@ export default function GuaranteeUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { state, addAttachment } = useProcurement();
+  const { data: requests = [] } = useProcurements();
   const uploadGuaranteeMutation = useUploadGuaranteeWithFile();
+  const extractGuaranteeMutation = useExtractGuarantee();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [requestId] = useState(() => searchParams.get("requestId") ?? "");
-  const selectedRequest = state.requests.find(request => request.id === requestId);
+  const selectedRequest = requests.find(request => request.id === requestId);
   const [documentType, setDocumentType] = useState<"Jaminan Pelaksanaan" | "Jaminan Pemeliharaan" | ProcurementAttachmentType>("Jaminan Pelaksanaan");
+  const [isExtracting, setIsExtracting] = useState(false);
   const [formData, setFormData] = useState({
     type: "Jaminan Pelaksanaan" as GuaranteeItem["type"],
     vendor: "",
@@ -54,6 +58,33 @@ export default function GuaranteeUploadPage() {
       setFile(e.target.files[0]);
     }
   };
+
+  useEffect(() => {
+    if (file && requiresExtraction) {
+      setIsExtracting(true);
+      extractGuaranteeMutation.mutateAsync(file)
+        .then((data) => {
+          setFormData(prev => ({
+            ...prev,
+            type: data.type || prev.type,
+            vendor: data.vendor_name || "",
+            issuer: data.issuer || "",
+            issuerType: data.issuer_type || "Bank",
+            beneficiary: data.beneficiary || "",
+            referenceNo: data.reference_no || "",
+            value: data.value ? "Rp " + data.value.toLocaleString('id-ID') : "",
+            issueDate: data.issue_date ? data.issue_date.split("T")[0] : "",
+            expiryDate: data.expiry_date ? data.expiry_date.split("T")[0] : "",
+          }));
+        })
+        .catch(err => {
+          console.error("OCR Failed", err);
+        })
+        .finally(() => {
+          setIsExtracting(false);
+        });
+    }
+  }, [file, requiresExtraction]);
 
   return (
     <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
@@ -143,6 +174,15 @@ export default function GuaranteeUploadPage() {
 
             {/* AI Extracted Fields (Mock) */}
             {file && requiresExtraction && (
+              isExtracting ? (
+                <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-300">
+                  <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-xl">
+                    <div className="w-10 h-10 border-4 border-blue-200 border-t-[#0a4d8c] rounded-full animate-spin mb-4"></div>
+                    <h3 className="text-sm font-bold text-slate-700">Mengekstrak Data dengan AI...</h3>
+                    <p className="text-xs text-slate-500 mt-1">Sistem sedang membaca dokumen untuk mengisi formulir secara otomatis.</p>
+                  </div>
+                </div>
+              ) : (
               <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
@@ -204,6 +244,7 @@ export default function GuaranteeUploadPage() {
                   </div>
                 </div>
               </div>
+              )
             )}
 
           </div>
@@ -250,4 +291,10 @@ export default function GuaranteeUploadPage() {
     </div>
   );
 }
+
+
+
+
+
+
 

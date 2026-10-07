@@ -1,36 +1,38 @@
 import { FileText } from "lucide-react";
-
+import { useEffect, useState } from "react";
 import { DocumentPreviewProps } from "./types";
 
 export function DocumentPreview({ file }: DocumentPreviewProps) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) {
+      setObjectUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [file]);
+
   return (
     <div className="flex-1 border-2 border-slate-200 rounded-xl flex flex-col bg-white overflow-hidden shadow-sm">
-      {file ? (
+      {file && objectUrl ? (
         <>
-          <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0 z-10">
             <span className="text-xs font-semibold text-slate-600 truncate mr-4">{file.name}</span>
             <span className="text-xs text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
           </div>
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 relative overflow-hidden">
-            <div className="absolute inset-x-8 inset-y-8 bg-white border border-slate-200 shadow-sm p-8 flex flex-col opacity-80">
-              <div className="h-4 bg-slate-200 w-1/2 mx-auto mb-8"></div>
-              <div className="h-2 bg-slate-200 w-full mb-3"></div>
-              <div className="h-2 bg-slate-200 w-5/6 mb-3"></div>
-              <div className="h-2 bg-slate-200 w-full mb-3"></div>
-              
-              <div className="my-6 border border-slate-200 p-4 bg-slate-50">
-                <div className="h-3 bg-slate-300 w-1/3 mb-2"></div>
-                <div className="h-2 bg-slate-200 w-1/2"></div>
-              </div>
-              
-              <div className="h-2 bg-slate-200 w-3/4 mb-3"></div>
-              <div className="h-2 bg-slate-200 w-full mb-3"></div>
-              
-              <div className="mt-auto absolute bottom-8 left-0 w-full flex justify-center">
-                <div className="bg-blue-50 text-[#0a4d8c] text-xs font-medium px-3 py-1 rounded-full border border-blue-100 flex items-center gap-1.5 shadow-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#0a4d8c] animate-pulse"></div>
-                  Data Berhasil Dibaca AI
-                </div>
+          <div className="flex-1 relative bg-slate-50">
+            <iframe src={objectUrl} className="absolute inset-0 w-full h-full border-0" title="Document Preview" />
+            
+            <div className="absolute bottom-6 left-0 w-full flex justify-center pointer-events-none">
+              <div className="bg-emerald-50 text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                Dokumen Berhasil Ditampilkan
               </div>
             </div>
           </div>

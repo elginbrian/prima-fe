@@ -9,11 +9,13 @@ import { GuaranteeStats } from "@/components/widgets/stats/GuaranteeStats";
 import { GuaranteeGroupRow } from "@/components/widgets/guarantees/GuaranteeGroupRow";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
+import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useGuarantees, useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 
 
 export default function GuaranteesPage() {
+  const { data: requests = [] } = useProcurements();
   const { state } = useProcurement();
   const { data: guarantees = [] } = useGuarantees(); const updateGuaranteeMutation = useUpdateGuarantee();
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,7 +49,7 @@ export default function GuaranteesPage() {
 
   const filteredGuarantees = useMemo(() => {
     return guarantees.filter((item) => {
-      const request = state.requests.find(requestItem => requestItem.id === item.requestId);
+      const request = requests.find(requestItem => requestItem.id === item.requestId);
       const matchesSearch = item.referenceNo.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             item.pic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,9 +60,9 @@ export default function GuaranteesPage() {
       
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [guarantees, state.requests, searchQuery, statusFilter, typeFilter]);
+  }, [guarantees, requests, searchQuery, statusFilter, typeFilter]);
 
-  const guaranteeGroups = useMemo(() => state.requests
+  const guaranteeGroups = useMemo(() => requests
     .map(request => ({
       request,
       guarantees: filteredGuarantees.filter(guarantee => guarantee.requestId === request.id),
@@ -70,7 +72,7 @@ export default function GuaranteesPage() {
         .some(value => value.toLowerCase().includes(searchQuery.toLowerCase()));
       const hasActiveFilters = statusFilter !== "All" || typeFilter !== "All";
       return hasActiveFilters ? group.guarantees.length > 0 : requestMatchesSearch || group.guarantees.length > 0;
-    }), [state.requests, filteredGuarantees, searchQuery, statusFilter, typeFilter]);
+    }), [requests, filteredGuarantees, searchQuery, statusFilter, typeFilter]);
 
   const sortedGuaranteeGroups = useMemo(() => sortRecords(guaranteeGroups, sort.direction, group => {
     if (sort.key === "title") return group.request.title;
@@ -160,7 +162,7 @@ export default function GuaranteesPage() {
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{state.attachments.length} dokumen</span>
         </div>
         {state.attachments.length > 0 ? <div className="divide-y divide-slate-100">{state.attachments.map(attachment => {
-          const request = state.requests.find(item => item.id === attachment.requestId);
+          const request = requests.find(item => item.id === attachment.requestId);
           return <div key={attachment.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-3"><FileText size={18} className="shrink-0 text-[#0a4d8c]" /><div className="min-w-0"><div className="truncate text-sm font-semibold text-slate-800">{attachment.fileUrl ? attachment.fileUrl.split('/').pop() : "File belum tersedia"}</div><div className="mt-1 text-xs text-slate-500">{request?.title ?? attachment.requestId} · {attachment.type} · {attachment.uploadedAt}</div></div></div><span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Tanpa ekstraksi</span></div>;
         })}</div> : <div className="px-5 py-10 text-center text-sm text-slate-500">Belum ada dokumen pendukung yang disimpan.</div>}
       </section>
@@ -221,3 +223,5 @@ export default function GuaranteesPage() {
     </div>
   );
 }
+
+

@@ -109,3 +109,9 @@ export function useUploadGuaranteeWithFile() {
     },
   });
 }
+
+export function useExtractGuarantee() {
+  return useMutation({
+    mutationFn: (file: File) => guaranteesApi.extract(file).then(res => res.data),
+  });
+}

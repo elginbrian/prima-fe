@@ -164,6 +164,17 @@ export const guaranteesApi = {
     apiFetch<GuaranteeDto>(`/guarantees/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   getUploadUrl: (id: string, contentType: string) =>
     apiFetch<{ presigned_post: any; object_key: string }>(`/guarantees/${id}/upload-url?content_type=${encodeURIComponent(contentType)}`),
+  extract: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return fetch(process.env.NEXT_PUBLIC_API_URL + "/guarantees/extract", {
+      method: "POST",
+      body: formData,
+    }).then((res) => {
+      if (!res.ok) throw new Error("Failed to extract data");
+      return res.json();
+    });
+  },
 };
 
 export const deadlinesApi = {
