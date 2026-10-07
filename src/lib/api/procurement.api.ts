@@ -102,10 +102,12 @@ export interface GuaranteeDto {
   issuer: string;
   issuer_type?: string;
   beneficiary?: string;
-  vendor: BaseUserDto;
+  vendor_id: string;
+  vendor_name: string;
   issue_date: string;
   expiry_date: string;
-  pic: BaseUserDto;
+  pic_id: string;
+  pic_name: string;
   status: string;
   next_action?: string;
   file_url?: string;
