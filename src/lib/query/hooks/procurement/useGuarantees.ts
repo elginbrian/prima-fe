@@ -28,7 +28,7 @@ export function mapGuaranteeDtoToItem(dto: GuaranteeDto): GuaranteeItem {
     pic: dto.pic,
     status: dto.status as GuaranteeStatus,
     nextAction: dto.next_action,
-    fileUrl: dto.file_url,
+    fileUrl: dto.file_url_signed || dto.file_url,
   };
 }
 
@@ -67,6 +67,45 @@ export function useUpdateGuarantee() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: guaranteesKeys.all });
       queryClient.invalidateQueries({ queryKey: guaranteesKeys.detail(variables.id) });
+    },
+  });
+}
+
+export function useUploadGuaranteeWithFile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ payload, file }: { payload: Partial<GuaranteeDto>; file: File }) => {
+      // 1. Create guarantee record
+      const guaranteeRes = await guaranteesApi.add(payload);
+      const guaranteeId = guaranteeRes.data.id;
+
+      // 2. Get upload URL
+      const urlRes = await guaranteesApi.getUploadUrl(guaranteeId, file.type);
+      const { presigned_post, object_key } = urlRes.data;
+
+      // 3. Upload to S3
+      const formData = new FormData();
+      Object.keys(presigned_post.fields).forEach((key) => {
+        formData.append(key, presigned_post.fields[key]);
+      });
+      formData.append("file", file);
+
+      const uploadResponse = await fetch(presigned_post.url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload file to S3");
+      }
+
+      // 4. Update guarantee with file URL key
+      const updateRes = await guaranteesApi.update(guaranteeId, { file_url: object_key });
+      return updateRes.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.all });
     },
   });
 }

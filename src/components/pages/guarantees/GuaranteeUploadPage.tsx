@@ -4,13 +4,15 @@ import { useState, DragEvent } from "react";
 import { UploadCloud, FileText, X, ArrowRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useUploadGuaranteeWithFile } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 
 export default function GuaranteeUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { state, addGuarantee, addAttachment } = useProcurement();
+  const { state, addAttachment } = useProcurement();
+  const uploadGuaranteeMutation = useUploadGuaranteeWithFile();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [requestId] = useState(() => searchParams.get("requestId") ?? "");
@@ -234,27 +236,7 @@ export default function GuaranteeUploadPage() {
                 const remainingDays = Number.isNaN(expiryTime) ? 0 : Math.ceil((expiryTime - Date.now()) / 86400000);
                 const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= state.settings.slaWarningDays ? "Mendekati Expiry" : "Aktif";
                 const valueRaw = Number(formData.value.replace(/[^0-9]/g, "")) || 0;
-                const newGuarantee: GuaranteeItem = {
-                  id: `GUAR-${Date.now()}`,
-                  requestId,
-                  referenceNo: formData.referenceNo,
-                  type: formData.type,
-                  value: valueRaw,
-                  issuer: formData.issuer,
-                  issuerType: formData.issuerType,
-                  beneficiary: formData.beneficiary,
-                  vendor: { id: "VND-NEW", name: formData.vendor },
-                  issueDate: formData.issueDate,
-                  submissionDate: formData.submissionDate,
-                  expiryDate: formData.expiryDate,
-                  pic: { id: "ADMIN", name: "P3 - Admin" },
-                  status,
-                  fileUrl: "/mock-docs/" + file.name,
-                };
-                addGuarantee(newGuarantee);
-                router.push('/dashboard/guarantees');
-              }}
-              disabled={!file || !requestId || (requiresExtraction && (!formData.vendor || !formData.issuer || !formData.referenceNo || !formData.value || !formData.issueDate || !formData.expiryDate))}
+                uploadGuaranteeMutation.mutate({ file: file, payload: { request_id: requestId, reference_no: formData.referenceNo, type: formData.type, value: valueRaw, issuer: formData.issuer, issuer_type: formData.issuerType, beneficiary: formData.beneficiary, vendor_id: "VND-NEW", vendor_name: formData.vendor, issue_date: formData.issueDate + "T00:00:00Z", expiry_date: formData.expiryDate + "T00:00:00Z", pic_id: "ADMIN", pic_name: "P3 - Admin", status } as any }, { onSuccess: () => router.push('/dashboard/guarantees') }); }} disabled={!file || !requestId || uploadGuaranteeMutation.isPending || (requiresExtraction && (!formData.vendor || !formData.issuer || !formData.referenceNo || !formData.value || !formData.issueDate || !formData.expiryDate))}
               className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-sm font-medium shadow-sm transition-all ${
                 file && requestId && (!requiresExtraction || (formData.vendor && formData.issuer && formData.referenceNo && formData.value && formData.issueDate && formData.expiryDate)) ? 'bg-[#0a4d8c] hover:bg-[#093e6f] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
@@ -268,3 +250,4 @@ export default function GuaranteeUploadPage() {
     </div>
   );
 }
+

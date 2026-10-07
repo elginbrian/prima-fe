@@ -109,6 +109,7 @@ export interface GuaranteeDto {
   status: string;
   next_action?: string;
   file_url?: string;
+  file_url_signed?: string;
 }
 
 // ─── Deadline / SLA (Modul D4) ────────────────────────────────────────────
@@ -161,6 +162,8 @@ export const guaranteesApi = {
     apiFetch<GuaranteeDto>("/guarantees", { method: "POST", body: JSON.stringify(payload) }),
   update: (id: string, payload: Partial<GuaranteeDto>) =>
     apiFetch<GuaranteeDto>(`/guarantees/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  getUploadUrl: (id: string, contentType: string) =>
+    apiFetch<{ presigned_post: any; object_key: string }>(`/guarantees/${id}/upload-url?content_type=${encodeURIComponent(contentType)}`),
 };
 
 export const deadlinesApi = {
