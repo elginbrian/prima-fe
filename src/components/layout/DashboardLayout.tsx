@@ -5,20 +5,40 @@ import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import { ProcurementProvider } from "@/context/ProcurementContext";
 import { SidebarNav } from "@/components/navigation/SidebarNav";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCurrentUser, useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
+import { clearSession } from "@/lib/api/auth.utils";
 
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { mobileOpen, setMobileOpen } = useSidebar();
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading } = useCurrentUser();
   const logout = useLogout();
   const pathname = usePathname();
+  const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  
+  useEffect(() => { 
+    setMounted(true); 
+  }, []);
 
-  const userLabel = mounted && currentUser
+  useEffect(() => {
+    if (mounted && !isLoading && !currentUser) {
+      clearSession();
+      router.replace("/login?session=expired");
+    }
+  }, [mounted, isLoading, currentUser, router]);
+
+  if (!currentUser) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f4f7fb]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#1d4ed8]/20 border-t-[#1d4ed8]" />
+      </div>
+    );
+  }
+
+  const userLabel = currentUser
     ? currentUser.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
     : "";
 
