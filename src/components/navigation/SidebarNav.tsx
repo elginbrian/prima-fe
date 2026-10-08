@@ -10,7 +10,8 @@ import {
   Settings,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
-import { useProcurement } from "@/context/ProcurementContext";
+import { useNotifications } from "@/lib/query/hooks/procurement/useNotifications";
+import { useActions } from "@/lib/query/hooks/procurement/useActions";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,12 +28,13 @@ const navItems: any[] = [
 
 export function SidebarNav() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
-  const { state } = useProcurement();
+  const { data: notifications = [] } = useNotifications();
+  const { data: actions = [] } = useActions();
   const pathname = usePathname();
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   
-  const unreadCount = state.notifications.filter(n => !n.isRead).length;
-  const pendingActionsCount = state.actions.filter(a => a.status === 'Pending').length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const pendingActionsCount = actions.filter(a => a.status === 'Pending').length;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
