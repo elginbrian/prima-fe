@@ -39,7 +39,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
           </div>
         </td>
         <td className="px-4 py-4 text-sm font-semibold text-slate-700">{guarantees.length} jaminan</td>
-        <td className="px-4 py-4 text-sm text-slate-600">{guarantees.map(guarantee => guarantee.value).join(" · ")}</td>
+        <td className="px-4 py-4 text-sm text-slate-600">Rp {guarantees.reduce((total, guarantee) => total + guarantee.value, 0).toLocaleString("id-ID")}</td>
         <td className="px-4 py-4 text-sm font-medium text-slate-700">{latestExpiry}</td>
         <td className="px-4 py-4">
           <div className="flex items-center gap-3">
@@ -91,7 +91,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                       <div className="truncate text-[12px] font-medium text-slate-800">{guarantee.referenceNo} · {guarantee.type}</div>
                       <div className="mt-1 text-[11px] text-slate-500">{guarantee.vendor.name} · {guarantee.issuer} · Terbit {guarantee.issueDate} · Expiry {guarantee.expiryDate}</div>
                     </div>
-                    <div className="text-sm font-medium text-slate-700">{guarantee.value}</div>
+                    <div className="text-sm font-medium text-slate-700">Rp {guarantee.value.toLocaleString("id-ID")}</div>
                     <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusClass(guarantee.status)}`}>{guarantee.status}</span>
                     {expandedGuaranteeId === guarantee.id ? <ChevronDown className="shrink-0 text-slate-400" size={16} /> : <ChevronRight className="shrink-0 text-slate-400" size={16} />}
                   </button>

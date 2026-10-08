@@ -21,6 +21,7 @@ import {
   useDocuments,
   useUpdateDeadline,
 } from "@/lib/query/hooks/procurement/useProcurement";
+import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 
@@ -31,6 +32,7 @@ export default function TrackerPage() {
   const { data: procurementsData, isLoading: isLoadingProcurements } = useProcurements();
   const { data: documentsData = [] } = useDocuments();
   const { data: deadlinesData = [] } = useDeadlines();
+  const { data: guaranteesData = [] } = useGuarantees();
   const { data: currentUser } = useCurrentUser();
   const { data: settings } = useSettings();
 
@@ -213,7 +215,7 @@ export default function TrackerPage() {
 
       {selectedRequestId && (() => {
         const docs = documentsData.filter(d => d.requestId === selectedRequestId);
-        const guars: import("@/types").GuaranteeItem[] = []; // TODO: implement useGuarantees hook if needed
+        const guars = guaranteesData.filter(g => g.requestId === selectedRequestId);
         const slas = deadlinesList.filter(d => d.requestId === selectedRequestId).map(deadline => ({ ...deadline, ...getDeadlineTiming(deadline, slaWarningDays) }));
         const history: import("@/types").HistoryItem[] = []; // TODO: implement useHistory hook if needed
         const request = requests.find(r => r.id === selectedRequestId);
