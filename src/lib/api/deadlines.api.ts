@@ -23,14 +23,14 @@ export interface DeadlineDto {
 
 export const deadlinesApi = {
   getAll: (requestId?: string) =>
-    apiFetch<DeadlineDto[]>(`/api/v1/deadlines/${requestId ? `?request_id=${requestId}` : ""}`),
+    apiFetch<DeadlineDto[]>(`/deadlines/${requestId ? `?request_id=${requestId}` : ""}`),
 
   getById: (id: string) =>
-    apiFetch<DeadlineDto>(`/api/v1/deadlines/${id}`),
+    apiFetch<DeadlineDto>(`/deadlines/${id}`),
 
   add: (payload: Partial<DeadlineDto>) =>
-    apiFetch<DeadlineDto>("/api/v1/deadlines/", { method: "POST", body: JSON.stringify(payload) }),
+    apiFetch<DeadlineDto>("/deadlines/", { method: "POST", body: JSON.stringify(payload) }),
 
   update: (id: string, payload: Partial<DeadlineDto>) =>
-    apiFetch<DeadlineDto>(`/api/v1/deadlines/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+    apiFetch<DeadlineDto>(`/deadlines/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
 };

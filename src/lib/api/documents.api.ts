@@ -22,14 +22,14 @@ export interface DocumentDto {
 
 export const documentsApi = {
   getAll: (requestId?: string) =>
-    apiFetch<DocumentDto[]>(`/api/v1/documents${requestId ? `?request_id=${requestId}` : ""}`),
+    apiFetch<DocumentDto[]>(`/documents${requestId ? `?request_id=${requestId}` : ""}`),
 
   getById: (id: string) =>
-    apiFetch<DocumentDto>(`/api/v1/documents/${id}`),
+    apiFetch<DocumentDto>(`/documents/${id}`),
 
   add: (payload: Partial<DocumentDto>) =>
-    apiFetch<DocumentDto>("/api/v1/documents", { method: "POST", body: JSON.stringify(payload) }),
+    apiFetch<DocumentDto>("/documents", { method: "POST", body: JSON.stringify(payload) }),
 
   update: (id: string, payload: Partial<DocumentDto>) =>
-    apiFetch<DocumentDto>(`/api/v1/documents/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+    apiFetch<DocumentDto>(`/documents/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
 };
