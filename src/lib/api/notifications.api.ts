@@ -13,7 +13,7 @@ export interface NotificationDto {
 
 export const notificationsApi = {
   getAll: () => 
-    apiFetch<NotificationDto[]>("/notifications/"),
+    apiFetch<NotificationDto[]>("/notifications"),
   
   markRead: (id: string) =>
     apiFetch<NotificationDto>(`/notifications/${id}/read`, { method: "PUT" }),
