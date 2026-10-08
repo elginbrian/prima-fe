@@ -78,7 +78,7 @@ export function ActionRow({ item }: ActionRowProps) {
           <div className="text-[11px] text-slate-500 mt-0.5">{item.actionType}</div>
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
-          <div className="text-[13px] text-slate-600">{item.assignee.name}</div>
+          <div className="text-[13px] text-slate-600">{item.assignee?.name || "Tidak ada assignee"}</div>
           {linkedRequest && <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[160px]">{linkedRequest.title}</div>}
         </td>
         <td className="px-4 py-3 whitespace-nowrap">

@@ -37,7 +37,7 @@ export default function NextActionPage() {
     return actions.filter((item) => {
       const matchesSearch = item.referenceId.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.assignee.name.toLowerCase().includes(searchQuery.toLowerCase());
+                            (item.assignee?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSource = sourceFilter === "All" || item.source === sourceFilter;
       const matchesPriority = priorityFilter === "All" || item.priority === priorityFilter;
       
@@ -46,7 +46,7 @@ export default function NextActionPage() {
   }, [actions, searchQuery, sourceFilter, priorityFilter]);
 
   const sortedActions = useMemo(() => sortRecords(filteredActions, sort.direction, item => {
-    if (sort.key === "assignee") return item.assignee.name;
+    if (sort.key === "assignee") return item.assignee?.name || "";
     return item[sort.key];
   }), [filteredActions, sort]);
   const totalPages = Math.ceil(sortedActions.length / itemsPerPage);
