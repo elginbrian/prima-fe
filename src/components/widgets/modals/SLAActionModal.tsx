@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Clock, AlertTriangle, CheckCircle2, User, Building2, Calendar, ArrowRight, Target } from "lucide-react";
 import { DeadlineItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useUpdateDeadline } from "@/lib/query/hooks/procurement/useDeadlines";
 
 interface SLAActionModalProps {
   deadline: DeadlineItem;
@@ -26,7 +27,8 @@ const URGENCY_MAP = {
 };
 
 export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
-  const { updateDeadlineStatus, state } = useProcurement();
+  const { state } = useProcurement();
+  const updateDeadline = useUpdateDeadline();
 
   const linkedRequest = state.requests.find(r => r.id === deadline.requestId);
   const statusMeta = STATUS_MAP[deadline.status] ?? STATUS_MAP["On Track"];
@@ -38,12 +40,12 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
   }, [onClose]);
 
   const handleMarkDone = () => {
-    updateDeadlineStatus(deadline.id, "Selesai");
+    updateDeadline.mutate({ id: deadline.id, payload: { status: "Selesai" } });
     onClose();
   };
 
   const handleEscalate = () => {
-    updateDeadlineStatus(deadline.id, "At Risk");
+    updateDeadline.mutate({ id: deadline.id, payload: { status: "At Risk" } });
     onClose();
   };
 

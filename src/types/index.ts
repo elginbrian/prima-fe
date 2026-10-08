@@ -18,6 +18,7 @@ import { User } from "./user";
 export interface DeadlineItem {
   id: string;
   requestId: string;
+  relatedId?: string;
   taskName: string;
   milestone: string;
   pic: import("./core").BaseUser;

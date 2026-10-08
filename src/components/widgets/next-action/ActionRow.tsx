@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, AlertCircle, ArrowRight, ExternalLink, Shield, FileText, Clock } from "lucide-react";
 import { ActionItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
+import { useDeadlines } from "@/lib/query/hooks/procurement/useDeadlines";
 
 import { ActionRowProps } from "./types";
 import { GuaranteeEditModal } from "@/components/widgets/modals/GuaranteeEditModal";
@@ -16,11 +18,13 @@ export function ActionRow({ item }: ActionRowProps) {
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [showSlaModal, setShowSlaModal] = useState(false);
   const { state } = useProcurement();
+  const { data: guarantees = [] } = useGuarantees();
+  const { data: deadlines = [] } = useDeadlines();
 
   // Resolve the real document/guarantee/deadline object from state for the modal
   const linkedDoc = state.documents.find(d => d.id === item.referenceId);
-  const linkedGuarantee = state.guarantees.find(g => g.id === item.referenceId);
-  const linkedDeadline = state.deadlines.find(d => d.id === item.referenceId);
+  const linkedGuarantee = guarantees.find(g => g.id === item.referenceId);
+  const linkedDeadline = deadlines.find(d => d.id === item.referenceId);
   const linkedRequest = state.requests.find(r => r.id === item.requestId);
 
   const getStatusBadge = (status: ActionItem["status"]) => {

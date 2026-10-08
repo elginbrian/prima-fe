@@ -2,22 +2,23 @@
 
 import { useState } from "react";
 import { Bell, CheckCircle2, AlertCircle, FileText, Clock, Settings, Search, CheckSquare } from "lucide-react";
-import { useProcurement } from "@/context/ProcurementContext";
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/query/hooks/procurement/useNotifications";
 import type { NotificationType, NotificationItem } from "@/types";
 
 export default function NotificationsPage() {
-  const { state, markNotificationRead, markAllRead } = useProcurement();
-  const notifications = state.notifications;
+  const { data: notifications = [], isLoading } = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
   const [activeTab, setActiveTab] = useState<"All" | "Unread">("All");
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const markAllAsRead = () => {
-    markAllRead();
+  const handleMarkAllAsRead = () => {
+    markAllRead.mutate();
   };
 
   const markAsRead = (id: string) => {
-    markNotificationRead(id);
+    markRead.mutate(id);
   };
 
   const getIcon = (type: NotificationType) => {
@@ -84,7 +85,7 @@ export default function NotificationsPage() {
           
           {unreadCount > 0 && (
             <button 
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               className="flex items-center justify-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-[#0a4d8c] shadow-sm transition-all hover:bg-slate-50 whitespace-nowrap shrink-0"
             >
               <CheckSquare size={16} />
@@ -98,7 +99,11 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="divide-y divide-slate-100 bg-white">
-          {filteredNotifications.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center p-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1d4ed8]/20 border-t-[#1d4ed8]" />
+            </div>
+          ) : filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Bell size={40} className="mb-4 text-slate-200" />
               <h3 className="text-sm font-bold text-slate-700">Tidak ada notifikasi</h3>

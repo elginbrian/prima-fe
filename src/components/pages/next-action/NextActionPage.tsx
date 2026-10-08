@@ -8,11 +8,10 @@ import { ActionStats } from "@/components/widgets/stats/ActionStats";
 import { ActionRow } from "@/components/widgets/next-action/ActionRow";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
-import { useProcurement } from "@/context/ProcurementContext";
+import { useActions } from "@/lib/query/hooks/procurement/useActions";
 
 export default function NextActionPage() {
-  const { state } = useProcurement();
-  const actions = state.actions;
+  const { data: actions = [], isLoading } = useActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<ActionSource | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<ActionPriority | "All">("All");
@@ -92,8 +91,7 @@ export default function NextActionPage() {
                 <SortableTableHeader label="Status" direction={sort.key === "status" ? sort.direction : null} onClick={() => toggleSort("status")} />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
-              {paginatedActions.length > 0 ? (
+            <tbody className="divide-y divide-slate-200">{isLoading ? (<tr><td colSpan={5}><div className="flex justify-center p-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1d4ed8]/20 border-t-[#1d4ed8]" /></div></td></tr>) : paginatedActions.length > 0 ? (
                 paginatedActions.map((item) => (
                   <ActionRow key={item.id} item={item} />
                 ))
@@ -125,3 +123,5 @@ export default function NextActionPage() {
     </div>
   );
 }
+
+

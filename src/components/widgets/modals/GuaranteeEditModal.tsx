@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { GuaranteeItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 
 interface GuaranteeEditModalProps {
   guarantee: GuaranteeItem;
@@ -12,7 +13,7 @@ interface GuaranteeEditModalProps {
 }
 
 export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalProps) {
-  const { updateGuarantee } = useProcurement();
+  const updateGuarantee = useUpdateGuarantee();
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -31,15 +32,19 @@ export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalPro
         onSubmit={e => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          updateGuarantee(guarantee.id, {
-            issuerType: fd.get("issuerType") as GuaranteeItem["issuerType"],
-            issuer: String(fd.get("issuer")),
-            referenceNo: String(fd.get("referenceNo")),
-            beneficiary: String(fd.get("beneficiary")),
-            vendor: { id: "VND-EDIT", name: String(fd.get("vendor")) },
-            value: Number(String(fd.get("value")).replace(/\D/g, "")),
-            issueDate: String(fd.get("issueDate")),
-            expiryDate: String(fd.get("expiryDate")),
+          updateGuarantee.mutate({
+            id: guarantee.id,
+            payload: {
+              issuer_type: fd.get("issuerType") as string,
+              issuer: String(fd.get("issuer")),
+              reference_no: String(fd.get("referenceNo")),
+              beneficiary: String(fd.get("beneficiary")),
+              vendor_id: "VND-EDIT",
+              vendor_name: String(fd.get("vendor")),
+              value: Number(String(fd.get("value")).replace(/\D/g, "")),
+              issue_date: String(fd.get("issueDate")),
+              expiry_date: String(fd.get("expiryDate")),
+            }
           });
           onClose();
         }}
