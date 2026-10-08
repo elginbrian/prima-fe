@@ -66,7 +66,7 @@ export function TrackerKanbanBoard({
                   {expandedCardId === item.id && <div className="flex flex-col gap-2 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-500">PIC</span>
-                      <span className="font-medium text-slate-700 truncate max-w-[120px] text-right">{item.pic.name}</span>
+                      <span className="font-medium text-slate-700 truncate max-w-[120px] text-right">{item.pic?.name || "-"}</span>
                     </div>
 
                   <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50/60 px-2.5 py-2">

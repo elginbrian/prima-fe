@@ -54,8 +54,8 @@ export function dtoToDeadline(dto: any): any {
     taskName: dto.task_name ?? dto.taskName,
     targetDate: dto.target_date ?? dto.targetDate,
     urgencyLevel: dto.urgency_level ?? dto.urgencyLevel ?? "Normal",
-    pic: dto.pic ? { id: dto.pic.id, name: dto.pic.name } : undefined,
-    department: dto.department ? { id: dto.department.id, name: dto.department.name } : undefined,
+    pic: dto.pic ? { id: dto.pic.id, name: dto.pic.name } : (dto.pic_id ? { id: dto.pic_id, name: dto.pic_name } : undefined),
+    department: dto.department ? { id: dto.department.id, name: dto.department.name } : (dto.department_id ? { id: dto.department_id, name: dto.department_name } : undefined),
   };
 }
 
@@ -64,6 +64,6 @@ export function dtoToDocument(dto: any): any {
     ...dto,
     requestId: dto.request_id ?? dto.requestId,
     uploadDate: dto.upload_date ?? dto.uploadDate ?? new Date().toISOString().split('T')[0],
-    pic: dto.pic ? { id: dto.pic.id, name: dto.pic.name } : undefined,
+    pic: dto.pic ? { id: dto.pic.id, name: dto.pic.name } : (dto.pic_id ? { id: dto.pic_id, name: dto.pic_name } : undefined),
   };
 }

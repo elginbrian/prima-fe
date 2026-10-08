@@ -99,7 +99,7 @@ export default function TrackerPage() {
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.pic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (item.pic?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                             item.id.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesDept = departmentFilter === "All" || item.department.name === departmentFilter;

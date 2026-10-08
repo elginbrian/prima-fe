@@ -19,7 +19,7 @@ export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEd
   
   const sortedDeadlines = useMemo(() => sortRecords(filteredDeadlines, sort.direction, deadline => {
     if (sort.key === "work") return requests.find(request => request.id === deadline.requestId)?.title ?? deadline.requestId;
-    if (sort.key === "pic") return deadline.pic.name;
+    if (sort.key === "pic") return deadline.pic?.name || "";
     if (sort.key === "period") return deadline.targetDate;
     return deadline.status;
   }), [filteredDeadlines, requests, sort]);
@@ -71,7 +71,7 @@ export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEd
                       <div className="mt-0.5 text-xs text-slate-500">{request?.title ?? deadline.requestId} · {deadline.milestone}</div>
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">{deadline.pic.name}</td>
+                  <td className="px-4 py-3 text-xs text-slate-600">{deadline.pic?.name || "-"}</td>
                   <td className="px-4 py-3 text-xs text-slate-600">
                     <div>{deadline.startDate ?? "Belum diatur"}</div>
                     <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate}</div>

@@ -15,7 +15,7 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
   const sortedItems = useMemo(() => sortRecords(filteredItems, sort.direction, item => {
     if (sort.key === "title") return item.title;
     if (sort.key === "status") return item.operationalStatus;
-    if (sort.key === "pic") return item.pic.name;
+    if (sort.key === "pic") return item.pic?.name || "";
     if (sort.key === "step") return item.currentStep;
     if (sort.key === "amount") return item.amount;
     return timeStatusMap[item.id] ?? "";
@@ -61,7 +61,7 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                     {item.operationalStatus}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-600">{item.pic.name}</td>
+                <td className="px-4 py-3 text-xs text-slate-600">{item.pic?.name || "-"}</td>
                 <td className="px-4 py-3 text-xs text-slate-600">{item.currentStep}</td>
                 <td className="px-4 py-3 text-xs font-medium text-slate-700">{item.amount}</td>
                 <td className="px-5 py-3 text-xs">
