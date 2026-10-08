@@ -3,14 +3,14 @@
 import { useMemo } from "react";
 import { useGuarantees } from "./useGuarantees";
 import { useDeadlines } from "./useDeadlines";
+import { useDocuments } from "./useDocuments";
 import { actionForGuarantee, actionForDeadline, actionForDocument } from "@/context/reducer";
 import { ActionItem } from "@/types";
-// using mock for documents for now since it's not integrated
-import { initialProcurementState } from "@/lib/mockData";
 
 export function useActions() {
   const { data: guarantees = [], isLoading: loadingGuarantees } = useGuarantees();
   const { data: deadlines = [], isLoading: loadingDeadlines } = useDeadlines();
+  const { data: documents = [], isLoading: loadingDocs } = useDocuments();
 
   const actions = useMemo(() => {
     const computedActions: ActionItem[] = [];
@@ -27,17 +27,17 @@ export function useActions() {
       if (act) computedActions.push(act);
     });
 
-    // 3. Actions from Documents (using mock for now until Documents API is ready)
-    initialProcurementState.documents.forEach(doc => {
+    // 3. Actions from Documents
+    documents.forEach(doc => {
       const act = actionForDocument(doc);
       if (act) computedActions.push(act);
     });
 
     return computedActions;
-  }, [guarantees, deadlines]);
+  }, [guarantees, deadlines, documents]);
 
   return {
     data: actions,
-    isLoading: loadingGuarantees || loadingDeadlines,
+    isLoading: loadingGuarantees || loadingDeadlines || loadingDocs,
   };
 }
