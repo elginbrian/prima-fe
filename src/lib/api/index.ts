@@ -19,3 +19,5 @@ export type {
   MoveStepPayload,
   UpdateOperationalStatusPayload,
 } from "./procurement.api";
+
+export { usersApi } from "./users.api";
