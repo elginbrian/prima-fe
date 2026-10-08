@@ -110,9 +110,14 @@ export default function TrackerPage() {
   }, [items, searchQuery, departmentFilter, operationalStatusFilter]);
 
   const itemsByStage = useMemo(() => {
-    const grouped = { "On Going": [], "On Hold": [], "Batal": [] } as Record<TrackerStage, TrackerItem[]>;
-    filteredItems.forEach(item => grouped[item.operationalStatus].push(item));
-    return grouped;
+    const grouped = { "On Going": [], "On Hold": [], "Batal": [] } as Record<string, TrackerItem[]>;
+    filteredItems.forEach(item => {
+      if (!grouped[item.operationalStatus]) {
+        grouped[item.operationalStatus] = [];
+      }
+      grouped[item.operationalStatus].push(item);
+    });
+    return grouped as Record<TrackerStage, TrackerItem[]>;
   }, [filteredItems]);
 
   const totalItemsCount = filteredItems.length;
