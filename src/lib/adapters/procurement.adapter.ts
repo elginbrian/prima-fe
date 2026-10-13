@@ -91,5 +91,8 @@ export function dtoToDocument(dto: DocumentDto): DocumentItem {
     documentNumber: dto.document_number,
     fileUrl: dto.file_url,
     mimeType: dto.mime_type,
+    versionNumber: dto.version_number ?? 1,
+    parentDocumentId: dto.parent_document_id,
+    revisionNotes: dto.revision_notes,
   };
 }

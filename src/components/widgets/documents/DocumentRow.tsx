@@ -31,7 +31,12 @@ export function DocumentRow({ doc }: { doc: DocumentItem }) {
         className={`transition-colors hover:bg-slate-50 cursor-pointer ${isExpanded ? 'bg-slate-50' : ''}`}
       >
         <td className="px-4 py-3">
-          <div className="font-medium text-slate-800 text-[13px]">{doc.name}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-800 text-[13px]">{doc.name}</span>
+            <span className="inline-flex shrink-0 items-center rounded-full bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold text-[#0a4d8c]">
+              v{doc.versionNumber ?? 1}
+            </span>
+          </div>
           <div className="text-[11px] text-slate-500 mt-0.5">{doc.id}</div>
         </td>
         <td className="px-4 py-3 text-[13px] text-slate-600">

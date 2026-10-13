@@ -135,6 +135,9 @@ export interface DocumentDto {
   document_number?: string;
   file_url?: string;
   mime_type?: string;
+  version_number?: number;
+  parent_document_id?: string;
+  revision_notes?: string;
 }
 
 // ─── Guarantee (Modul D2) ─────────────────────────────────────────────────
@@ -254,6 +257,10 @@ export const documentsApi = {
     apiFetch<DocumentDto>(`/documents/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
   getViewUrl: (id: string) =>
     apiFetch<{ view_url: string; file_name: string }>(`/documents/${id}/view-url`),
+  createRevision: (id: string, payload: { pic_id: string; pic_name: string; revision_notes: string; name?: string; file_url?: string; mime_type?: string; document_date?: string; document_number?: string }) =>
+    apiFetch<DocumentDto>(`/documents/${id}/revision`, { method: "POST", body: JSON.stringify(payload) }),
+  getRevisions: (id: string) =>
+    apiFetch<DocumentDto[]>(`/documents/${id}/revisions`),
 };
 
 export const guaranteesApi = {

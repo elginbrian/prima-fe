@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, AlertCircle, CheckCircle2, XCircle, Sparkles, Eye } from "lucide-react";
+import { X, AlertCircle, CheckCircle2, XCircle, Sparkles, Eye, History, UploadCloud, FileText } from "lucide-react";
 import { DocumentItem, DocumentStatus } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
-import { useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
+import { useUpdateDocumentStatus, useDocumentRevisions, useCreateDocumentRevision } from "@/lib/query/hooks";
 import { useToast } from "@/components/ui/Toast";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
@@ -25,10 +25,17 @@ const STATUS_LABELS: { value: DocumentStatus; label: string; icon: React.ReactNo
 export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) {
   const { updateDocumentStatus } = useProcurement();
   const updateDocMutation = useUpdateDocumentStatus();
+  const createRevisionMutation = useCreateDocumentRevision();
+  const { data: revisions = [] } = useDocumentRevisions(doc.id);
   const toast = useToast();
   const router = useRouter();
   const [selected, setSelected] = useState<DocumentStatus>(doc.status);
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<"detail" | "history" | "revision">("detail");
+
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [revisionDocNo, setRevisionDocNo] = useState("");
+  const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -50,6 +57,33 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
     onClose();
   };
 
+  const handleCreateRevision = async () => {
+    if (!revisionNotes.trim()) {
+      toast.warning("Mohon isi catatan perbaikan untuk versi revisi.");
+      return;
+    }
+    setIsSubmittingRevision(true);
+    try {
+      await createRevisionMutation.mutateAsync({
+        id: doc.id,
+        payload: {
+          pic_id: doc.pic.id,
+          pic_name: doc.pic.name,
+          revision_notes: revisionNotes.trim(),
+          document_number: revisionDocNo.trim() || doc.documentNumber,
+        },
+      });
+      toast.success(`Revisi baru berhasil diunggah (v${(doc.versionNumber ?? 1) + 1}).`);
+      setRevisionNotes("");
+      setRevisionDocNo("");
+      setActiveTab("history");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Gagal mengunggah revisi dokumen"));
+    } finally {
+      setIsSubmittingRevision(false);
+    }
+  };
+
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex min-h-dvh items-center justify-center overflow-y-auto bg-slate-900/60 backdrop-blur-sm p-6 sm:p-8 animate-in fade-in duration-300"
@@ -62,7 +96,12 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 gap-4">
           <div className="min-w-0">
-            <h2 className="text-base font-bold text-slate-800 truncate">{doc.name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-800 truncate">{doc.name}</h2>
+              <span className="inline-flex shrink-0 items-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-[#0a4d8c]">
+                v{doc.versionNumber ?? 1}
+              </span>
+            </div>
             <p className="mt-1 text-xs text-slate-500">{doc.id} · {doc.type} · Diunggah: {doc.uploadDate}</p>
           </div>
           <button
@@ -74,51 +113,164 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
           </button>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="flex border-b border-slate-200 bg-slate-50/70 px-6 pt-2 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setActiveTab("detail")}
+            className={`border-b-2 px-3 py-2 transition-colors ${activeTab === "detail" ? "border-[#0a4d8c] text-[#0a4d8c]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            Status & Temuan
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`border-b-2 px-3 py-2 transition-colors ${activeTab === "history" ? "border-[#0a4d8c] text-[#0a4d8c]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            Riwayat Versi ({revisions.length || 1})
+          </button>
+          {doc.status !== "Lulus Verifikasi" && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("revision")}
+              className={`border-b-2 px-3 py-2 transition-colors ${activeTab === "revision" ? "border-amber-600 text-amber-700" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            >
+              + Ajukan Revisi (v{(doc.versionNumber ?? 1) + 1})
+            </button>
+          )}
+        </div>
+
         {/* Body */}
-        <div className="p-6 space-y-5">
-          {/* Issues */}
-          {doc.issues && doc.issues.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle size={15} className="text-red-500 shrink-0" />
-                <h4 className="text-[13px] font-semibold text-slate-800">Temuan Pemeriksaan</h4>
+        <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+          {activeTab === "detail" && (
+            <>
+              {/* Revision Notes on current doc */}
+              {doc.revisionNotes && (
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs">
+                  <div className="font-bold text-emerald-900 mb-0.5">Catatan Perbaikan Versi Ini:</div>
+                  <p className="text-emerald-800">{doc.revisionNotes}</p>
+                </div>
+              )}
+
+              {/* Issues */}
+              {doc.issues && doc.issues.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle size={15} className="text-red-500 shrink-0" />
+                    <h4 className="text-[13px] font-semibold text-slate-800">Temuan Pemeriksaan</h4>
+                  </div>
+                  <ul className="list-disc list-outside space-y-1.5 pl-5 text-[13px] text-slate-600 leading-relaxed">
+                    {doc.issues.map((issue, idx) => (
+                      <li key={idx}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Next Action */}
+              {doc.nextAction && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles size={14} className="text-[#0a4d8c]" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#0a4d8c]">Next Action</span>
+                  </div>
+                  <p className="text-[13px] text-slate-700 leading-relaxed">{doc.nextAction}</p>
+                </div>
+              )}
+
+              {/* Status Update */}
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Update Status Dokumen</div>
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_LABELS.map(({ value, label, icon, color }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setSelected(value)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${color} ${selected === value ? "ring-2 ring-offset-1 ring-current opacity-100" : "opacity-70"}`}
+                    >
+                      {icon}
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <ul className="list-disc list-outside space-y-1.5 pl-5 text-[13px] text-slate-600 leading-relaxed">
-                {doc.issues.map((issue, idx) => (
-                  <li key={idx}>{issue}</li>
-                ))}
-              </ul>
-            </div>
+            </>
           )}
 
-          {/* Next Action */}
-          {doc.nextAction && (
-            <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles size={14} className="text-[#0a4d8c]" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0a4d8c]">Next Action</span>
-              </div>
-              <p className="text-[13px] text-slate-700 leading-relaxed">{doc.nextAction}</p>
-            </div>
-          )}
-
-          {/* Status Update */}
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Update Status Dokumen</div>
-            <div className="flex flex-wrap gap-2">
-              {STATUS_LABELS.map(({ value, label, icon, color }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setSelected(value)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${color} ${selected === value ? "ring-2 ring-offset-1 ring-current opacity-100" : "opacity-70"}`}
-                >
-                  {icon}
-                  {label}
-                </button>
+          {activeTab === "history" && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Histori versi dokumen terlacak secara persisten dari versi pertama hingga revisi terbaru.
+              </p>
+              {(revisions.length > 0 ? revisions : [doc]).map((rev, idx) => (
+                <div key={rev.id || idx} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold text-slate-800">
+                      <span className="rounded bg-[#0a4d8c] px-2 py-0.5 text-[11px] font-bold text-white">
+                        v{rev.versionNumber ?? 1}
+                      </span>
+                      <span>{rev.name}</span>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-500">
+                      {rev.uploadDate ? rev.uploadDate.split("T")[0] : "-"}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    PIC: {rev.pic.name} · Status: <span className="font-semibold text-slate-700">{rev.status}</span>
+                  </div>
+                  {rev.revisionNotes && (
+                    <div className="rounded bg-white p-2 border border-slate-200/80 text-slate-700">
+                      <span className="font-bold text-slate-600">Catatan Revisi: </span>
+                      {rev.revisionNotes}
+                    </div>
+                  )}
+                  {rev.issues && rev.issues.length > 0 && (
+                    <div className="text-rose-700">
+                      <span className="font-bold">Catatan Verifikator: </span>
+                      {rev.issues.join("; ")}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
-          </div>
+          )}
+
+          {activeTab === "revision" && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+                Anda sedang mengajukan <strong>Revisi v{(doc.versionNumber ?? 1) + 1}</strong> untuk menggantikan berkas sebelumnya yang berstatus <em>{doc.status}</em>.
+              </div>
+              <label className="block text-xs">
+                <span className="mb-1 block font-bold text-slate-700">Nomor Dokumen Revisi (Opsional)</span>
+                <input
+                  type="text"
+                  value={revisionDocNo}
+                  onChange={(e) => setRevisionDocNo(e.target.value)}
+                  placeholder="Contoh: SPM/REV/2026/002"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:border-[#0a4d8c] focus:outline-none"
+                />
+              </label>
+              <label className="block text-xs">
+                <span className="mb-1 block font-bold text-slate-700">Catatan Perbaikan / Tindak Lanjut *</span>
+                <textarea
+                  value={revisionNotes}
+                  onChange={(e) => setRevisionNotes(e.target.value)}
+                  placeholder="Jelaskan perbaikan yang telah dilakukan berdasarkan catatan verifikator..."
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-xs focus:border-[#0a4d8c] focus:outline-none"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleCreateRevision}
+                disabled={isSubmittingRevision || !revisionNotes.trim()}
+                className="w-full rounded-lg bg-amber-600 py-2.5 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
+              >
+                {isSubmittingRevision ? "Mengunggah Revisi..." : `Kirim Revisi Dokumen v${(doc.versionNumber ?? 1) + 1}`}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

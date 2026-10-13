@@ -14,6 +14,8 @@ export {
   useUpdateOperationalStatus,
   useDocuments,
   useUpdateDocumentStatus,
+  useDocumentRevisions,
+  useCreateDocumentRevision,
   useGuarantees,
   useUpdateGuarantee,
   useDeadlines,

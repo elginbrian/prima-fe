@@ -100,6 +100,9 @@ export interface DocumentItem {
   fileUrl?: string;
   mimeType?: string;
   extractedData?: DocumentExtractedData;
+  versionNumber?: number;
+  parentDocumentId?: string;
+  revisionNotes?: string;
 }
 
 export type ProcurementAttachmentType = "Dokumen Pendukung Lain";

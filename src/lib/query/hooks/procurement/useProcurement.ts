@@ -142,6 +142,26 @@ export function useUpdateDocumentStatus() {
   });
 }
 
+export function useDocumentRevisions(documentId?: string) {
+  return useQuery({
+    queryKey: ["documents", documentId, "revisions"],
+    queryFn: () => (documentId ? documentsApi.getRevisions(documentId).then((r) => r.data.map(dtoToDocument)) : Promise.resolve([])),
+    enabled: Boolean(documentId),
+  });
+}
+
+export function useCreateDocumentRevision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof documentsApi.createRevision>[1] }) =>
+      documentsApi.createRevision(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all() });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
+    },
+  });
+}
+
 // ─── Guarantees D2 ───────────────────────────────────────────────────────
 
 export function useGuarantees(requestId?: string) {
