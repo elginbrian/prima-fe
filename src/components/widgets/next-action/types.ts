@@ -11,4 +11,5 @@ export interface ActionFilterBarProps {
   setSourceFilter: (val: ActionSource | "All") => void;
   priorityFilter: ActionPriority | "All";
   setPriorityFilter: (val: ActionPriority | "All") => void;
+  onExport?: () => void;
 }

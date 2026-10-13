@@ -20,6 +20,7 @@ export const queryKeys = {
   procurement: {
     all: () => ["procurement"] as const,
     detail: (id: string) => ["procurement", id] as const,
+    activities: (id: string) => ["procurement", id, "activities"] as const,
   },
   documents: {
     all: () => ["documents"] as const,

@@ -28,6 +28,7 @@ import { requestFormToCreatePayload, deadlineToCreatePayload, deadlineChangesToU
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
+import { exportProcurementsToCsv } from "@/lib/exportUtils";
 
 export default function TrackerPage() {
   const router = useRouter();
@@ -165,6 +166,7 @@ export default function TrackerPage() {
         departmentFilter={departmentFilter} setDepartmentFilter={setDepartmentFilter}
         operationalStatusFilter={operationalStatusFilter} setOperationalStatusFilter={setOperationalStatusFilter}
         viewMode={viewMode} setViewMode={setViewMode}
+        onExport={() => exportProcurementsToCsv(requests)}
       />
 
       {viewMode === "list" && (

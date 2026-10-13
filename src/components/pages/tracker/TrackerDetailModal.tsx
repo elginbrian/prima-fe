@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { LayoutList, X, CheckCircle2, FileText, ChevronRight, ChevronDown, ShieldCheck, CalendarClock } from "lucide-react";
 import { ProcurementRequest, ProcurementOperationalStatus, ProcurementStep, DeadlineItem, DocumentItem, GuaranteeItem, HistoryItem, ProcurementMilestone } from "@/types";
-import { useProcurement } from "@/lib/query/hooks/procurement/useProcurement";
+import { useProcurement, useProcurementActivities } from "@/lib/query/hooks/procurement/useProcurement";
 
 import { TrackerDetailModalProps } from "./types";
 
@@ -28,6 +28,7 @@ export function TrackerDetailModal({
   router, setAddingDeadlineRequestId, setEditingDeadlineId
 }: TrackerDetailModalProps) {
   const { data: detailData, isLoading } = useProcurement(selectedRequestId);
+  const { data: activitiesData } = useProcurementActivities(selectedRequestId || "");
   
   const request = detailData?.request ?? initialRequest;
   const milestones = detailData?.milestones ?? initialMilestones;
@@ -100,8 +101,40 @@ export function TrackerDetailModal({
                 </label>
               </div>
               <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/80"><div className="h-full rounded-full bg-[#0a4d8c] transition-all" style={{ width: `${milestones.length ? ((completedMilestones + (currentMilestoneIndex >= 0 ? 1 : 0)) / milestones.length) * 100 : 0}%` }} /></div>
-              {nextMilestone && <div className="mt-2 text-[11px] font-medium text-slate-500">Berikutnya: <span className="font-semibold text-slate-700">{nextMilestone.step}</span></div>}
-              {request.operationalStatus !== "On Going" && <div className="mt-4 border-t border-blue-100 pt-4"><label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Alasan status {request.operationalStatus}</label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><input value={statusReasonDraft} onChange={(event) => setStatusReasonDraft(event.target.value)} placeholder={request.operationalStatus === "On Hold" ? "Contoh: menunggu klarifikasi user" : "Contoh: kebutuhan dibatalkan peminta"} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:border-[#0a4d8c] focus:outline-none" /><button type="button" onClick={() => updateRequestOperationalStatus(selectedRequestId, request.operationalStatus, statusReasonDraft)} className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-[#0a4d8c] hover:bg-blue-50">Simpan Alasan</button></div></div>}
+              {request.operationalStatus !== "On Going" && (
+                <div className="mt-4 border-t border-blue-100 pt-4">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Alasan status {request.operationalStatus}
+                  </label>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      value={statusReasonDraft}
+                      onChange={(event) => setStatusReasonDraft(event.target.value)}
+                      placeholder={request.operationalStatus === "On Hold" ? "Contoh: menunggu persetujuan anggaran tambahan" : "Contoh: kebutuhan dibatalkan peminta"}
+                      className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:border-[#0a4d8c] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateRequestOperationalStatus(selectedRequestId, request.operationalStatus, statusReasonDraft)}
+                      className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-[#0a4d8c] hover:bg-blue-50"
+                    >
+                      Simpan Alasan
+                    </button>
+                  </div>
+                  {request.operationalStatus === "On Hold" && (
+                    <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900">
+                      <span className="text-sm">⏸️</span>
+                      <div className="min-w-0">
+                        <span className="font-bold">Perhitungan SLA Sedang Dijeda (Paused):</span>
+                        <p className="mt-0.5 text-[11px] leading-relaxed text-amber-800">
+                          Pengadaan berstatus <strong>On Hold</strong>. Jam kerja dan penalti batas waktu SLA dibekukan sementara.
+                          Saat status kembali diaktifkan ke <strong>On Going</strong>, seluruh target tanggal deadline aktif akan diperpanjang secara otomatis sesuai durasi penundaan.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -231,8 +264,82 @@ export function TrackerDetailModal({
 
 
           <section>
-            <div className="flex items-end justify-between gap-3 border-b border-slate-200 pb-3"><div><h4 className="text-sm font-bold text-slate-800">Histori Aktivitas</h4><p className="mt-1 text-xs text-slate-500">Perubahan penting pada pekerjaan, timeline, SLA, dokumen, dan jaminan.</p></div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">{history.length} aktivitas</span></div>
-            {history.length > 0 ? <div className="relative mt-4 space-y-4 border-l border-slate-200 pl-5">{history.map(item => <div key={item.id} className="relative"><span className={`absolute -left-[25px] top-1.5 h-3 w-3 rounded-full border-2 border-white ${item.category === "SLA" ? "bg-amber-500" : item.category === "Jaminan" ? "bg-emerald-500" : item.category === "Dokumen" ? "bg-blue-500" : "bg-slate-500"}`} /><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-slate-800">{item.title}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{item.category}</span></div><p className="mt-1 text-xs text-slate-600">{item.description}</p><time className="mt-1 block text-[10px] text-slate-400">{new Date(item.createdAt).toLocaleString("id-ID")}</time></div>)}</div> : <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500">Belum ada aktivitas yang tercatat untuk pekerjaan ini.</div>}
+            <div className="flex items-end justify-between gap-3 border-b border-slate-200 pb-3">
+              <div>
+                <h4 className="text-sm font-bold text-slate-800">Log Audit & Histori Aktivitas</h4>
+                <p className="mt-1 text-xs text-slate-500">Jejak audit resmi: perubahan tahap, penundaan (On Hold), dan deliverable pengadaan.</p>
+              </div>
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-[#0a4d8c]">
+                {activitiesData ? activitiesData.length : history.length} aktivitas
+              </span>
+            </div>
+
+            {activitiesData && activitiesData.length > 0 ? (
+              <div className="relative mt-4 space-y-4 border-l-2 border-slate-200 pl-5">
+                {activitiesData.map((act) => {
+                  const actionBadge =
+                    act.action === "CREATE"
+                      ? { label: "Pengadaan Dibuat", bg: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" }
+                      : act.action === "UPDATE_STATUS"
+                      ? { label: `Status: ${act.new_state}`, bg: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" }
+                      : act.action === "MOVE_STAGE"
+                      ? { label: `Stage: ${act.new_state}`, bg: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-[#0a4d8c]" }
+                      : { label: `Langkah: ${act.new_state}`, bg: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500" };
+
+                  return (
+                    <div key={act.id} className="relative group">
+                      <span className={`absolute -left-[27px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm ${actionBadge.dot}`} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${actionBadge.bg}`}>
+                          {actionBadge.label}
+                        </span>
+                        {act.user_name && (
+                          <span className="text-[11px] font-semibold text-slate-700">
+                            oleh {act.user_name}
+                          </span>
+                        )}
+                        <time className="text-[10px] text-slate-400">
+                          {act.created_at ? new Date(act.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-"}
+                        </time>
+                      </div>
+                      {act.notes && (
+                        <p className="mt-1 text-xs text-slate-600 bg-slate-50/80 p-2 rounded-lg border border-slate-100">
+                          {act.notes}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : history.length > 0 ? (
+              <div className="relative mt-4 space-y-4 border-l border-slate-200 pl-5">
+                {history.map((item) => (
+                  <div key={item.id} className="relative">
+                    <span
+                      className={`absolute -left-[25px] top-1.5 h-3 w-3 rounded-full border-2 border-white ${
+                        item.category === "SLA"
+                          ? "bg-amber-500"
+                          : item.category === "Jaminan"
+                          ? "bg-emerald-500"
+                          : item.category === "Dokumen"
+                          ? "bg-blue-500"
+                          : "bg-slate-500"
+                      }`}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-800">{item.title}</span>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{item.category}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600">{item.description}</p>
+                    <time className="mt-1 block text-[10px] text-slate-400">{new Date(item.createdAt).toLocaleString("id-ID")}</time>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500">
+                Belum ada aktivitas yang tercatat untuk pekerjaan ini.
+              </div>
+            )}
           </section>
         </div>
       </div>

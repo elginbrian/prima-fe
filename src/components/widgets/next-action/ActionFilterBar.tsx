@@ -9,7 +9,8 @@ export function ActionFilterBar({
   sourceFilter, 
   setSourceFilter, 
   priorityFilter, 
-  setPriorityFilter
+  setPriorityFilter,
+  onExport
 }: ActionFilterBarProps) {
   return (
     <div className="flex flex-col xl:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -49,6 +50,16 @@ export function ActionFilterBar({
               <option value="Low">Low</option>
             </select>
           </div>
+          {onExport && (
+            <button
+              type="button"
+              onClick={onExport}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
+              title="Unduh Rekapitulasi Tindakan & SLA ke Excel (CSV)"
+            >
+              <span>📥 Ekspor Excel</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

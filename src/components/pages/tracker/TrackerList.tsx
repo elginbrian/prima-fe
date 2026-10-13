@@ -57,9 +57,14 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                   <div className="mt-1 text-sm font-medium text-slate-800">{item.title}</div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${item.operationalStatus === "On Going" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : item.operationalStatus === "On Hold" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-red-200 bg-red-50 text-red-700"}`}>
-                    {item.operationalStatus}
-                  </span>
+                  <div className="flex flex-col gap-1 items-start">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${item.operationalStatus === "On Going" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : item.operationalStatus === "On Hold" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                      {item.operationalStatus}
+                    </span>
+                    {item.operationalStatus === "On Hold" && (
+                      <span className="text-[10px] text-amber-600 font-medium whitespace-nowrap">⏸️ SLA Dijeda</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-600">{item.pic?.name || "-"}</td>
                 <td className="px-4 py-3 text-xs text-slate-600">{item.currentStep}</td>

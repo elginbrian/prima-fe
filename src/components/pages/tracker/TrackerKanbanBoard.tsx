@@ -56,7 +56,19 @@ export function TrackerKanbanBoard({
                   className={`bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group hover:border-[#0a4d8c]/30 ${expandedCardId === item.id ? "p-4 ring-2 ring-blue-100" : "px-3 py-2.5"}`}
                 >
                   <div className={`flex items-start justify-between ${expandedCardId === item.id ? "mb-2" : "mb-1"}`}>
-                    <div className="text-[11px] font-medium text-slate-400 tracking-wider">{item.id}</div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] font-medium text-slate-400 tracking-wider">{item.id}</span>
+                      {item.operationalStatus === "On Hold" && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 border border-amber-200">
+                          ⏸️ On Hold (SLA Paused)
+                        </span>
+                      )}
+                      {item.operationalStatus === "Batal" && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 border border-red-200">
+                          Batal
+                        </span>
+                      )}
+                    </div>
                     <GripVertical size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   

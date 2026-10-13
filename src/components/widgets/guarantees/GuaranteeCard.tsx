@@ -15,6 +15,12 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
         return { color: "bg-amber-50 text-amber-700 border-amber-200", icon: <AlertTriangle size={16} /> };
       case "Expired": 
         return { color: "bg-red-50 text-red-700 border-red-200", icon: <ShieldAlert size={16} /> };
+      case "Klaim Diajukan":
+        return { color: "bg-rose-50 text-rose-700 border-rose-300", icon: <ShieldAlert size={16} /> };
+      case "Dikembalikan":
+        return { color: "bg-slate-100 text-slate-700 border-slate-300", icon: <ShieldCheck size={16} /> };
+      default:
+        return { color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <Shield size={16} /> };
     }
   };
 

@@ -48,6 +48,17 @@ export function useCreateProcurement() {
   });
 }
 
+export function useProcurementActivities(id: string) {
+  return useQuery({
+    queryKey: queryKeys.procurement.activities(id),
+    queryFn: async () => {
+      const r = await procurementApi.getActivities(id);
+      return r.data;
+    },
+    enabled: !!id,
+  });
+}
+
 export function useMoveStage() {
   const qc = useQueryClient();
   return useMutation({
@@ -55,6 +66,7 @@ export function useMoveStage() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.activities(id) });
     },
   });
 }
@@ -66,6 +78,7 @@ export function useMoveStep() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.activities(id) });
     },
   });
 }
@@ -78,6 +91,8 @@ export function useUpdateOperationalStatus() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.activities(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
     },
   });
 }

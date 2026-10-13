@@ -9,6 +9,7 @@ import { ActionRow } from "@/components/widgets/next-action/ActionRow";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { useActions } from "@/lib/query/hooks/procurement/useActions";
+import { exportActionsToCsv } from "@/lib/exportUtils";
 
 export default function NextActionPage() {
   const { data: actions = [], isLoading } = useActions();
@@ -76,6 +77,7 @@ export default function NextActionPage() {
         setSourceFilter={setSourceFilter}
         priorityFilter={priorityFilter}
         setPriorityFilter={setPriorityFilter}
+        onExport={() => exportActionsToCsv(filteredActions)}
       />
 
       {/* Actions List (Table Layout) */}
@@ -123,5 +125,3 @@ export default function NextActionPage() {
     </div>
   );
 }
-
-

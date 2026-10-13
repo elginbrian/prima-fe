@@ -26,6 +26,8 @@ export interface ProcurementRequestDto {
   stage: string;
   operational_status: string;
   operational_status_reason?: string;
+  hold_started_at?: string;
+  total_hold_days?: number;
   current_step: string;
   department: DepartmentDto;
   stage_started_at: string;
@@ -33,6 +35,18 @@ export interface ProcurementRequestDto {
   created_at: string;
   updated_at: string;
   milestones?: MilestoneDto[];
+}
+
+export interface ProcurementActivityDto {
+  id: string;
+  request_id: string;
+  action: string;
+  user_id?: string;
+  user_name?: string;
+  previous_state?: string;
+  new_state?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface MilestoneDto {
@@ -116,6 +130,12 @@ export interface GuaranteeDto {
   next_action?: string;
   file_url?: string;
   file_url_signed?: string;
+  claim_letter_no?: string;
+  claim_reason?: string;
+  claim_amount?: number;
+  bast_no?: string;
+  release_date?: string;
+  amendment_letter_no?: string;
 }
 
 export interface PresignedPost {
@@ -170,6 +190,8 @@ export const procurementApi = {
     apiFetch<ProcurementRequestDto>(`/procurement/${id}/step`, { method: "PATCH", body: JSON.stringify(payload) }),
   updateOperationalStatus: (id: string, payload: UpdateOperationalStatusPayload) =>
     apiFetch<ProcurementRequestDto>(`/procurement/${id}/operational-status`, { method: "PATCH", body: JSON.stringify(payload) }),
+  getActivities: (id: string) =>
+    apiFetch<ProcurementActivityDto[]>(`/procurement/${id}/activities`),
 };
 
 export const documentsApi = {
@@ -180,6 +202,8 @@ export const documentsApi = {
     apiFetch<DocumentDto>("/documents", { method: "POST", body: JSON.stringify(payload) }),
   updateStatus: (id: string, status: string) =>
     apiFetch<DocumentDto>(`/documents/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  getViewUrl: (id: string) =>
+    apiFetch<{ view_url: string; file_name: string }>(`/documents/${id}/view-url`),
 };
 
 export const guaranteesApi = {
@@ -192,6 +216,14 @@ export const guaranteesApi = {
     apiFetch<GuaranteeDto>(`/guarantees/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   getUploadUrl: (id: string, contentType: string) =>
     apiFetch<{ presigned_post: PresignedPost; object_key: string }>(`/guarantees/${id}/upload-url?content_type=${encodeURIComponent(contentType)}`),
+  getViewUrl: (id: string) =>
+    apiFetch<{ view_url: string; file_name: string }>(`/guarantees/${id}/view-url`),
+  claim: (id: string, payload: { claim_letter_no: string; claim_reason: string; claim_amount?: number }) =>
+    apiFetch<GuaranteeDto>(`/guarantees/${id}/claim`, { method: "POST", body: JSON.stringify(payload) }),
+  release: (id: string, payload: { bast_no: string; release_notes?: string }) =>
+    apiFetch<GuaranteeDto>(`/guarantees/${id}/release`, { method: "POST", body: JSON.stringify(payload) }),
+  amend: (id: string, payload: { amendment_no: string; new_expiry_date: string; new_value?: number; amendment_reason?: string }) =>
+    apiFetch<GuaranteeDto>(`/guarantees/${id}/amend`, { method: "POST", body: JSON.stringify(payload) }),
   remove: (id: string) => apiFetch<null>(`/guarantees/${id}`, { method: "DELETE" }),
   extract: (file: File) => {
     const formData = new FormData();

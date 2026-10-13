@@ -13,4 +13,5 @@ export interface GuaranteeFilterBarProps {
   setStatusFilter: (val: GuaranteeStatus | "All") => void;
   typeFilter: string;
   setTypeFilter: (val: string) => void;
+  onExport?: () => void;
 }

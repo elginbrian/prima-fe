@@ -3,7 +3,15 @@ import { GuaranteeStatus } from "@/types";
 
 import { GuaranteeFilterBarProps } from "./types";
 
-export function GuaranteeFilterBar({ searchQuery, setSearchQuery, statusFilter, setStatusFilter, typeFilter, setTypeFilter }: GuaranteeFilterBarProps) {
+export function GuaranteeFilterBar({
+  searchQuery,
+  setSearchQuery,
+  statusFilter,
+  setStatusFilter,
+  typeFilter,
+  setTypeFilter,
+  onExport,
+}: GuaranteeFilterBarProps) {
   return (
     <div className="flex flex-col xl:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
       <div className="relative w-full flex-1">
@@ -39,8 +47,21 @@ export function GuaranteeFilterBar({ searchQuery, setSearchQuery, statusFilter, 
               <option value="Aktif">Aktif</option>
               <option value="Mendekati Expiry">Mendekati</option>
               <option value="Expired">Expired</option>
+              <option value="Klaim Diajukan">Klaim Diajukan</option>
+              <option value="Dikembalikan">Dikembalikan</option>
             </select>
           </div>
+          {onExport && (
+            <button
+              type="button"
+              onClick={onExport}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
+              title="Unduh Rekapitulasi Jaminan ke Excel (CSV)"
+            >
+              <Search className="hidden" size={0} />
+              <span className="font-bold">📥 Ekspor Excel</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

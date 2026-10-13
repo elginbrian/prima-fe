@@ -17,6 +17,12 @@ export function GuaranteeRow({ guarantee, onEdit }: { guarantee: GuaranteeItem; 
         return { color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <AlertTriangle size={14} /> };
       case "Expired": 
         return { color: "bg-red-50 text-red-700 border-red-200", icon: <ShieldAlert size={14} /> };
+      case "Klaim Diajukan":
+        return { color: "bg-rose-50 text-rose-700 border-rose-300", icon: <ShieldAlert size={14} /> };
+      case "Dikembalikan":
+        return { color: "bg-slate-100 text-slate-700 border-slate-300", icon: <ShieldCheck size={14} /> };
+      default:
+        return { color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <ShieldCheck size={14} /> };
     }
   };
 

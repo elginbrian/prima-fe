@@ -29,6 +29,12 @@ export function mapGuaranteeDtoToItem(dto: GuaranteeDto): GuaranteeItem {
     status: dto.status as GuaranteeStatus,
     nextAction: dto.next_action,
     fileUrl: dto.file_url_signed || dto.file_url,
+    claimLetterNo: dto.claim_letter_no,
+    claimReason: dto.claim_reason,
+    claimAmount: dto.claim_amount,
+    bastNo: dto.bast_no,
+    releaseDate: dto.release_date,
+    amendmentLetterNo: dto.amendment_letter_no,
   };
 }
 
@@ -121,5 +127,41 @@ export function useUploadGuaranteeWithFile() {
 export function useExtractGuarantee() {
   return useMutation({
     mutationFn: (file: File) => guaranteesApi.extract(file).then(res => res.data),
+  });
+}
+
+export function useClaimGuarantee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { claim_letter_no: string; claim_reason: string; claim_amount?: number } }) =>
+      guaranteesApi.claim(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.all });
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.detail(variables.id) });
+    },
+  });
+}
+
+export function useReleaseGuarantee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { bast_no: string; release_notes?: string } }) =>
+      guaranteesApi.release(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.all });
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.detail(variables.id) });
+    },
+  });
+}
+
+export function useAmendGuarantee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { amendment_no: string; new_expiry_date: string; new_value?: number; amendment_reason?: string } }) =>
+      guaranteesApi.amend(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.all });
+      queryClient.invalidateQueries({ queryKey: guaranteesKeys.detail(variables.id) });
+    },
   });
 }

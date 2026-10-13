@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { AlertCircle, ArrowRight, CheckCircle2, ChevronDown, ChevronRight, FileCheck2, Inbox, Sparkles, UploadCloud } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, ChevronDown, ChevronRight, FileCheck2, Inbox, Sparkles, UploadCloud, Download } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 import { DocumentStatus, ProcurementOperationalStatus } from "@/types";
 import { DocumentFilterBar } from "@/components/widgets/documents/DocumentFilterBar";
@@ -10,6 +11,8 @@ import { DocumentGroupRow } from "@/components/widgets/documents/DocumentGroupRo
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { useProcurement } from "@/context/ProcurementContext";
+import { exportDocumentsToCsv } from "@/lib/exportUtils";
+
 
 export default function DocumentsPage() {
   const router = useRouter();
@@ -99,6 +102,13 @@ export default function DocumentsPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <button onClick={() => router.push("/dashboard/documents/upload")} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#0a4d8c] shadow-sm transition hover:bg-blue-50">
               <UploadCloud size={16} /> Upload Dokumen
+            </button>
+            <button
+              onClick={() => exportDocumentsToCsv(filteredDocuments, state.requests)}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 backdrop-blur-sm"
+              title="Unduh Rekapitulasi Dokumen Pemeriksaan ke Excel (CSV)"
+            >
+              <Download size={16} /> Ekspor Data (.csv)
             </button>
           </div>
         </div>

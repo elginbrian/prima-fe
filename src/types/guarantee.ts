@@ -3,7 +3,9 @@ import { BaseUser } from "./core";
 export type GuaranteeStatus =
   | "Aktif"
   | "Mendekati Expiry"
-  | "Expired";
+  | "Expired"
+  | "Klaim Diajukan"
+  | "Dikembalikan";
 
 export type GuaranteeType =
   | "Jaminan Pelaksanaan"
@@ -30,4 +32,10 @@ export interface GuaranteeItem {
   nextAction?: string;
   fileUrl?: string;
   mimeType?: string;
+  claimLetterNo?: string;
+  claimReason?: string;
+  claimAmount?: number;
+  bastNo?: string;
+  releaseDate?: string;
+  amendmentLetterNo?: string;
 }

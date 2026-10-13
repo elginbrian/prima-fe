@@ -13,6 +13,7 @@ import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useGuarantees, useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import { GuaranteeEditModal } from "@/components/widgets/modals/GuaranteeEditModal";
+import { exportGuaranteesToCsv } from "@/lib/exportUtils";
 
 
 export default function GuaranteesPage() {
@@ -109,6 +110,7 @@ export default function GuaranteesPage() {
         setStatusFilter={setStatusFilter}
         typeFilter={typeFilter}
         setTypeFilter={setTypeFilter}
+        onExport={() => exportGuaranteesToCsv(filteredGuarantees)}
       />
 
       {/* Guarantees List (Table Layout) */}

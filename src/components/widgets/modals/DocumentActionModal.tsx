@@ -9,6 +9,7 @@ import { useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcur
 import { useToast } from "@/components/ui/Toast";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
+import { DocumentPreviewModal } from "./DocumentPreviewModal";
 
 interface DocumentActionModalProps {
   doc: DocumentItem;
@@ -27,6 +28,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
   const toast = useToast();
   const router = useRouter();
   const [selected, setSelected] = useState<DocumentStatus>(doc.status);
+  const [showPreview, setShowPreview] = useState<boolean>(false);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -121,22 +123,48 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
-          <button
-            type="button"
-            onClick={() => { router.push(`/dashboard/documents/result?id=${doc.id}`); onClose(); }}
-            className="flex items-center gap-2 text-[13px] text-slate-600 hover:text-[#0a4d8c] transition-colors font-medium"
-          >
-            <Eye size={15} />
-            <span className="underline underline-offset-4 decoration-slate-300">Lihat Hasil Pemeriksaan</span>
-          </button>
-          <div className="flex gap-3">
-            <button type="button" onClick={onClose} disabled={updateDocMutation.isPending} className="rounded-lg px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50 disabled:opacity-50">Batal</button>
-            <button type="button" onClick={handleSave} disabled={updateDocMutation.isPending} className="rounded-lg bg-[#0a4d8c] px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] disabled:opacity-50">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#0a4d8c] hover:underline"
+            >
+              <Eye size={14} />
+              <span>Pratinjau File</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { router.push(`/dashboard/documents/result?id=${doc.id}`); onClose(); }}
+              className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-[#0a4d8c] transition-colors font-medium"
+            >
+              <span className="underline underline-offset-4 decoration-slate-300">Hasil Pemeriksaan</span>
+            </button>
+          </div>
+          <div className="flex gap-2.5">
+            <button type="button" onClick={onClose} disabled={updateDocMutation.isPending} className="rounded-lg px-3.5 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200/50 disabled:opacity-50">Batal</button>
+            <button type="button" onClick={handleSave} disabled={updateDocMutation.isPending} className="rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] disabled:opacity-50">
               {updateDocMutation.isPending ? "Menyimpan..." : "Simpan Status"}
             </button>
           </div>
         </div>
       </div>
+      {showPreview && (
+        <DocumentPreviewModal
+          title={doc.name}
+          fileId={doc.id}
+          fileType="document"
+          directUrl={doc.fileUrl}
+          fileName={doc.name}
+          metadata={[
+            { label: "Nomor Dokumen", value: doc.id },
+            { label: "Tipe", value: doc.type },
+            { label: "PIC", value: doc.pic.name },
+            { label: "Tanggal Upload", value: doc.uploadDate },
+            { label: "Status", value: doc.status },
+          ]}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>,
     document.body
   );

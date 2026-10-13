@@ -25,6 +25,7 @@ export interface TrackerHeaderProps {
   setOperationalStatusFilter: (val: ProcurementOperationalStatus | "All") => void;
   viewMode: "kanban" | "list";
   setViewMode: (val: "kanban" | "list") => void;
+  onExport?: () => void;
 }
 
 export interface TrackerListProps {

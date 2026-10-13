@@ -7,7 +7,8 @@ export function TrackerHeader({
   searchQuery, setSearchQuery,
   departmentFilter, setDepartmentFilter,
   operationalStatusFilter, setOperationalStatusFilter,
-  viewMode, setViewMode
+  viewMode, setViewMode,
+  onExport
 }: TrackerHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-3 shrink-0">
@@ -51,6 +52,16 @@ export function TrackerHeader({
           <button type="button" onClick={() => setViewMode("kanban")} title="Tampilan Kanban" className={`p-2 transition-colors ${viewMode === "kanban" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutGrid size={18} /></button>
           <button type="button" onClick={() => setViewMode("list")} title="Tampilan List" className={`border-l border-slate-200 p-2 transition-colors ${viewMode === "list" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutList size={18} /></button>
         </div>
+        {onExport && (
+          <button
+            type="button"
+            onClick={onExport}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
+            title="Unduh Rekapitulasi Tracker Pengadaan ke Excel (CSV)"
+          >
+            <span>📥 Ekspor Excel</span>
+          </button>
+        )}
       </div>
     </div>
   );

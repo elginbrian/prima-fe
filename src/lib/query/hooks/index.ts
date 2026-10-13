@@ -7,6 +7,7 @@ export { useCurrentUser, useLogout } from "./auth/useCurrentUser";
 export {
   useProcurements,
   useProcurement,
+  useProcurementActivities,
   useCreateProcurement,
   useMoveStage,
   useMoveStep,
