@@ -71,7 +71,7 @@ export interface TrackerDetailModalProps {
   setShowFullTimeline: (val: boolean) => void;
   statusReasonDraft: string;
   setStatusReasonDraft: (val: string) => void;
-  moveRequestStep: (id: string, step: ProcurementStep) => void;
+  moveRequestStep: (id: string, step: ProcurementStep, force?: boolean, overrideReason?: string) => Promise<unknown> | void;
   updateRequestOperationalStatus: (id: string, status: ProcurementOperationalStatus, reason?: string) => void;
   expandedRelatedId: string | null;
   setExpandedRelatedId: (val: React.SetStateAction<string | null>) => void;

@@ -252,7 +252,9 @@ export default function TrackerPage() {
           request={request} milestones={milestones} docs={docs} guars={guars} slas={slas} history={history}
           showFullTimeline={showFullTimeline} setShowFullTimeline={setShowFullTimeline}
           statusReasonDraft={statusReasonDraft} setStatusReasonDraft={setStatusReasonDraft}
-          moveRequestStep={(id, step) => updateStep.mutate({ id, payload: { step } })} 
+          moveRequestStep={(id, step, force, overrideReason) =>
+            updateStep.mutateAsync({ id, payload: { step, force, override_reason: overrideReason } })
+          } 
           updateRequestOperationalStatus={(id, status, reason) => updateStatus.mutate({ id, payload: { status, reason } })}
           expandedRelatedId={expandedRelatedId} setExpandedRelatedId={setExpandedRelatedId}
           router={router} setAddingDeadlineRequestId={setAddingDeadlineRequestId} setEditingDeadlineId={setEditingDeadlineId}

@@ -59,6 +59,17 @@ export function useProcurementActivities(id: string) {
   });
 }
 
+export function useProcurementGatekeeper(id: string) {
+  return useQuery({
+    queryKey: queryKeys.procurement.gatekeeper(id),
+    queryFn: async () => {
+      const r = await procurementApi.getGatekeeper(id);
+      return r.data;
+    },
+    enabled: !!id,
+  });
+}
+
 export function useMoveStage() {
   const qc = useQueryClient();
   return useMutation({
@@ -67,6 +78,7 @@ export function useMoveStage() {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.activities(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.gatekeeper(id) });
     },
   });
 }
@@ -79,6 +91,7 @@ export function useMoveStep() {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
       qc.invalidateQueries({ queryKey: queryKeys.procurement.activities(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.gatekeeper(id) });
     },
   });
 }

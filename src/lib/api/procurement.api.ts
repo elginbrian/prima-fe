@@ -81,6 +81,27 @@ export interface MoveStagePaylod {
 
 export interface MoveStepPayload {
   step: string;
+  force?: boolean;
+  override_reason?: string;
+}
+
+export interface GatekeeperBlockerDto {
+  category: string;
+  title: string;
+  description: string;
+  severity: string;
+}
+
+export interface GatekeeperCheckDto {
+  request_id: string;
+  current_stage: string;
+  current_step: string;
+  is_ready_to_advance: boolean;
+  blockers: GatekeeperBlockerDto[];
+  warnings: GatekeeperBlockerDto[];
+  mandatory_documents_total: number;
+  mandatory_documents_verified: number;
+  can_override: boolean;
 }
 
 export interface UpdateOperationalStatusPayload {
@@ -136,6 +157,9 @@ export interface GuaranteeDto {
   bast_no?: string;
   release_date?: string;
   amendment_letter_no?: string;
+  is_threshold_compliant?: boolean;
+  min_required_value?: number;
+  threshold_warning?: string;
 }
 
 export interface PresignedPost {
@@ -192,6 +216,8 @@ export const procurementApi = {
     apiFetch<ProcurementRequestDto>(`/procurement/${id}/operational-status`, { method: "PATCH", body: JSON.stringify(payload) }),
   getActivities: (id: string) =>
     apiFetch<ProcurementActivityDto[]>(`/procurement/${id}/activities`),
+  getGatekeeper: (id: string) =>
+    apiFetch<GatekeeperCheckDto>(`/procurement/${id}/gatekeeper`),
 };
 
 export const documentsApi = {

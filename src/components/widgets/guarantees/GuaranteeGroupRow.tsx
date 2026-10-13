@@ -163,8 +163,15 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                           {guarantee.vendor.name} · {guarantee.issuer} · Terbit {guarantee.issueDate} · Expiry {guarantee.expiryDate}
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-slate-700">
-                        Rp {guarantee.value.toLocaleString("id-ID")}
+                      <div className="flex flex-col items-end">
+                        <div className="text-sm font-medium text-slate-700">
+                          Rp {guarantee.value.toLocaleString("id-ID")}
+                        </div>
+                        {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
+                          <span className="mt-0.5 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-800 flex items-center gap-1 shadow-2xs">
+                            <span>⚠️</span> {guarantee.thresholdWarning || "Nilai < 5% Pagu"}
+                          </span>
+                        )}
                       </div>
                       <span
                         className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${statusClass(
@@ -221,6 +228,18 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                             <div className="mt-1">{guarantee.beneficiary || "Belum diisi"}</div>
                           </div>
                         </div>
+
+                        {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
+                          <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50/90 p-2.5 text-xs text-amber-900 shadow-2xs">
+                            <span className="text-sm font-bold">⚠️</span>
+                            <div>
+                              <div className="font-bold">Ketentuan Nilai Minimum Jaminan:</div>
+                              <div className="text-[11px] text-amber-800 mt-0.5">
+                                {guarantee.thresholdWarning || `Nilai jaminan ini di bawah batas ketentuan (minimal 5% pagu pengadaan: Rp ${guarantee.minRequiredValue?.toLocaleString("id-ID")}).`}
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {guarantee.nextAction && (
                           <div className="mt-3 text-xs text-slate-600">

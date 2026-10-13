@@ -46,7 +46,12 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5 text-[11px] sm:text-sm text-slate-500">
               <span className="font-medium text-slate-600">{guarantee.referenceNo}</span>
               <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-              <span className="font-semibold text-slate-700">{guarantee.value}</span>
+              <span className="font-semibold text-slate-700">Rp {typeof guarantee.value === 'number' ? guarantee.value.toLocaleString('id-ID') : guarantee.value}</span>
+              {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 flex items-center gap-1 shadow-2xs">
+                  <span>⚠️</span> {guarantee.thresholdWarning || "Nilai < 5% Pagu"}
+                </span>
+              )}
               <span className="hidden sm:block w-1 h-1 rounded-full bg-slate-300"></span>
               <span className="hidden sm:inline">PIC: {guarantee.pic.name}</span>
             </div>

@@ -35,6 +35,9 @@ export function mapGuaranteeDtoToItem(dto: GuaranteeDto): GuaranteeItem {
     bastNo: dto.bast_no,
     releaseDate: dto.release_date,
     amendmentLetterNo: dto.amendment_letter_no,
+    isThresholdCompliant: dto.is_threshold_compliant,
+    minRequiredValue: dto.min_required_value,
+    thresholdWarning: dto.threshold_warning,
   };
 }
 

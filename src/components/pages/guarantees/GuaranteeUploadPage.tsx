@@ -241,6 +241,20 @@ export default function GuaranteeUploadPage() {
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Nilai Jaminan</label>
                     <input type="text" value={formData.value} onChange={(event) => setFormData(prev => ({ ...prev, value: event.target.value }))} placeholder="Rp 5.000.000.000" className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]" />
+                    {selectedRequest?.amount && selectedRequest.amount > 0 && (() => {
+                      const minReq = selectedRequest.amount * 0.05;
+                      const numVal = parseFloat(formData.value.replace(/[^0-9]/g, '')) || 0;
+                      return (
+                        <div className="mt-1.5 text-[11px] text-slate-500 space-y-0.5">
+                          <div>Regulasi: Min. 5% Pagu = <strong className="text-slate-700">Rp {minReq.toLocaleString('id-ID')}</strong></div>
+                          {numVal > 0 && numVal < minReq && (
+                            <div className="text-amber-700 font-semibold flex items-center gap-1">
+                              ⚠️ Nilai terisi di bawah batas 5% pagu pengadaan
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Berlaku Sampai (Jatuh Tempo)</label>

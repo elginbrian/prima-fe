@@ -1,8 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { LayoutList, X, CheckCircle2, FileText, ChevronRight, ChevronDown, ShieldCheck, CalendarClock } from "lucide-react";
+import { LayoutList, X, CheckCircle2, FileText, ChevronRight, ChevronDown, ShieldCheck, CalendarClock, AlertTriangle, ShieldAlert } from "lucide-react";
 import { ProcurementRequest, ProcurementOperationalStatus, ProcurementStep, DeadlineItem, DocumentItem, GuaranteeItem, HistoryItem, ProcurementMilestone } from "@/types";
-import { useProcurement, useProcurementActivities } from "@/lib/query/hooks/procurement/useProcurement";
+import { useProcurement, useProcurementActivities, useProcurementGatekeeper } from "@/lib/query/hooks/procurement/useProcurement";
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
 
 import { TrackerDetailModalProps } from "./types";
 
@@ -29,6 +31,12 @@ export function TrackerDetailModal({
 }: TrackerDetailModalProps) {
   const { data: detailData, isLoading } = useProcurement(selectedRequestId);
   const { data: activitiesData } = useProcurementActivities(selectedRequestId || "");
+  const { data: gatekeeperData } = useProcurementGatekeeper(selectedRequestId || "");
+  const toast = useToast();
+
+  const [pendingStep, setPendingStep] = useState<ProcurementStep | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
+  const [isOverriding, setIsOverriding] = useState(false);
   
   const request = detailData?.request ?? initialRequest;
   const milestones = detailData?.milestones ?? initialMilestones;
@@ -81,7 +89,21 @@ export function TrackerDetailModal({
                   <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Update tahap manual</span>
                   <select
                     value={request.currentStep}
-                    onChange={(event) => moveRequestStep(selectedRequestId, event.target.value as ProcurementStep)}
+                    onChange={async (event) => {
+                      const targetStep = event.target.value as ProcurementStep;
+                      if (targetStep === request.currentStep) return;
+                      if (gatekeeperData && !gatekeeperData.is_ready_to_advance) {
+                        setPendingStep(targetStep);
+                        setOverrideReason("");
+                        return;
+                      }
+                      try {
+                        await moveRequestStep(selectedRequestId, targetStep);
+                        toast.success(`Tahap berhasil dipindahkan ke '${targetStep}'.`);
+                      } catch (err) {
+                        toast.error(getErrorMessage(err, "Gagal memindahkan tahap."));
+                      }
+                    }}
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
                   >
                     {PROCUREMENT_STEPS.map(step => <option key={step} value={step}>{step}</option>)}
@@ -101,6 +123,86 @@ export function TrackerDetailModal({
                 </label>
               </div>
               <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/80"><div className="h-full rounded-full bg-[#0a4d8c] transition-all" style={{ width: `${milestones.length ? ((completedMilestones + (currentMilestoneIndex >= 0 ? 1 : 0)) / milestones.length) * 100 : 0}%` }} /></div>
+
+              {/* Gatekeeper Prerequisite & Quality Gate Card */}
+              {gatekeeperData && (
+                <div className={`mt-4 rounded-xl border p-4 text-xs transition-all ${
+                  gatekeeperData.is_ready_to_advance
+                    ? "border-emerald-200 bg-emerald-50/70 text-emerald-950"
+                    : "border-amber-300 bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-rose-50/60 text-slate-800 shadow-xs"
+                }`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 rounded-lg p-2 ${
+                        gatekeeperData.is_ready_to_advance ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
+                      }`}>
+                        {gatekeeperData.is_ready_to_advance ? <CheckCircle2 size={18} /> : <ShieldAlert size={18} />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm">
+                            {gatekeeperData.is_ready_to_advance
+                              ? "Quality Gate: Prasyarat Lengkap"
+                              : `Quality Gate: Prasyarat Tertahan (${gatekeeperData.blockers.length} Kendala)`}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            gatekeeperData.is_ready_to_advance
+                              ? "bg-emerald-200/70 text-emerald-800"
+                              : "bg-rose-100 text-rose-700 border border-rose-200"
+                          }`}>
+                            {gatekeeperData.is_ready_to_advance ? "Siap Lanjut" : "Perlu Tindakan"}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-600">
+                          {gatekeeperData.is_ready_to_advance
+                            ? `Seluruh dokumen wajib (${gatekeeperData.mandatory_documents_verified}/${gatekeeperData.mandatory_documents_total}) telah diverifikasi dan jaminan valid untuk tahap ini.`
+                            : `Tahap '${gatekeeperData.current_step}' membutuhkan penyelesaian prasyarat sebelum dapat dimajukan.`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2 text-[11px]">
+                      <span className="font-semibold text-slate-500">Verifikasi BA:</span>
+                      <span className="font-bold text-slate-700 bg-white/90 px-2 py-1 rounded-md border border-slate-200 shadow-2xs">
+                        {gatekeeperData.mandatory_documents_verified} / {gatekeeperData.mandatory_documents_total}
+                      </span>
+                    </div>
+                  </div>
+
+                  {gatekeeperData.blockers.length > 0 && (
+                    <div className="mt-3.5 pt-3 border-t border-amber-200/70 space-y-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-800">Daftar Kendala Yang Memblokir:</div>
+                      {gatekeeperData.blockers.map((b, idx) => (
+                        <div key={idx} className="flex items-start gap-2 bg-white/95 p-2.5 rounded-lg border border-amber-200/90 shadow-2xs">
+                          <span className="text-rose-600 shrink-0 font-bold mt-0.5">⛔</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-slate-800">{b.title}</div>
+                            <div className="text-[11px] text-slate-600 mt-0.5">{b.description}</div>
+                          </div>
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-200 shrink-0">
+                            {b.category}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {gatekeeperData.warnings.length > 0 && (
+                    <div className="mt-2.5 pt-2 border-t border-amber-200/50 space-y-1.5">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Peringatan:</div>
+                      {gatekeeperData.warnings.map((w, idx) => (
+                        <div key={idx} className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60 text-[11px]">
+                          <span className="text-amber-600 shrink-0">⚠️</span>
+                          <div className="min-w-0 flex-1">
+                            <span className="font-semibold text-amber-900">{w.title}:</span>{" "}
+                            <span className="text-amber-800">{w.description}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {request.operationalStatus !== "On Going" && (
                 <div className="mt-4 border-t border-blue-100 pt-4">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -135,6 +237,77 @@ export function TrackerDetailModal({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Manager Force Override Modal */}
+          {pendingStep && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setPendingStep(null)}>
+              <div className="w-full max-w-lg rounded-2xl border border-rose-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-rose-100 p-2.5 text-rose-600">
+                    <ShieldAlert size={24} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-base font-bold text-slate-800">Otorisasi Manager (Gatekeeper Override)</h4>
+                    <p className="mt-1 text-xs text-slate-600">
+                      Tahap pengadaan ini memiliki kendala prasyarat yang belum terselesaikan. Memindahkan tahap ke <strong>'{pendingStep}'</strong> memerlukan otorisasi manajerial dan akan tercatat permanen pada Log Audit.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50/60 p-3.5 space-y-2 max-h-48 overflow-y-auto">
+                  <div className="text-[11px] font-bold text-rose-800 uppercase tracking-wider">Kendala Aktif:</div>
+                  {gatekeeperData?.blockers.map((b, i) => (
+                    <div key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
+                      <span className="text-rose-500 font-bold">•</span>
+                      <span><strong>{b.title}</strong>: {b.description}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Alasan Otorisasi / Override <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={overrideReason}
+                    onChange={e => setOverrideReason(e.target.value)}
+                    placeholder="Contoh: Disetujui Manager Procurement berdasarkan Memo No. MEMO-123 karena verifikasi fisik paralel."
+                    className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-[#0a4d8c] focus:outline-none focus:ring-1 focus:ring-[#0a4d8c]"
+                  />
+                </div>
+
+                <div className="mt-6 flex justify-end gap-2.5 border-t border-slate-100 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setPendingStep(null)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isOverriding || !overrideReason.trim()}
+                    onClick={async () => {
+                      try {
+                        setIsOverriding(true);
+                        await moveRequestStep(selectedRequestId, pendingStep, true, overrideReason.trim());
+                        toast.success(`Tahap berhasil dipindahkan ke '${pendingStep}' dengan Otorisasi Manager.`);
+                        setPendingStep(null);
+                      } catch (err) {
+                        toast.error(getErrorMessage(err, "Gagal override tahap."));
+                      } finally {
+                        setIsOverriding(false);
+                      }
+                    }}
+                    className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50"
+                  >
+                    {isOverriding ? "Menyimpan..." : "Konfirmasi Override & Lanjutkan"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

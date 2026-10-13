@@ -38,4 +38,7 @@ export interface GuaranteeItem {
   bastNo?: string;
   releaseDate?: string;
   amendmentLetterNo?: string;
+  isThresholdCompliant?: boolean;
+  minRequiredValue?: number;
+  thresholdWarning?: string;
 }
