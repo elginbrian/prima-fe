@@ -1,9 +1,19 @@
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Download } from "lucide-react";
 import { DocumentStatus, ProcurementOperationalStatus } from "@/types";
 
 import { DocumentFilterBarProps } from "./types";
 
-export function DocumentFilterBar({ searchQuery, setSearchQuery, statusFilter, setStatusFilter, typeFilter, setTypeFilter, workStatusFilter, setWorkStatusFilter }: DocumentFilterBarProps) {
+export function DocumentFilterBar({ 
+  searchQuery, 
+  setSearchQuery, 
+  statusFilter, 
+  setStatusFilter, 
+  typeFilter, 
+  setTypeFilter, 
+  workStatusFilter, 
+  setWorkStatusFilter,
+  onExport,
+}: DocumentFilterBarProps) {
   return (
     <div className="flex flex-col xl:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
       <div className="relative w-full flex-1">
@@ -48,6 +58,17 @@ export function DocumentFilterBar({ searchQuery, setSearchQuery, statusFilter, s
               <option value="Tindak Lanjut FPP">Tindak Lanjut FPP</option>
             </select>
           </div>
+          {onExport && (
+            <button
+              type="button"
+              onClick={onExport}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
+              title="Unduh Rekapitulasi Dokumen ke Excel (CSV)"
+            >
+              <Download size={14} className="text-[#0a4d8c]" />
+              <span>Ekspor Excel</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

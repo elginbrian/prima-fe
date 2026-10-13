@@ -12,7 +12,7 @@ export function ExpiryPanel() {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
-        <div className="rounded-xl bg-indigo-100 p-2 text-indigo-700">
+        <div className="rounded-xl bg-blue-50 p-2 text-[#0a4d8c]">
           <CalendarClock size={16} />
         </div>
         <p className="text-sm font-semibold text-slate-800">Jatuh Tempo</p>

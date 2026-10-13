@@ -172,6 +172,7 @@ export default function DocumentsPage() {
         setTypeFilter={setTypeFilter}
         workStatusFilter={workStatusFilter}
         setWorkStatusFilter={setWorkStatusFilter}
+        onExport={() => exportDocumentsToCsv(documents, state.requests)}
         />
       </div>
 

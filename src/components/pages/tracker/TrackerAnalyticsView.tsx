@@ -403,16 +403,31 @@ export function TrackerAnalyticsView() {
                           )}
                         </td>
                         <td className="py-2.5 px-4 text-center">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                             isHigh 
                               ? "bg-red-50 text-red-700 border border-red-200" 
                               : isMed 
                               ? "bg-amber-50 text-amber-700 border border-amber-200" 
                               : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           }`}>
-                            {isHigh && "⚠️ High Risk"}
-                            {isMed && "⚡ Medium Risk"}
-                            {!isHigh && !isMed && "✅ Low Risk"}
+                            {isHigh && (
+                              <>
+                                <AlertTriangle size={11} className="text-red-600 shrink-0" />
+                                <span>High Risk</span>
+                              </>
+                            )}
+                            {isMed && (
+                              <>
+                                <AlertCircle size={11} className="text-amber-600 shrink-0" />
+                                <span>Medium Risk</span>
+                              </>
+                            )}
+                            {!isHigh && !isMed && (
+                              <>
+                                <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
+                                <span>Low Risk</span>
+                              </>
+                            )}
                           </span>
                         </td>
                       </tr>

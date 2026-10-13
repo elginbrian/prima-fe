@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, DragEvent } from "react";
-import { UploadCloud, FileText, X, ArrowRight } from "lucide-react";
+import { UploadCloud, FileText, X, ArrowRight, AlertTriangle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
@@ -248,8 +248,9 @@ export default function GuaranteeUploadPage() {
                         <div className="mt-1.5 text-[11px] text-slate-500 space-y-0.5">
                           <div>Regulasi: Min. 5% Pagu = <strong className="text-slate-700">Rp {minReq.toLocaleString('id-ID')}</strong></div>
                           {numVal > 0 && numVal < minReq && (
-                            <div className="text-amber-700 font-semibold flex items-center gap-1">
-                              ⚠️ Nilai terisi di bawah batas 5% pagu pengadaan
+                            <div className="text-amber-700 font-semibold flex items-center gap-1.5">
+                              <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                              <span>Nilai terisi di bawah batas 5% pagu pengadaan</span>
                             </div>
                           )}
                         </div>

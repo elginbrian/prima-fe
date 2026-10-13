@@ -49,7 +49,8 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
               <span className="font-semibold text-slate-700">Rp {typeof guarantee.value === 'number' ? guarantee.value.toLocaleString('id-ID') : guarantee.value}</span>
               {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
                 <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 flex items-center gap-1 shadow-2xs">
-                  <span>⚠️</span> {guarantee.thresholdWarning || "Nilai < 5% Pagu"}
+                  <AlertTriangle size={12} className="text-amber-600 shrink-0" />
+                  <span>{guarantee.thresholdWarning || "Nilai < 5% Pagu"}</span>
                 </span>
               )}
               <span className="hidden sm:block w-1 h-1 rounded-full bg-slate-300"></span>

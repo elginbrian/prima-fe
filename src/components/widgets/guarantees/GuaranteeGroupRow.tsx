@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   ShieldAlert,
   Edit3,
+  AlertTriangle,
 } from "lucide-react";
 import type { GuaranteeItem } from "@/types";
 import { useRouter } from "next/navigation";
@@ -169,7 +170,8 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                         </div>
                         {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
                           <span className="mt-0.5 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-800 flex items-center gap-1 shadow-2xs">
-                            <span>⚠️</span> {guarantee.thresholdWarning || "Nilai < 5% Pagu"}
+                            <AlertTriangle size={11} className="text-amber-600 shrink-0" />
+                            <span>{guarantee.thresholdWarning || "Nilai < 5% Pagu"}</span>
                           </span>
                         )}
                       </div>
@@ -231,7 +233,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
 
                         {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
                           <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50/90 p-2.5 text-xs text-amber-900 shadow-2xs">
-                            <span className="text-sm font-bold">⚠️</span>
+                            <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
                             <div>
                               <div className="font-bold">Ketentuan Nilai Minimum Jaminan:</div>
                               <div className="text-[11px] text-amber-800 mt-0.5">

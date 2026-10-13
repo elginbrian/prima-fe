@@ -1,4 +1,4 @@
-import { Search, Filter, LayoutGrid, LayoutList, BarChart3 } from "lucide-react";
+import { Search, Filter, LayoutGrid, LayoutList, BarChart3, Download } from "lucide-react";
 import type { ProcurementOperationalStatus } from "@/types";
 
 import { TrackerHeaderProps } from "./types";
@@ -60,7 +60,8 @@ export function TrackerHeader({
             className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
             title="Unduh Rekapitulasi Tracker Pengadaan ke Excel (CSV)"
           >
-            <span>📥 Ekspor Excel</span>
+            <Download size={14} className="text-[#0a4d8c]" />
+            <span>Ekspor Excel</span>
           </button>
         )}
       </div>

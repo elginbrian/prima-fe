@@ -1,4 +1,4 @@
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, PauseCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
@@ -62,7 +62,10 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                       {item.operationalStatus}
                     </span>
                     {item.operationalStatus === "On Hold" && (
-                      <span className="text-[10px] text-amber-600 font-medium whitespace-nowrap">⏸️ SLA Dijeda</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium whitespace-nowrap">
+                        <PauseCircle size={11} className="text-amber-600" />
+                        <span>SLA Dijeda</span>
+                      </span>
                     )}
                   </div>
                 </td>

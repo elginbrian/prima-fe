@@ -82,7 +82,7 @@ export function actionForDeadline(deadline: DeadlineItem): ActionItem | null {
     id: `ACT-DL-${deadline.id}`,
     requestId: deadline.requestId,
     referenceId: deadline.id,
-    title: isEsc ? `🚨 [ESKALASI MANAJER] ${deadline.taskName}` : (deadline.nextAction ?? `Tindak Lanjut SLA: ${deadline.taskName}`),
+    title: isEsc ? `[ESKALASI MANAJER] ${deadline.taskName}` : (deadline.nextAction ?? `Tindak Lanjut SLA: ${deadline.taskName}`),
     source: "Deadline",
     priority: isEsc || deadline.status === "Overdue" || deadline.urgencyLevel === "Critical" ? "High" : "Medium",
     dateAdded: new Date().toISOString().split("T")[0],

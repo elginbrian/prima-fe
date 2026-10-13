@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { LayoutList, X, CheckCircle2, FileText, ChevronRight, ChevronDown, ShieldCheck, CalendarClock, AlertTriangle, ShieldAlert, ArrowRightLeft } from "lucide-react";
+import { LayoutList, X, CheckCircle2, FileText, ChevronRight, ChevronDown, ShieldCheck, CalendarClock, AlertTriangle, ShieldAlert, ArrowRightLeft, PauseCircle } from "lucide-react";
 import { ProcurementRequest, ProcurementOperationalStatus, ProcurementStep, DeadlineItem, DocumentItem, GuaranteeItem, HistoryItem, ProcurementMilestone } from "@/types";
 import { useProcurement, useProcurementActivities, useProcurementGatekeeper, useAssignPic } from "@/lib/query/hooks/procurement/useProcurement";
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
@@ -205,7 +205,7 @@ export function TrackerDetailModal({
                       <div className="text-[10px] font-bold uppercase tracking-wider text-rose-800">Daftar Kendala Yang Memblokir:</div>
                       {gatekeeperData.blockers.map((b, idx) => (
                         <div key={idx} className="flex items-start gap-2 bg-white/95 p-2.5 rounded-lg border border-amber-200/90 shadow-2xs">
-                          <span className="text-rose-600 shrink-0 font-bold mt-0.5">⛔</span>
+                          <ShieldAlert size={16} className="text-rose-600 shrink-0 mt-0.5" />
                           <div className="min-w-0 flex-1">
                             <div className="font-semibold text-slate-800">{b.title}</div>
                             <div className="text-[11px] text-slate-600 mt-0.5">{b.description}</div>
@@ -223,7 +223,7 @@ export function TrackerDetailModal({
                       <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Peringatan:</div>
                       {gatekeeperData.warnings.map((w, idx) => (
                         <div key={idx} className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60 text-[11px]">
-                          <span className="text-amber-600 shrink-0">⚠️</span>
+                          <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
                           <div className="min-w-0 flex-1">
                             <span className="font-semibold text-amber-900">{w.title}:</span>{" "}
                             <span className="text-amber-800">{w.description}</span>
@@ -257,7 +257,7 @@ export function TrackerDetailModal({
                   </div>
                   {request.operationalStatus === "On Hold" && (
                     <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900">
-                      <span className="text-sm">⏸️</span>
+                      <PauseCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                       <div className="min-w-0">
                         <span className="font-bold">Perhitungan SLA Sedang Dijeda (Paused):</span>
                         <p className="mt-0.5 text-[11px] leading-relaxed text-amber-800">
@@ -580,14 +580,14 @@ export function TrackerDetailModal({
                     act.action === "CREATE"
                       ? { label: "Pengadaan Dibuat", bg: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" }
                       : act.action === "HANDOVER_PIC"
-                      ? { label: `Handover PIC: ${act.new_state}`, bg: "bg-purple-50 text-purple-700 border-purple-200 font-semibold", dot: "bg-purple-500" }
+                      ? { label: `Handover PIC: ${act.new_state}`, bg: "bg-blue-50 text-[#0a4d8c] border-blue-200 font-semibold", dot: "bg-[#0a4d8c]" }
                       : act.action === "MOVE_STEP_OVERRIDE"
                       ? { label: `Override Tahap: ${act.new_state}`, bg: "bg-rose-50 text-rose-700 border-rose-300 font-bold", dot: "bg-rose-500" }
                       : act.action === "UPDATE_STATUS"
                       ? { label: `Status: ${act.new_state}`, bg: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" }
                       : act.action === "MOVE_STAGE"
                       ? { label: `Stage: ${act.new_state}`, bg: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-[#0a4d8c]" }
-                      : { label: `Langkah: ${act.new_state}`, bg: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500" };
+                      : { label: `Langkah: ${act.new_state}`, bg: "bg-sky-50 text-sky-700 border-sky-200 font-medium", dot: "bg-sky-500" };
 
                   return (
                     <div key={act.id} className="relative group">

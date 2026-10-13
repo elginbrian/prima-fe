@@ -1,4 +1,4 @@
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Download } from "lucide-react";
 import { GuaranteeStatus } from "@/types";
 
 import { GuaranteeFilterBarProps } from "./types";
@@ -58,8 +58,8 @@ export function GuaranteeFilterBar({
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
               title="Unduh Rekapitulasi Jaminan ke Excel (CSV)"
             >
-              <Search className="hidden" size={0} />
-              <span className="font-bold">📥 Ekspor Excel</span>
+              <Download size={14} className="text-[#0a4d8c]" />
+              <span>Ekspor Excel</span>
             </button>
           )}
         </div>

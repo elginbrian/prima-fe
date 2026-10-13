@@ -1,4 +1,4 @@
-import { GripVertical, AlertCircle, Clock, Eye } from "lucide-react";
+import { GripVertical, AlertCircle, Clock, Eye, PauseCircle } from "lucide-react";
 import { TrackerItem, TrackerStage } from "./types";
 import { calculateDaysBetween } from "@/lib/utils";
 import { TrackerStatsPanel } from "./TrackerStatsPanel";
@@ -59,8 +59,9 @@ export function TrackerKanbanBoard({
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[11px] font-medium text-slate-400 tracking-wider">{item.id}</span>
                       {item.operationalStatus === "On Hold" && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 border border-amber-200">
-                          ⏸️ On Hold (SLA Paused)
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 border border-amber-200">
+                          <PauseCircle size={10} className="text-amber-600" />
+                          <span>On Hold (SLA Paused)</span>
                         </span>
                       )}
                       {item.operationalStatus === "Batal" && (

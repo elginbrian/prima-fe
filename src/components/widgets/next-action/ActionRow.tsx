@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, AlertCircle, ArrowRight, ExternalLink, Shield, FileText, Clock } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertCircle, ArrowRight, ExternalLink, Shield, FileText, Clock, Flame } from "lucide-react";
 import { ActionItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
@@ -67,8 +67,9 @@ export function ActionRow({ item }: ActionRowProps) {
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-800 text-[13px] truncate">{item.title}</span>
             {linkedDeadline?.isEscalated && (
-              <span className="inline-flex shrink-0 items-center rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-700">
-                🚨 ESKALASI
+              <span className="inline-flex shrink-0 items-center gap-1 rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-700">
+                <Flame size={10} className="text-rose-600" />
+                <span>ESKALASI</span>
               </span>
             )}
           </div>
