@@ -3,6 +3,7 @@ import { ProcurementAction } from "./types";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 
 const stageForStep: Record<ProcurementStep, ProcurementStage> = {
+  // Tender Terbuka
   "Rapat Pra-Tender": "Sourcing",
   "Pengumuman Pengadaan": "Sourcing",
   "Prebid Meeting": "Sourcing",
@@ -15,6 +16,15 @@ const stageForStep: Record<ProcurementStep, ProcurementStage> = {
   "Laporan Hasil Pemilihan": "Contracting",
   "Pengumuman Pemenang": "Contracting",
   "Penunjukan Pemenang": "Selesai",
+  // Pemilihan Langsung
+  "Undangan Pemilihan": "Sourcing",
+  "Pembukaan & Evaluasi Penawaran": "Evaluasi",
+  "Klarifikasi & Negosiasi Teknis": "Evaluasi",
+  "Penetapan Pemenang": "Contracting",
+  // Penunjukan Langsung
+  "Undangan Penunjukan Langsung": "Sourcing",
+  "Pemasukan & Evaluasi Dokumen": "Evaluasi",
+  "Klarifikasi & Negosiasi Harga": "Evaluasi",
 };
 
 function historyItem(requestId: string, category: HistoryItem["category"], title: string, description: string): HistoryItem {

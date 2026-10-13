@@ -215,6 +215,7 @@ export function AddRequestModal({ onClose, onSave, isSaving = false, errorMessag
             amount,
             departmentId: department.id,
             departmentName: department.name,
+            method: String(formData.get("method") || "Tender Terbuka"),
             isUrgent: String(formData.get("priority")) === "Urgent",
           });
         }}>
@@ -222,7 +223,7 @@ export function AddRequestModal({ onClose, onSave, isSaving = false, errorMessag
             <div className="mb-6 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
               <AlertCircle size={18} className="mt-0.5 shrink-0 text-blue-600" />
               <p className="text-xs leading-relaxed text-blue-800">
-                Pastikan informasi yang dimasukkan sudah sesuai dengan dokumen pendukung (FPP). Request baru akan otomatis masuk ke tahap <strong className="font-bold">Persiapan</strong>.
+                Pastikan informasi yang dimasukkan sudah sesuai dengan dokumen pendukung (FPP). Request baru akan otomatis masuk ke tahap <strong className="font-bold">Persiapan</strong> dengan jumlah tahapan sesuai metode pengadaan yang dipilih.
               </p>
             </div>
             
@@ -256,8 +257,17 @@ export function AddRequestModal({ onClose, onSave, isSaving = false, errorMessag
                   {DEPARTMENT_OPTIONS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
+
+              <div className="col-span-2 sm:col-span-1">
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Metode Pengadaan <span className="text-red-500">*</span></label>
+                <select required name="method" defaultValue="Tender Terbuka" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
+                  <option value="Tender Terbuka">Tender Terbuka (12 Tahapan)</option>
+                  <option value="Pemilihan Langsung">Pemilihan Langsung (8 Tahapan)</option>
+                  <option value="Penunjukan Langsung">Penunjukan Langsung (4 Tahapan)</option>
+                </select>
+              </div>
               
-              <div className="col-span-2">
+              <div className="col-span-2 sm:col-span-1">
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tingkat Prioritas <span className="text-red-500">*</span></label>
                 <select required name="priority" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
                   <option value="Normal">Normal</option>

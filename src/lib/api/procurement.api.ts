@@ -32,6 +32,7 @@ export interface ProcurementRequestDto {
   department: DepartmentDto;
   stage_started_at: string;
   is_urgent: boolean;
+  procurement_method?: string;
   created_at: string;
   updated_at: string;
   milestones?: MilestoneDto[];
@@ -71,9 +72,15 @@ export interface CreateProcurementPayload {
   department_name: string;
   stage?: string;
   current_step?: string;
+  procurement_method?: string;
   is_urgent?: boolean;
 }
 
+export interface AssignPicPayload {
+  new_pic_id: string;
+  new_pic_name: string;
+  handover_notes?: string;
+}
 
 export interface MoveStagePaylod {
   stage: string;
@@ -218,6 +225,8 @@ export const procurementApi = {
     apiFetch<ProcurementActivityDto[]>(`/procurement/${id}/activities`),
   getGatekeeper: (id: string) =>
     apiFetch<GatekeeperCheckDto>(`/procurement/${id}/gatekeeper`),
+  assignPic: (id: string, payload: AssignPicPayload) =>
+    apiFetch<ProcurementRequestDto>(`/procurement/${id}/assign-pic`, { method: "PATCH", body: JSON.stringify(payload) }),
 };
 
 export const documentsApi = {

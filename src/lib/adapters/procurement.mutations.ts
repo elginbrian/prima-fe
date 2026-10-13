@@ -77,6 +77,7 @@ export interface AddRequestFormValues {
   departmentId: string;
   departmentName: string;
   isUrgent: boolean;
+  method?: string;
 }
 
 export function requestFormToCreatePayload(values: AddRequestFormValues): CreateProcurementPayload {
@@ -91,6 +92,7 @@ export function requestFormToCreatePayload(values: AddRequestFormValues): Create
     department_id: values.departmentId,
     department_name: values.departmentName,
     is_urgent: values.isUrgent,
+    procurement_method: values.method || "Tender Terbuka",
   };
 }
 

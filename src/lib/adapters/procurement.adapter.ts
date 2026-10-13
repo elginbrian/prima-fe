@@ -24,6 +24,9 @@ export function dtoToRequest(dto: ProcurementRequestDto): ProcurementRequest {
     department: { id: dto.department.id, name: dto.department.name },
     stageStartedAt: dto.stage_started_at,
     isUrgent: dto.is_urgent,
+    procurementMethod: dto.procurement_method || "Tender Terbuka",
+    holdStartedAt: dto.hold_started_at,
+    totalHoldDays: dto.total_hold_days,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
   };

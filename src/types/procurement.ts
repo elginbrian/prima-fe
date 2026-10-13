@@ -21,7 +21,14 @@ export type ProcurementStep =
   | "Negosiasi Manual"
   | "Laporan Hasil Pemilihan"
   | "Pengumuman Pemenang"
-  | "Penunjukan Pemenang";
+  | "Penunjukan Pemenang"
+  | "Undangan Pemilihan"
+  | "Pembukaan & Evaluasi Penawaran"
+  | "Klarifikasi & Negosiasi Teknis"
+  | "Penetapan Pemenang"
+  | "Undangan Penunjukan Langsung"
+  | "Pemasukan & Evaluasi Dokumen"
+  | "Klarifikasi & Negosiasi Harga";
 
 export type ProcurementMilestoneStatus = "Pending" | "In Progress" | "Done" | "Skipped";
 
@@ -49,6 +56,9 @@ export interface ProcurementRequest {
   department: Department;
   stageStartedAt: string;
   isUrgent?: boolean;
+  procurementMethod?: string;
+  holdStartedAt?: string;
+  totalHoldDays?: number;
   createdAt: string;
   updatedAt: string;
 }

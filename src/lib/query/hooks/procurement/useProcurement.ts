@@ -110,6 +110,19 @@ export function useUpdateOperationalStatus() {
   });
 }
 
+export function useAssignPic() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof procurementApi.assignPic>[1] }) =>
+      procurementApi.assignPic(id, payload),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.detail(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.activities(id) });
+    },
+  });
+}
+
 // ─── Documents D1 ────────────────────────────────────────────────────────
 import { dtoToDocument, dtoToDeadline } from "@/lib/adapters/procurement.adapter";
 
