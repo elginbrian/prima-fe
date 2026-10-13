@@ -2,9 +2,11 @@ import { useState } from "react";
 import { AlertTriangle, ShieldCheck, ShieldAlert, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { GuaranteeItem, GuaranteeStatus } from "@/types";
 import { calculateDaysRemaining } from "@/lib/utils";
+import { useToast } from "@/components/ui/Toast";
 
-export function GuaranteeRow({ guarantee }: { guarantee: GuaranteeItem }) {
+export function GuaranteeRow({ guarantee, onEdit }: { guarantee: GuaranteeItem; onEdit?: (guarantee: GuaranteeItem) => void }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const toast = useToast();
   const hasAction = !!guarantee.nextAction;
 
   const getStatusStyle = (status: GuaranteeStatus) => {
@@ -88,21 +90,25 @@ export function GuaranteeRow({ guarantee }: { guarantee: GuaranteeItem }) {
                       
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); alert('Form Perpanjang Jaminan akan muncul di sini'); }}
+                          onClick={(e) => { e.stopPropagation(); toast.info('Fitur perpanjangan jaminan akan segera hadir.'); }}
                           className="flex items-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm"
                         >
                           <ArrowRight size={14} />
                           <span>Perpanjang Jaminan</span>
                         </button>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); alert('Proses pencairan jaminan akan dijalankan'); }}
+                          onClick={(e) => { e.stopPropagation(); toast.warning('Pengajuan pencairan jaminan diteruskan ke Bagian Keuangan.'); }}
                           className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm"
                         >
                           <AlertTriangle size={14} />
                           <span>Cairkan Jaminan</span>
                         </button>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); alert('Form Edit Jaminan akan muncul di sini'); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (onEdit) onEdit(guarantee);
+                            else toast.info('Buka daftar jaminan untuk mengoreksi data OCR.');
+                          }}
                           className="flex items-center gap-2 bg-white border border-slate-300 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm"
                         >
                           <span>Edit Data OCR</span>
@@ -122,7 +128,11 @@ export function GuaranteeRow({ guarantee }: { guarantee: GuaranteeItem }) {
                     
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); alert('Form Edit Jaminan akan muncul di sini'); }}
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (onEdit) onEdit(guarantee);
+                          else toast.info('Buka daftar jaminan untuk mengoreksi data OCR.');
+                        }}
                         className="flex items-center gap-2 bg-white border border-slate-300 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm"
                       >
                         <span>Edit Data OCR</span>

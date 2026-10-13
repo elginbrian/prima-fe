@@ -5,6 +5,9 @@ import { createPortal } from "react-dom";
 import { X, AlertCircle, CheckCircle2, XCircle, Sparkles, Eye } from "lucide-react";
 import { DocumentItem, DocumentStatus } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
 
 interface DocumentActionModalProps {
@@ -20,6 +23,8 @@ const STATUS_LABELS: { value: DocumentStatus; label: string; icon: React.ReactNo
 
 export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) {
   const { updateDocumentStatus } = useProcurement();
+  const updateDocMutation = useUpdateDocumentStatus();
+  const toast = useToast();
   const router = useRouter();
   const [selected, setSelected] = useState<DocumentStatus>(doc.status);
 
@@ -29,9 +34,16 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selected !== doc.status) {
-      updateDocumentStatus(doc.id, selected);
+      try {
+        await updateDocMutation.mutateAsync({ id: doc.id, status: selected });
+        updateDocumentStatus(doc.id, selected);
+        toast.success(`Status dokumen berhasil diperbarui ke "${selected}"`);
+      } catch (err) {
+        toast.error(`Gagal memperbarui status dokumen: ${getErrorMessage(err)}`);
+        return;
+      }
     }
     onClose();
   };
@@ -118,8 +130,10 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
             <span className="underline underline-offset-4 decoration-slate-300">Lihat Hasil Pemeriksaan</span>
           </button>
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-            <button type="button" onClick={handleSave} className="rounded-lg bg-[#0a4d8c] px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f]">Simpan Status</button>
+            <button type="button" onClick={onClose} disabled={updateDocMutation.isPending} className="rounded-lg px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50 disabled:opacity-50">Batal</button>
+            <button type="button" onClick={handleSave} disabled={updateDocMutation.isPending} className="rounded-lg bg-[#0a4d8c] px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] disabled:opacity-50">
+              {updateDocMutation.isPending ? "Menyimpan..." : "Simpan Status"}
+            </button>
           </div>
         </div>
       </div>

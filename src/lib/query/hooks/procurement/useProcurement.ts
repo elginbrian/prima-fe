@@ -136,3 +136,11 @@ export function useUpdateDeadline() {
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() }),
   });
 }
+
+export function useCreateDeadline() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof deadlinesApi.add>[0]) => deadlinesApi.add(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() }),
+  });
+}

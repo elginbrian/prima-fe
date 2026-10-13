@@ -5,7 +5,9 @@ import { createPortal } from "react-dom";
 import { X, Clock, AlertTriangle, CheckCircle2, User, Building2, Calendar, ArrowRight, Target } from "lucide-react";
 import { DeadlineItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
-import { useUpdateDeadline } from "@/lib/query/hooks/procurement/useDeadlines";
+import { useUpdateDeadline, useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
 
 interface SLAActionModalProps {
   deadline: DeadlineItem;
@@ -28,9 +30,11 @@ const URGENCY_MAP = {
 
 export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
   const { state } = useProcurement();
+  const { data: procurements = [] } = useProcurements();
   const updateDeadline = useUpdateDeadline();
+  const toast = useToast();
 
-  const linkedRequest = state.requests.find(r => r.id === deadline.requestId);
+  const linkedRequest = procurements.find(r => r.id === deadline.requestId) || state.requests.find(r => r.id === deadline.requestId);
   const statusMeta = STATUS_MAP[deadline.status] ?? STATUS_MAP["On Track"];
 
   useEffect(() => {
@@ -39,14 +43,24 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  const handleMarkDone = () => {
-    updateDeadline.mutate({ id: deadline.id, payload: { status: "Selesai" } });
-    onClose();
+  const handleMarkDone = async () => {
+    try {
+      await updateDeadline.mutateAsync({ id: deadline.id, payload: { status: "Selesai" } });
+      toast.success(`SLA "${deadline.taskName}" berhasil ditandai Selesai`);
+      onClose();
+    } catch (err) {
+      toast.error(`Gagal memperbarui SLA: ${getErrorMessage(err)}`);
+    }
   };
 
-  const handleEscalate = () => {
-    updateDeadline.mutate({ id: deadline.id, payload: { status: "At Risk" } });
-    onClose();
+  const handleEscalate = async () => {
+    try {
+      await updateDeadline.mutateAsync({ id: deadline.id, payload: { status: "At Risk" } });
+      toast.warning(`SLA "${deadline.taskName}" telah dieskalasi ke status At Risk`);
+      onClose();
+    } catch (err) {
+      toast.error(`Gagal memperbarui SLA: ${getErrorMessage(err)}`);
+    }
   };
 
   return createPortal(
@@ -155,7 +169,8 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               <button
                 type="button"
                 onClick={handleEscalate}
-                className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100"
+                disabled={updateDeadline.isPending}
+                className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
               >
                 <AlertTriangle size={14} />
                 Tandai At Risk
@@ -165,10 +180,11 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               <button
                 type="button"
                 onClick={handleMarkDone}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700"
+                disabled={updateDeadline.isPending}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
               >
                 <CheckCircle2 size={14} />
-                Tandai Selesai
+                {updateDeadline.isPending ? "Menyimpan..." : "Tandai Selesai"}
               </button>
             )}
             {deadline.status === "Selesai" && (

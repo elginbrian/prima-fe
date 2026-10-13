@@ -2,8 +2,7 @@
 
 import { useMemo } from "react";
 import { useGuarantees } from "./useGuarantees";
-import { useDeadlines } from "./useDeadlines";
-import { useDocuments } from "./useDocuments";
+import { useDeadlines, useDocuments } from "./useProcurement";
 import { actionForGuarantee, actionForDeadline, actionForDocument } from "@/context/reducer";
 import { ActionItem } from "@/types";
 

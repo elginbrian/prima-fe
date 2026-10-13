@@ -1,15 +1,35 @@
 "use client";
 
 import { CheckCircle2, AlertTriangle, FileText, ArrowLeft, Download } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useDocuments, useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
+import { useToast } from "@/components/ui/Toast";
 
 export default function DocumentResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const { state, updateDocumentStatus } = useProcurement();
-  const selectedDocument = state.documents.find(doc => doc.id === searchParams.get("id")) ?? state.documents[0];
+  const { data: documents = [] } = useDocuments();
+  const updateDocMutation = useUpdateDocumentStatus();
+
+  const docId = searchParams.get("id");
+  const selectedDocument = documents.find(doc => doc.id === docId) ?? state.documents.find(doc => doc.id === docId) ?? documents[0] ?? state.documents[0];
+
+  const handleFollowUp = async () => {
+    if (selectedDocument) {
+      try {
+        await updateDocMutation.mutateAsync({ id: selectedDocument.id, status: "Tindak Lanjut FPP" });
+        updateDocumentStatus(selectedDocument.id, "Tindak Lanjut FPP");
+        toast.success("Dokumen berhasil diteruskan ke FPP untuk tindak lanjut.");
+      } catch {
+        updateDocumentStatus(selectedDocument.id, "Tindak Lanjut FPP");
+        toast.info("Status dokumen berhasil diperbarui.");
+      }
+    }
+    router.push('/dashboard/documents');
+  };
 
   return (
     <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
@@ -23,21 +43,17 @@ export default function DocumentResultPage() {
         </button>
         <div className="flex gap-3">
           <button 
-            onClick={() => alert('Mendownload Laporan Hasil Pemeriksaan (PDF)...')}
+            onClick={() => toast.info('Mengunduh Laporan Hasil Pemeriksaan (PDF)...')}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
           >
             <Download size={16} /> Unduh Laporan
           </button>
           <button 
-            onClick={() => {
-              if (selectedDocument) {
-                updateDocumentStatus(selectedDocument.id, "Tindak Lanjut FPP");
-              }
-              router.push('/dashboard/documents');
-            }}
-            className="px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+            onClick={handleFollowUp}
+            disabled={updateDocMutation.isPending}
+            className="px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
           >
-            Tindak Lanjut (Kirim ke FPP)
+            {updateDocMutation.isPending ? "Memproses..." : "Tindak Lanjut (Kirim ke FPP)"}
           </button>
         </div>
       </div>

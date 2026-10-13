@@ -76,8 +76,11 @@ export async function apiFetch<T>(
 ): Promise<ApiEnvelope<T>> {
   const token = getAccessToken();
 
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    // Let the browser set the multipart boundary for FormData bodies.
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string> ?? {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
@@ -96,7 +99,7 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     throw new ApiError(
-      json.message ?? `HTTP ${res.status}`,
+      json.message ?? json.detail ?? `Server error (HTTP ${res.status})`,
       res.status,
       json.data
     );

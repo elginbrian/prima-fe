@@ -4,14 +4,22 @@ import { FileText, AlertCircle, CheckCircle2, XCircle, Sparkles, FileSearch, Eye
 import { DocumentItem, DocumentStatus } from "@/types";
 import { useRouter } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
+import { useToast } from "@/components/ui/Toast";
 
 export function DocumentCard({ doc }: { doc: DocumentItem }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAiDraft, setShowAiDraft] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const toast = useToast();
+  const defaultDraft = `Nomor: ${doc.id}\nPerihal: Tindak Lanjut Dokumen ${doc.name}\n\nSehubungan dengan hasil pemeriksaan sistem, ditemukan poin-poin berikut yang memerlukan tindak lanjut pada dokumen ${doc.name}:\n\n- ${doc.issues.join("\n- ")}\n\nNext Action yang direkomendasikan:\n${doc.nextAction}\n\nMohon agar dapat segera dilengkapi. Terima kasih.`;
+  const [draftContent, setDraftContent] = useState(defaultDraft);
   const router = useRouter();
   const { updateDocumentStatus } = useProcurement();
   const hasIssues = doc.issues && doc.issues.length > 0;
+
+  useEffect(() => {
+    setDraftContent(`Nomor: ${doc.id}\nPerihal: Tindak Lanjut Dokumen ${doc.name}\n\nSehubungan dengan hasil pemeriksaan sistem, ditemukan poin-poin berikut yang memerlukan tindak lanjut pada dokumen ${doc.name}:\n\n- ${doc.issues.join("\n- ")}\n\nNext Action yang direkomendasikan:\n${doc.nextAction}\n\nMohon agar dapat segera dilengkapi. Terima kasih.`);
+  }, [doc]);
 
   useEffect(() => {
     setMounted(true);
@@ -188,19 +196,25 @@ export function DocumentCard({ doc }: { doc: DocumentItem }) {
               <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">Draft Konten (Editable)</label>
               <textarea 
                 className="w-full h-[300px] p-4 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono leading-relaxed resize-none"
-                defaultValue={`Nomor: ${doc.id}\nPerihal: Tindak Lanjut Dokumen ${doc.name}\n\nSehubungan dengan hasil pemeriksaan sistem, ditemukan poin-poin berikut yang memerlukan tindak lanjut pada dokumen ${doc.name}:\n\n- ${doc.issues.join("\n- ")}\n\nNext Action yang direkomendasikan:\n${doc.nextAction}\n\nMohon agar dapat segera dilengkapi. Terima kasih.`}
+                value={draftContent}
+                onChange={(e) => setDraftContent(e.target.value)}
               ></textarea>
             </div>
             
             <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
               <button 
-                onClick={() => {
-                  alert('Draft berhasil disalin/diunduh.');
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(draftContent);
+                    toast.success("Draft berhasil disalin ke clipboard!");
+                  } catch {
+                    toast.info("Draft telah siap digunakan.");
+                  }
                   setShowAiDraft(false);
                 }}
                 className="px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
               >
-                Simpan & Unduh
+                Salin Draft Konten
               </button>
             </div>
           </div>

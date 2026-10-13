@@ -1,7 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, PlusCircle, AlertCircle } from "lucide-react";
-import { DeadlineItem, ProcurementRequest, ProcurementStep, BaseUser, Department } from "@/types";
+import { DeadlineItem, ProcurementStep, BaseUser, Department } from "@/types";
+import { useUsers } from "@/lib/query/hooks/users/useUsers";
+import { parseRupiah, type AddRequestFormValues } from "@/lib/adapters/procurement.mutations";
+
+const DEPARTMENT_OPTIONS = [
+  { id: "DEPT-IT", name: "IT Infrastructure" },
+  { id: "DEPT-OPS", name: "Operations" },
+  { id: "DEPT-HR", name: "Human Resources" },
+  { id: "DEPT-CRE", name: "Creative" },
+  { id: "DEPT-GA", name: "General Affairs" },
+];
 
 const PROCUREMENT_STEPS: ProcurementStep[] = [
   "Rapat Pra-Tender",
@@ -18,13 +28,16 @@ const PROCUREMENT_STEPS: ProcurementStep[] = [
   "Penunjukan Pemenang",
 ];
 
-export function DeadlineEditor({ deadline, onClose, onSave }: { deadline: DeadlineItem; onClose: () => void; onSave: (changes: Partial<DeadlineItem>) => void }) {
+export function DeadlineEditor({ deadline, onClose, onSave, isSaving = false, errorMessage }: { deadline: DeadlineItem; onClose: () => void; onSave: (changes: Partial<DeadlineItem>) => void; isSaving?: boolean; errorMessage?: string | null }) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
+  const { data: users } = useUsers();
+  const [formError, setFormError] = useState<string | null>(null);
+  
   if (typeof document === 'undefined') return null;
   
   return createPortal(
@@ -38,12 +51,16 @@ export function DeadlineEditor({ deadline, onClose, onSave }: { deadline: Deadli
           const startDate = String(formData.get("startDate"));
           const targetDate = String(formData.get("targetDate"));
           if (targetDate < startDate) {
-            alert("Target selesai tidak boleh lebih awal dari tanggal mulai.");
+            setFormError("Target selesai tidak boleh lebih awal dari tanggal mulai.");
             return;
           }
+          setFormError(null);
           onSave({
             taskName: String(formData.get("taskName")),
-            pic: { id: "USR-EDIT", name: String(formData.get("pic")) },
+            pic: { 
+              id: String(formData.get("pic")), 
+              name: users?.find(u => u.id === String(formData.get("pic")))?.name || "" 
+            },
             milestone: String(formData.get("milestone")),
             startDate,
             targetDate,
@@ -63,7 +80,11 @@ export function DeadlineEditor({ deadline, onClose, onSave }: { deadline: Deadli
         </div>
         <div className="grid gap-5 p-6 sm:grid-cols-2">
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Nama aktivitas</span><input required name="taskName" defaultValue={deadline.taskName} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
-          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">PIC</span><input required name="pic" defaultValue={deadline.pic.name} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
+          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">PIC</span>
+            <select required name="pic" defaultValue={deadline.pic.id} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
+              {users?.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Milestone</span><input required name="milestone" defaultValue={deadline.milestone} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal mulai</span><input required type="date" name="startDate" defaultValue={deadline.startDate ?? ""} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Target selesai</span><input required type="date" name="targetDate" defaultValue={deadline.targetDate} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
@@ -71,20 +92,24 @@ export function DeadlineEditor({ deadline, onClose, onSave }: { deadline: Deadli
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Alasan keterlambatan</span><textarea name="overdueReason" rows={2} defaultValue={deadline.overdueReason ?? ""} placeholder="Diisi bila SLA melewati target selesai" className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
         </div>
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+          {(formError || errorMessage) && <p role="alert" className="mr-auto self-center text-xs font-semibold text-red-600">{formError || errorMessage}</p>}
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-          <button type="submit" className="rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow">Simpan SLA</button>
+          <button type="submit" disabled={isSaving} className="rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Menyimpan..." : "Simpan SLA"}</button>
         </div>
       </form>
     </div>
   , document.body);
 }
 
-export function DeadlineCreator({ requestId, pic, department, onClose, onSave }: { requestId: string; pic: BaseUser; department: Department; onClose: () => void; onSave: (deadline: DeadlineItem) => void }) {
+export function DeadlineCreator({ requestId, pic, department, onClose, onSave, isSaving = false, errorMessage }: { requestId: string; pic: BaseUser; department: Department; onClose: () => void; onSave: (deadline: Omit<DeadlineItem, "id">) => void; isSaving?: boolean; errorMessage?: string | null }) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
+
+  const { data: users } = useUsers();
+  const [formError, setFormError] = useState<string | null>(null);
 
   if (typeof document === 'undefined') return null;
   
@@ -95,8 +120,10 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave }:
         const formData = new FormData(event.currentTarget);
         const startDate = String(formData.get("startDate"));
         const targetDate = String(formData.get("targetDate"));
-        if (targetDate < startDate) { alert("Target selesai tidak boleh lebih awal dari tanggal mulai."); return; }
-        onSave({ id: `SLA-${Date.now()}`, requestId, taskName: String(formData.get("taskName")), milestone: String(formData.get("milestone")), pic: { id: "USR-NEW", name: String(formData.get("pic")) }, department, startDate, targetDate, status: "On Track", urgencyLevel: formData.get("urgencyLevel") as DeadlineItem["urgencyLevel"], nextAction: String(formData.get("nextAction")), overdueReason: String(formData.get("overdueReason")) });
+        if (targetDate < startDate) { setFormError("Target selesai tidak boleh lebih awal dari tanggal mulai."); return; }
+        setFormError(null);
+        const picId = String(formData.get("pic"));
+        onSave({ requestId, taskName: String(formData.get("taskName")), milestone: String(formData.get("milestone")), pic: { id: picId, name: users?.find(u => u.id === picId)?.name || "" }, department, startDate, targetDate, status: "On Track", urgencyLevel: formData.get("urgencyLevel") as DeadlineItem["urgencyLevel"], nextAction: String(formData.get("nextAction")), overdueReason: String(formData.get("overdueReason")) });
       }}>
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
           <div>
@@ -109,7 +136,11 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave }:
         </div>
         <div className="grid gap-5 p-6 sm:grid-cols-2">
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Nama aktivitas</span><input required autoFocus name="taskName" placeholder="Contoh: Rapat pra-tender" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
-          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">PIC</span><input required name="pic" defaultValue={pic.name} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
+          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">PIC</span>
+            <select required name="pic" defaultValue={pic.id} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
+              {users?.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Milestone</span><select required name="milestone" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">{PROCUREMENT_STEPS.map(step => <option key={step} value={step}>{step}</option>)}</select></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal mulai</span><input required type="date" name="startDate" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Target selesai</span><input required type="date" name="targetDate" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
@@ -118,20 +149,24 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave }:
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Alasan keterlambatan</span><textarea name="overdueReason" rows={2} placeholder="Opsional; isi bila target nantinya terlambat" className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
         </div>
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+          {(formError || errorMessage) && <p role="alert" className="mr-auto self-center text-xs font-semibold text-red-600">{formError || errorMessage}</p>}
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-          <button type="submit" className="rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow">Simpan SLA</button>
+          <button type="submit" disabled={isSaving} className="rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Menyimpan..." : "Simpan SLA"}</button>
         </div>
       </form>
     </div>
   , document.body);
 }
 
-export function AddRequestModal({ onClose, onSave }: { onClose: () => void; onSave: (request: ProcurementRequest) => void }) {
+export function AddRequestModal({ onClose, onSave, isSaving = false, errorMessage }: { onClose: () => void; onSave: (values: AddRequestFormValues) => void; isSaving?: boolean; errorMessage?: string | null }) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
+
+  const { data: users } = useUsers();
+  const [formError, setFormError] = useState<string | null>(null);
 
   if (typeof document === 'undefined') return null;
   
@@ -155,20 +190,32 @@ export function AddRequestModal({ onClose, onSave }: { onClose: () => void; onSa
         <form onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
-          
+          const picId = String(formData.get("pic"));
+          const amount = parseRupiah(String(formData.get("amount")));
+          if (amount === null || amount <= 0) {
+            setFormError("Nilai pengadaan tidak valid. Contoh: 150000000, Rp 150.000.000, atau 150 Jt.");
+            return;
+          }
+          const picName = users?.find(u => u.id === picId)?.name;
+          if (!picName) {
+            setFormError("PIC tidak ditemukan. Pilih PIC dari daftar.");
+            return;
+          }
+          const department = DEPARTMENT_OPTIONS.find(d => d.id === String(formData.get("department")));
+          if (!department) {
+            setFormError("Pilih fungsi / departemen.");
+            return;
+          }
+          setFormError(null);
           onSave({
-            id: `REQ-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`,
             title: String(formData.get("title")),
-            pic: { id: "USR-NEW", name: String(formData.get("pic")) },
-            amount: Number(String(formData.get("amount")).replace(/\D/g, "")),
-            stage: "Persiapan",
-            operationalStatus: "On Going",
-            currentStep: "Rapat Pra-Tender",
-            department: { id: "DEPT-NEW", name: String(formData.get("department")) },
-            fpp: { id: "USR-FPP", name: "User FPP" },
-            stageStartedAt: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            fppNumber: String(formData.get("fpp")),
+            picId,
+            picName,
+            amount,
+            departmentId: department.id,
+            departmentName: department.name,
+            isUrgent: String(formData.get("priority")) === "Urgent",
           });
         }}>
           <div className="p-6">
@@ -192,22 +239,21 @@ export function AddRequestModal({ onClose, onSave }: { onClose: () => void; onSa
 
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">PIC Procurement <span className="text-red-500">*</span></label>
-                <input required name="pic" className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" placeholder="Contoh: Budi Santoso" />
+                <select required name="pic" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
+                  <option value="">Pilih PIC</option>
+                  {users?.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
               </div>
               
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Nilai Pengadaan <span className="text-red-500">*</span></label>
-                <input required name="amount" className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" placeholder="Contoh: Rp 150.0 Jt" />
+                <input required name="amount" className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" placeholder="Contoh: 150000000, Rp 150.000.000, atau 150 Jt" />
               </div>
               
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Fungsi / Departemen <span className="text-red-500">*</span></label>
                 <select required name="department" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
-                  <option value="IT Infrastructure">IT Infrastructure</option>
-                  <option value="Operations">Operations</option>
-                  <option value="HR">Human Resources</option>
-                  <option value="Creative">Creative</option>
-                  <option value="General Affairs">General Affairs</option>
+                  {DEPARTMENT_OPTIONS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               
@@ -221,10 +267,11 @@ export function AddRequestModal({ onClose, onSave }: { onClose: () => void; onSa
             </div>
           </div>
           <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/80 p-6">
+            {(formError || errorMessage) && <p role="alert" className="mr-auto text-xs font-semibold text-red-600">{formError || errorMessage}</p>}
             <button type="button" onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-            <button type="submit" className="flex items-center gap-2 rounded-lg bg-[#0a4d8c] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow">
+            <button type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-[#0a4d8c] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">
               <PlusCircle size={16} />
-              Buat Request Baru
+              {isSaving ? "Menyimpan..." : "Buat Request Baru"}
             </button>
           </div>
         </form>

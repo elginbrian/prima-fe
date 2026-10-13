@@ -20,7 +20,11 @@ import {
   useDeadlines,
   useDocuments,
   useUpdateDeadline,
+  useCreateDeadline,
 } from "@/lib/query/hooks/procurement/useProcurement";
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
+import { requestFormToCreatePayload, deadlineToCreatePayload, deadlineChangesToUpdatePayload } from "@/lib/adapters/procurement.mutations";
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
@@ -43,6 +47,8 @@ export default function TrackerPage() {
   const updateStatus = useUpdateOperationalStatus();
   const updateStep = useMoveStep();
   const editDeadline = useUpdateDeadline();
+  const createDeadline = useCreateDeadline();
+  const toast = useToast();
   
   // Safe defaults while loading
   const requests = procurementsData ?? [];
@@ -204,13 +210,31 @@ export default function TrackerPage() {
       {editingDeadlineId && (() => {
         const deadline = deadlinesList.find(item => item.id === editingDeadlineId);
         if (!deadline) return null;
-        return <DeadlineEditor deadline={deadline} onClose={() => setEditingDeadlineId(null)} onSave={(changes) => { editDeadline.mutate({ id: deadline.id, payload: changes }); setEditingDeadlineId(null); }} />;
+        return <DeadlineEditor
+          deadline={deadline}
+          isSaving={editDeadline.isPending}
+          errorMessage={editDeadline.isError ? getErrorMessage(editDeadline.error) : null}
+          onClose={() => { editDeadline.reset(); setEditingDeadlineId(null); }}
+          onSave={(changes) => editDeadline.mutate(
+            { id: deadline.id, payload: deadlineChangesToUpdatePayload(changes) },
+            { onSuccess: () => { toast.success("SLA berhasil diperbarui."); setEditingDeadlineId(null); } },
+          )}
+        />;
       })()}
 
       {addingDeadlineRequestId && (() => {
         const request = requests.find(item => item.id === addingDeadlineRequestId);
         if (!request) return null;
-        return <DeadlineCreator requestId={request.id} pic={request.pic} department={request.department} onClose={() => setAddingDeadlineRequestId(null)} onSave={(deadline) => { /* TODO: useCreateDeadline */ setAddingDeadlineRequestId(null); }} />;
+        return <DeadlineCreator
+          requestId={request.id} pic={request.pic} department={request.department}
+          isSaving={createDeadline.isPending}
+          errorMessage={createDeadline.isError ? getErrorMessage(createDeadline.error) : null}
+          onClose={() => { createDeadline.reset(); setAddingDeadlineRequestId(null); }}
+          onSave={(deadline) => createDeadline.mutate(
+            deadlineToCreatePayload(deadline),
+            { onSuccess: () => { toast.success("SLA berhasil ditambahkan."); setAddingDeadlineRequestId(null); } },
+          )}
+        />;
       })()}
 
       {selectedRequestId && (() => {
@@ -233,7 +257,17 @@ export default function TrackerPage() {
         />;
       })()}
 
-      {showAddModal && <AddRequestModal onClose={() => setShowAddModal(false)} onSave={(req) => { createProcurement.mutate(req as any); setShowAddModal(false); }} />}
+      {showAddModal && (
+        <AddRequestModal
+          isSaving={createProcurement.isPending}
+          errorMessage={createProcurement.isError ? getErrorMessage(createProcurement.error) : null}
+          onClose={() => { createProcurement.reset(); setShowAddModal(false); }}
+          onSave={(values) => createProcurement.mutate(
+            requestFormToCreatePayload(values),
+            { onSuccess: () => { toast.success("Request pengadaan berhasil dibuat."); setShowAddModal(false); } },
+          )}
+        />
+      )}
     </div>
   );
 }

@@ -8,9 +8,13 @@ import { NotificationTab } from "./tabs/NotificationTab";
 import { SystemTab } from "./tabs/SystemTab";
 import { SystemSettings } from "@/types";
 
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
+
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettingsMutation = useUpdateSettings();
+  const toast = useToast();
   
   const [formData, setFormData] = useState<SystemSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,11 +38,11 @@ export default function SettingsPage() {
     updateSettingsMutation.mutate(formData, {
       onSuccess: () => {
         setIsSaving(false);
-        alert("Pengaturan berhasil disimpan.");
+        toast.success("Pengaturan berhasil disimpan.");
       },
-      onError: () => {
+      onError: (err) => {
         setIsSaving(false);
-        alert("Gagal menyimpan pengaturan.");
+        toast.error(getErrorMessage(err, "Gagal menyimpan pengaturan."));
       }
     });
   };

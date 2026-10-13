@@ -80,29 +80,37 @@ export function useUploadGuaranteeWithFile() {
       const guaranteeRes = await guaranteesApi.add(payload);
       const guaranteeId = guaranteeRes.data.id;
 
-      // 2. Get upload URL
-      const urlRes = await guaranteesApi.getUploadUrl(guaranteeId, file.type);
-      const { presigned_post, object_key } = urlRes.data;
+      try {
+        // 2. Get upload URL
+        const urlRes = await guaranteesApi.getUploadUrl(guaranteeId, file.type);
+        const { presigned_post, object_key } = urlRes.data;
 
-      // 3. Upload to S3
-      const formData = new FormData();
-      Object.keys(presigned_post.fields).forEach((key) => {
-        formData.append(key, presigned_post.fields[key]);
-      });
-      formData.append("file", file);
+        // 3. Upload to S3
+        const formData = new FormData();
+        Object.entries(presigned_post.fields).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+        formData.append("file", file);
 
-      const uploadResponse = await fetch(presigned_post.url, {
-        method: "POST",
-        body: formData,
-      });
+        const uploadResponse = await fetch(presigned_post.url, {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload file to S3");
+        if (!uploadResponse.ok) {
+          throw new Error(
+            `Upload file ke storage gagal (HTTP ${uploadResponse.status}). Periksa konfigurasi CORS/bucket.`
+          );
+        }
+
+        // 4. Update guarantee with file URL key
+        const updateRes = await guaranteesApi.update(guaranteeId, { file_url: object_key });
+        return updateRes.data;
+      } catch (error) {
+        // Don't leave a guarantee record without its document behind.
+        await guaranteesApi.remove(guaranteeId).catch(() => undefined);
+        throw error;
       }
-
-      // 4. Update guarantee with file URL key
-      const updateRes = await guaranteesApi.update(guaranteeId, { file_url: object_key });
-      return updateRes.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: guaranteesKeys.all });

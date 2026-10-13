@@ -5,6 +5,10 @@ import { UploadCloud, FileText, X, ArrowRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
+import { vendorIdFromName } from "@/lib/adapters/procurement.mutations";
+import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
 import { useUploadGuaranteeWithFile, useExtractGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
@@ -22,6 +26,9 @@ export default function GuaranteeUploadPage() {
   const selectedRequest = requests.find(request => request.id === requestId);
   const [documentType, setDocumentType] = useState<"Jaminan Pelaksanaan" | "Jaminan Pemeliharaan" | ProcurementAttachmentType>("Jaminan Pelaksanaan");
   const [isExtracting, setIsExtracting] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const { data: currentUser } = useCurrentUser();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     type: "Jaminan Pelaksanaan" as GuaranteeItem["type"],
     vendor: "",
@@ -62,11 +69,12 @@ export default function GuaranteeUploadPage() {
   useEffect(() => {
     if (file && requiresExtraction) {
       setIsExtracting(true);
+      setOcrError(null);
       extractGuaranteeMutation.mutateAsync(file)
         .then((data) => {
           setFormData(prev => ({
             ...prev,
-            type: data.type || prev.type,
+            type: (data.type as GuaranteeItem["type"]) || prev.type,
             vendor: data.vendor_name || "",
             issuer: data.issuer || "",
             issuerType: data.issuer_type || "Bank",
@@ -78,7 +86,7 @@ export default function GuaranteeUploadPage() {
           }));
         })
         .catch(err => {
-          console.error("OCR Failed", err);
+          setOcrError(getErrorMessage(err, "Ekstraksi AI gagal."));
         })
         .finally(() => {
           setIsExtracting(false);
@@ -172,7 +180,14 @@ export default function GuaranteeUploadPage() {
               <p className="mt-1.5 text-xs text-slate-500">{requiresExtraction ? "Data jaminan akan ditampilkan untuk diperiksa dan dikoreksi manual." : "File disimpan pada pekerjaan tanpa menjalankan ekstraksi OCR."}</p>
             </div>
 
-            {/* AI Extracted Fields (Mock) */}
+            {file && requiresExtraction && !isExtracting && ocrError && (
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="font-semibold">Ekstraksi otomatis gagal</div>
+                <p className="mt-0.5 text-xs">{ocrError}. Anda tetap bisa mengisi data jaminan secara manual di bawah, atau klik "Ganti File" untuk mencoba lagi.</p>
+              </div>
+            )}
+
+            {/* AI Extracted Fields */}
             {file && requiresExtraction && (
               isExtracting ? (
                 <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-300">
@@ -277,7 +292,7 @@ export default function GuaranteeUploadPage() {
                 const remainingDays = Number.isNaN(expiryTime) ? 0 : Math.ceil((expiryTime - Date.now()) / 86400000);
                 const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= state.settings.slaWarningDays ? "Mendekati Expiry" : "Aktif";
                 const valueRaw = Number(formData.value.replace(/[^0-9]/g, "")) || 0;
-                uploadGuaranteeMutation.mutate({ file: file, payload: { request_id: requestId, reference_no: formData.referenceNo, type: formData.type, value: valueRaw, issuer: formData.issuer, issuer_type: formData.issuerType, beneficiary: formData.beneficiary, vendor_id: "VND-NEW", vendor_name: formData.vendor, issue_date: formData.issueDate + "T00:00:00Z", expiry_date: formData.expiryDate + "T00:00:00Z", pic_id: "ADMIN", pic_name: "P3 - Admin", status } as any }, { onSuccess: () => router.push('/dashboard/guarantees') }); }} disabled={!file || !requestId || uploadGuaranteeMutation.isPending || (requiresExtraction && (!formData.vendor || !formData.issuer || !formData.referenceNo || !formData.value || !formData.issueDate || !formData.expiryDate))}
+                uploadGuaranteeMutation.mutate({ file: file, payload: { request_id: requestId, reference_no: formData.referenceNo, type: formData.type, value: valueRaw, issuer: formData.issuer, issuer_type: formData.issuerType, beneficiary: formData.beneficiary, vendor_id: vendorIdFromName(formData.vendor), vendor_name: formData.vendor, issue_date: formData.issueDate + "T00:00:00Z", expiry_date: formData.expiryDate + "T00:00:00Z", pic_id: currentUser?.id ?? "", pic_name: currentUser?.name ?? "", status } }, { onSuccess: () => { toast.success("Jaminan berhasil disimpan."); router.push('/dashboard/guarantees'); }, onError: (err) => toast.error(getErrorMessage(err, "Gagal menyimpan jaminan.")) }); }} disabled={!file || !requestId || uploadGuaranteeMutation.isPending || (requiresExtraction && (!formData.vendor || !formData.issuer || !formData.referenceNo || !formData.value || !formData.issueDate || !formData.expiryDate))}
               className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-sm font-medium shadow-sm transition-all ${
                 file && requestId && (!requiresExtraction || (formData.vendor && formData.issuer && formData.referenceNo && formData.value && formData.issueDate && formData.expiryDate)) ? 'bg-[#0a4d8c] hover:bg-[#093e6f] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}

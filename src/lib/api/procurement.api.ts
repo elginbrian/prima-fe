@@ -83,12 +83,16 @@ export interface DocumentDto {
   type: string;
   status: string;
   upload_date: string;
-  pic: BaseUserDto;
+  pic_id: string;
+  pic_name: string;
   issues: string[];
   document_kind?: string;
   next_action?: string;
   procurement_step?: string;
+  document_date?: string;
+  document_number?: string;
   file_url?: string;
+  mime_type?: string;
 }
 
 // ─── Guarantee (Modul D2) ─────────────────────────────────────────────────
@@ -114,6 +118,23 @@ export interface GuaranteeDto {
   file_url_signed?: string;
 }
 
+export interface PresignedPost {
+  url: string;
+  fields: Record<string, string>;
+}
+
+export interface ExtractedGuaranteeDto {
+  type?: string;
+  vendor_name?: string;
+  issuer?: string;
+  issuer_type?: "Bank" | "Asuransi" | "Lainnya";
+  beneficiary?: string;
+  reference_no?: string;
+  value?: number;
+  issue_date?: string;
+  expiry_date?: string;
+}
+
 // ─── Deadline / SLA (Modul D4) ────────────────────────────────────────────
 
 export interface DeadlineDto {
@@ -121,14 +142,19 @@ export interface DeadlineDto {
   request_id: string;
   task_name: string;
   milestone: string;
-  pic: BaseUserDto;
-  department: DepartmentDto;
+  pic_id: string;
+  pic_name: string;
+  department_id: string;
+  department_name: string;
   target_date: string;
   status: string;
   urgency_level: string;
   start_date?: string;
   next_action?: string;
   overdue_reason?: string;
+  related_id?: string;
+  paused_at?: string;
+  accumulated_paused_days?: number;
 }
 
 // ─── Endpoint functions ────────────────────────────────────────────────────
@@ -165,17 +191,12 @@ export const guaranteesApi = {
   update: (id: string, payload: Partial<GuaranteeDto>) =>
     apiFetch<GuaranteeDto>(`/guarantees/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   getUploadUrl: (id: string, contentType: string) =>
-    apiFetch<{ presigned_post: any; object_key: string }>(`/guarantees/${id}/upload-url?content_type=${encodeURIComponent(contentType)}`),
+    apiFetch<{ presigned_post: PresignedPost; object_key: string }>(`/guarantees/${id}/upload-url?content_type=${encodeURIComponent(contentType)}`),
+  remove: (id: string) => apiFetch<null>(`/guarantees/${id}`, { method: "DELETE" }),
   extract: (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return fetch(process.env.NEXT_PUBLIC_API_URL + "/guarantees/extract", {
-      method: "POST",
-      body: formData,
-    }).then((res) => {
-      if (!res.ok) throw new Error("Failed to extract data");
-      return res.json();
-    });
+    return apiFetch<ExtractedGuaranteeDto>("/guarantees/extract", { method: "POST", body: formData });
   },
 };
 

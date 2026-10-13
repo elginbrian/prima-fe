@@ -7,8 +7,8 @@
  * This is the bridge layer — TrackerPage continues to use @/types,
  * but data can now come from either mock state or BE API.
  */
-import type { ProcurementRequest, ProcurementMilestone, ProcurementStep, ProcurementStage } from "@/types";
-import type { ProcurementRequestDto, MilestoneDto } from "@/lib/api/procurement.api";
+import type { ProcurementRequest, ProcurementMilestone, ProcurementStep, ProcurementStage, DeadlineItem, DocumentItem, DocumentKind } from "@/types";
+import type { ProcurementRequestDto, MilestoneDto, DeadlineDto, DocumentDto } from "@/lib/api/procurement.api";
 
 export function dtoToRequest(dto: ProcurementRequestDto): ProcurementRequest {
   return {
@@ -46,24 +46,42 @@ export function dtoListToRequests(dtos: ProcurementRequestDto[]): ProcurementReq
   return dtos.map(dtoToRequest);
 }
 
-// Minimal stub adapters to fix build errors in TrackerPage
-export function dtoToDeadline(dto: any): any {
+export function dtoToDeadline(dto: DeadlineDto): DeadlineItem {
   return {
-    ...dto,
-    requestId: dto.request_id ?? dto.requestId,
-    taskName: dto.task_name ?? dto.taskName,
-    targetDate: dto.target_date ?? dto.targetDate,
-    urgencyLevel: dto.urgency_level ?? dto.urgencyLevel ?? "Normal",
-    pic: dto.pic ? { id: dto.pic.id, name: dto.pic.name } : (dto.pic_id ? { id: dto.pic_id, name: dto.pic_name } : undefined),
-    department: dto.department ? { id: dto.department.id, name: dto.department.name } : (dto.department_id ? { id: dto.department_id, name: dto.department_name } : undefined),
+    id: dto.id,
+    requestId: dto.request_id,
+    relatedId: dto.related_id,
+    taskName: dto.task_name,
+    targetDate: dto.target_date,
+    startDate: dto.start_date,
+    status: dto.status as DeadlineItem["status"],
+    urgencyLevel: dto.urgency_level as DeadlineItem["urgencyLevel"],
+    milestone: dto.milestone,
+    nextAction: dto.next_action,
+    overdueReason: dto.overdue_reason,
+    pausedAt: dto.paused_at,
+    accumulatedPausedDays: dto.accumulated_paused_days,
+    pic: { id: dto.pic_id, name: dto.pic_name },
+    department: { id: dto.department_id, name: dto.department_name },
   };
 }
 
-export function dtoToDocument(dto: any): any {
+export function dtoToDocument(dto: DocumentDto): DocumentItem {
   return {
-    ...dto,
-    requestId: dto.request_id ?? dto.requestId,
-    uploadDate: dto.upload_date ?? dto.uploadDate ?? new Date().toISOString().split('T')[0],
-    pic: dto.pic ? { id: dto.pic.id, name: dto.pic.name } : (dto.pic_id ? { id: dto.pic_id, name: dto.pic_name } : undefined),
+    id: dto.id,
+    requestId: dto.request_id,
+    name: dto.name,
+    type: dto.type as DocumentItem["type"],
+    status: dto.status as DocumentItem["status"],
+    uploadDate: dto.upload_date,
+    pic: { id: dto.pic_id, name: dto.pic_name },
+    issues: dto.issues,
+    documentKind: dto.document_kind as DocumentKind | undefined,
+    nextAction: dto.next_action,
+    procurementStep: dto.procurement_step as ProcurementStep,
+    documentDate: dto.document_date,
+    documentNumber: dto.document_number,
+    fileUrl: dto.file_url,
+    mimeType: dto.mime_type,
   };
 }

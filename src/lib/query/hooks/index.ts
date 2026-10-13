@@ -17,4 +17,5 @@ export {
   useUpdateGuarantee,
   useDeadlines,
   useUpdateDeadline,
+  useCreateDeadline,
 } from "./procurement/useProcurement";

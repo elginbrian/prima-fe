@@ -7,6 +7,10 @@ import { GuaranteeItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
+import { vendorIdFromName } from "@/lib/adapters/procurement.mutations";
+
 interface GuaranteeEditModalProps {
   guarantee: GuaranteeItem;
   onClose: () => void;
@@ -14,6 +18,7 @@ interface GuaranteeEditModalProps {
 
 export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalProps) {
   const updateGuarantee = useUpdateGuarantee();
+  const toast = useToast();
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -32,21 +37,35 @@ export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalPro
         onSubmit={e => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          updateGuarantee.mutate({
-            id: guarantee.id,
-            payload: {
-              issuer_type: fd.get("issuerType") as string,
-              issuer: String(fd.get("issuer")),
-              reference_no: String(fd.get("referenceNo")),
-              beneficiary: String(fd.get("beneficiary")),
-              vendor_id: "VND-EDIT",
-              vendor_name: String(fd.get("vendor")),
-              value: Number(String(fd.get("value")).replace(/\D/g, "")),
-              issue_date: String(fd.get("issueDate")),
-              expiry_date: String(fd.get("expiryDate")),
+          const vendorName = String(fd.get("vendor"));
+          const issueDateVal = fd.get("issueDate") ? String(fd.get("issueDate")) + "T00:00:00Z" : undefined;
+          const expiryDateVal = fd.get("expiryDate") ? String(fd.get("expiryDate")) + "T00:00:00Z" : undefined;
+
+          updateGuarantee.mutate(
+            {
+              id: guarantee.id,
+              payload: {
+                issuer_type: fd.get("issuerType") as string,
+                issuer: String(fd.get("issuer")),
+                reference_no: String(fd.get("referenceNo")),
+                beneficiary: String(fd.get("beneficiary")),
+                vendor_id: vendorIdFromName(vendorName),
+                vendor_name: vendorName,
+                value: Number(String(fd.get("value")).replace(/\D/g, "")),
+                issue_date: issueDateVal,
+                expiry_date: expiryDateVal,
+              },
+            },
+            {
+              onSuccess: () => {
+                toast.success("Data jaminan berhasil diperbarui.");
+                onClose();
+              },
+              onError: (err) => {
+                toast.error(getErrorMessage(err, "Gagal memperbarui data jaminan."));
+              },
             }
-          });
-          onClose();
+          );
         }}
       >
         {/* Header */}
@@ -107,7 +126,9 @@ export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalPro
         {/* Footer */}
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 p-6">
           <button type="button" onClick={onClose} className="rounded-lg px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-          <button type="submit" className="rounded-lg bg-[#0a4d8c] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow">Simpan Perbaruan</button>
+          <button type="submit" disabled={updateGuarantee.isPending} className="rounded-lg bg-[#0a4d8c] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:opacity-60 disabled:cursor-not-allowed">
+            {updateGuarantee.isPending ? "Menyimpan..." : "Simpan Perbaruan"}
+          </button>
         </div>
       </form>
     </div>,
