@@ -19,6 +19,11 @@ export interface DeadlineItem {
   overdueReason?: string;
   pausedAt?: string;
   accumulatedPausedDays?: number;
+  isEscalated?: boolean;
+  escalatedAt?: string;
+  escalatedTo?: string;
+  recoveryDate?: string;
+  recoveryPlan?: string;
 }
 
 export type ActionPriority = "High" | "Medium" | "Low";

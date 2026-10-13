@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, AlertTriangle, ShieldAlert } from "lucide-react";
 import { ActionPriority, ActionSource } from "@/types";
 import { ActionFilterBar } from "@/components/widgets/next-action/ActionFilterBar";
 import { ActionStats } from "@/components/widgets/stats/ActionStats";
@@ -9,10 +9,15 @@ import { ActionRow } from "@/components/widgets/next-action/ActionRow";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { useActions } from "@/lib/query/hooks/procurement/useActions";
+import { useEvaluateSla } from "@/lib/query/hooks";
+import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/api/errors";
 import { exportActionsToCsv } from "@/lib/exportUtils";
 
 export default function NextActionPage() {
   const { data: actions = [], isLoading } = useActions();
+  const evaluateSlaMutation = useEvaluateSla();
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<ActionSource | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<ActionPriority | "All">("All");
@@ -20,6 +25,7 @@ export default function NextActionPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sort, setSort] = useState<{ key: "title" | "source" | "assignee" | "dueDate" | "status"; direction: SortDirection }>({ key: "title", direction: null });
 
+  const escalatedCount = actions.filter(d => d.actionType === "Eskalasi" || d.title.includes("[ESKALASI MANAJER]")).length;
   const highCount = actions.filter(d => d.priority === "High").length;
   const mediumCount = actions.filter(d => d.priority === "Medium").length;
   const lowCount = actions.filter(d => d.priority === "Low").length;
@@ -27,6 +33,16 @@ export default function NextActionPage() {
   
   const highPct = totalCount ? (highCount / totalCount) * 100 : 0;
   const mediumPct = totalCount ? (mediumCount / totalCount) * 100 : 0;
+
+  const handleSyncSla = async () => {
+    try {
+      const res = await evaluateSlaMutation.mutateAsync();
+      const d = res.data;
+      toast.success(`Evaluasi SLA Selesai: ${d.total_evaluated} tugas dievaluasi (${d.on_track} On Track, ${d.at_risk} At Risk, ${d.overdue} Overdue, ${d.escalated} Dieskalasi).`);
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Gagal menjalankan sinkronisasi SLA"));
+    }
+  };
 
   const [prevFilters, setPrevFilters] = useState({ searchQuery, sourceFilter, priorityFilter });
   if (searchQuery !== prevFilters.searchQuery || sourceFilter !== prevFilters.sourceFilter || priorityFilter !== prevFilters.priorityFilter) {
@@ -69,6 +85,32 @@ export default function NextActionPage() {
         mediumPct={mediumPct}
       />
 
+      {/* Managerial Escalation Alert Banner */}
+      {escalatedCount > 0 && (
+        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/90 p-4 text-xs shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+              <ShieldAlert size={20} />
+            </div>
+            <div>
+              <p className="font-semibold text-rose-900">
+                Perhatian: Terdapat {escalatedCount} Tindak Lanjut dalam Status Eskalasi Manajerial
+              </p>
+              <p className="text-rose-700">
+                Batas toleransi SLA terlampaui. Tugas-tugas ini memerlukan persetujuan arahan dan pengisian Action Recovery Plan.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPriorityFilter(priorityFilter === "High" ? "All" : "High")}
+            className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 font-medium text-white shadow hover:bg-rose-700 transition-colors"
+          >
+            {priorityFilter === "High" ? "Tampilkan Semua" : "Filter Eskalasi Prioritas"}
+          </button>
+        </div>
+      )}
+
       {/* Search and Filter */}
       <ActionFilterBar 
         searchQuery={searchQuery}
@@ -78,6 +120,8 @@ export default function NextActionPage() {
         priorityFilter={priorityFilter}
         setPriorityFilter={setPriorityFilter}
         onExport={() => exportActionsToCsv(filteredActions)}
+        onSyncSla={handleSyncSla}
+        isSyncingSla={evaluateSlaMutation.isPending}
       />
 
       {/* Actions List (Table Layout) */}

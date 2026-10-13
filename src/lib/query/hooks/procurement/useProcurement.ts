@@ -185,3 +185,37 @@ export function useCreateDeadline() {
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() }),
   });
 }
+
+export function useEvaluateSla() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId?: string) => deadlinesApi.evaluateSla(requestId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
+    },
+  });
+}
+
+export function useEscalateDeadline() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof deadlinesApi.escalate>[1] }) =>
+      deadlinesApi.escalate(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
+    },
+  });
+}
+
+export function useSubmitRecoveryPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof deadlinesApi.submitRecoveryPlan>[1] }) =>
+      deadlinesApi.submitRecoveryPlan(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
+    },
+  });
+}
+

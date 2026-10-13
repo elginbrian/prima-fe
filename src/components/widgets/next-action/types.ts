@@ -12,4 +12,6 @@ export interface ActionFilterBarProps {
   priorityFilter: ActionPriority | "All";
   setPriorityFilter: (val: ActionPriority | "All") => void;
   onExport?: () => void;
+  onSyncSla?: () => void;
+  isSyncingSla?: boolean;
 }

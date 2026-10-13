@@ -19,4 +19,8 @@ export {
   useDeadlines,
   useUpdateDeadline,
   useCreateDeadline,
+  useEvaluateSla,
+  useEscalateDeadline,
+  useSubmitRecoveryPlan,
 } from "./procurement/useProcurement";
+

@@ -64,6 +64,11 @@ export function dtoToDeadline(dto: DeadlineDto): DeadlineItem {
     overdueReason: dto.overdue_reason,
     pausedAt: dto.paused_at,
     accumulatedPausedDays: dto.accumulated_paused_days,
+    isEscalated: dto.is_escalated,
+    escalatedAt: dto.escalated_at,
+    escalatedTo: dto.escalated_to,
+    recoveryDate: dto.recovery_date,
+    recoveryPlan: dto.recovery_plan,
     pic: { id: dto.pic_id, name: dto.pic_name },
     department: { id: dto.department_id, name: dto.department_name },
   };

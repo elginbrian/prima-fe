@@ -186,7 +186,17 @@ export interface ExtractedGuaranteeDto {
   expiry_date?: string;
 }
 
-// ─── Deadline / SLA (Modul D4) ────────────────────────────────────────────
+export interface EvaluateSlaResponseDto {
+  total_evaluated: number;
+  on_track: number;
+  at_risk: number;
+  overdue: number;
+  escalated: number;
+  paused: number;
+  sla_warning_days: number;
+  auto_escalate_days: number;
+  evaluated_at: string;
+}
 
 export interface DeadlineDto {
   id: string;
@@ -206,6 +216,11 @@ export interface DeadlineDto {
   related_id?: string;
   paused_at?: string;
   accumulated_paused_days?: number;
+  is_escalated?: boolean;
+  escalated_at?: string;
+  escalated_to?: string;
+  recovery_date?: string;
+  recovery_plan?: string;
 }
 
 // ─── Endpoint functions ────────────────────────────────────────────────────
@@ -275,4 +290,10 @@ export const deadlinesApi = {
     apiFetch<DeadlineDto>("/deadlines", { method: "POST", body: JSON.stringify(payload) }),
   update: (id: string, payload: Partial<DeadlineDto>) =>
     apiFetch<DeadlineDto>(`/deadlines/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  evaluateSla: (requestId?: string) =>
+    apiFetch<EvaluateSlaResponseDto>(requestId ? `/deadlines/evaluate-sla?request_id=${requestId}` : "/deadlines/evaluate-sla", { method: "POST" }),
+  escalate: (id: string, payload: { escalated_to?: string; reason?: string }) =>
+    apiFetch<DeadlineDto>(`/deadlines/${id}/escalate`, { method: "POST", body: JSON.stringify(payload) }),
+  submitRecoveryPlan: (id: string, payload: { recovery_plan: string; recovery_date: string }) =>
+    apiFetch<DeadlineDto>(`/deadlines/${id}/recovery-plan`, { method: "POST", body: JSON.stringify(payload) }),
 };

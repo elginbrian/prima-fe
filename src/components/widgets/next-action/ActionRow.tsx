@@ -63,8 +63,15 @@ export function ActionRow({ item }: ActionRowProps) {
         onClick={() => setIsExpanded(!isExpanded)}
         className={`transition-colors hover:bg-slate-50 cursor-pointer ${isExpanded ? "bg-slate-50" : ""}`}
       >
-        <td className="px-4 py-3 whitespace-nowrap max-w-[260px]">
-          <div className="font-medium text-slate-800 text-[13px] truncate">{item.title}</div>
+        <td className="px-4 py-3 whitespace-nowrap max-w-[280px]">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-800 text-[13px] truncate">{item.title}</span>
+            {linkedDeadline?.isEscalated && (
+              <span className="inline-flex shrink-0 items-center rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-700">
+                🚨 ESKALASI
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1 text-[11px] text-[#0a4d8c] mt-0.5">
             <ExternalLink size={10} />
             <span className="truncate">{item.referenceId}</span>

@@ -76,19 +76,23 @@ export function actionForGuarantee(guarantee: GuaranteeItem): ActionItem | null 
 export function actionForDeadline(deadline: DeadlineItem): ActionItem | null {
   if (deadline.status === "Selesai") return null;
 
+  const isEsc = Boolean(deadline.isEscalated);
+
   return {
     id: `ACT-DL-${deadline.id}`,
     requestId: deadline.requestId,
     referenceId: deadline.id,
-    title: deadline.nextAction ?? `Tindak Lanjut SLA: ${deadline.taskName}`,
+    title: isEsc ? `🚨 [ESKALASI MANAJER] ${deadline.taskName}` : (deadline.nextAction ?? `Tindak Lanjut SLA: ${deadline.taskName}`),
     source: "Deadline",
-    priority: deadline.urgencyLevel === "Critical" || deadline.status === "Overdue" ? "High" : "Medium",
+    priority: isEsc || deadline.status === "Overdue" || deadline.urgencyLevel === "Critical" ? "High" : "Medium",
     dateAdded: new Date().toISOString().split("T")[0],
     dueDate: deadline.targetDate,
-    description: `SLA "${deadline.taskName}" pada milestone ${deadline.milestone} perlu dipantau oleh ${deadline.pic.name}.`,
+    description: isEsc
+      ? `Task dieskalasi ke ${deadline.escalatedTo || "Manager Pengadaan"}. Keterlambatan SLA melampaui batas toleransi. Input recovery plan diperlukan.`
+      : `SLA "${deadline.taskName}" pada milestone ${deadline.milestone} perlu dipantau oleh ${deadline.pic.name}.`,
     assignee: deadline.pic,
     status: "Pending",
-    actionType: deadline.status === "Overdue" ? "Eskalasi" : "Follow Up",
+    actionType: isEsc || deadline.status === "Overdue" ? "Eskalasi" : "Follow Up",
   };
 }
 
