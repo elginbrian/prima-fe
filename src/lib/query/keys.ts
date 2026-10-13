@@ -22,6 +22,7 @@ export const queryKeys = {
     detail: (id: string) => ["procurement", id] as const,
     activities: (id: string) => ["procurement", id, "activities"] as const,
     gatekeeper: (id: string) => ["procurement", id, "gatekeeper"] as const,
+    analytics: () => ["procurement", "analytics"] as const,
   },
   documents: {
     all: () => ["documents"] as const,

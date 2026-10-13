@@ -18,6 +18,12 @@ export type {
   MoveStagePaylod,
   MoveStepPayload,
   UpdateOperationalStatusPayload,
+  AnalyticsOverviewDto,
+  AnalyticsSummaryDto,
+  DepartmentComplianceDto,
+  BottleneckDto,
+  VendorRiskDto,
+  DocumentStatsDto,
 } from "./procurement.api";
 
 export { usersApi } from "./users.api";

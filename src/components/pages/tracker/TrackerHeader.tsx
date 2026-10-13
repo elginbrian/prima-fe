@@ -1,4 +1,4 @@
-import { Search, Filter, LayoutGrid, LayoutList } from "lucide-react";
+import { Search, Filter, LayoutGrid, LayoutList, BarChart3 } from "lucide-react";
 import type { ProcurementOperationalStatus } from "@/types";
 
 import { TrackerHeaderProps } from "./types";
@@ -51,6 +51,7 @@ export function TrackerHeader({
         <div className="flex shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
           <button type="button" onClick={() => setViewMode("kanban")} title="Tampilan Kanban" className={`p-2 transition-colors ${viewMode === "kanban" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutGrid size={18} /></button>
           <button type="button" onClick={() => setViewMode("list")} title="Tampilan List" className={`border-l border-slate-200 p-2 transition-colors ${viewMode === "list" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutList size={18} /></button>
+          <button type="button" onClick={() => setViewMode("analytics")} title="Eksekutif Analitik & SLA Bottleneck" className={`border-l border-slate-200 p-2 transition-colors ${viewMode === "analytics" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><BarChart3 size={18} /></button>
         </div>
         {onExport && (
           <button

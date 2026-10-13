@@ -116,6 +116,59 @@ export interface UpdateOperationalStatusPayload {
   reason?: string;
 }
 
+// ─── Analytics & Intelligence DTOs (Fitur 4.3) ─────────────────────────────
+
+export interface AnalyticsSummaryDto {
+  total_procurements: number;
+  total_budget: number;
+  overall_compliance_rate: number;
+  total_deadlines: number;
+  overdue_deadlines: number;
+  escalated_deadlines: number;
+}
+
+export interface DepartmentComplianceDto {
+  department: string;
+  total_deadlines: number;
+  compliant: number;
+  overdue: number;
+  compliance_rate: number;
+}
+
+export interface BottleneckDto {
+  milestone: string;
+  overdue_count: number;
+  severity: "High" | "Medium" | "Low";
+}
+
+export interface VendorRiskDto {
+  vendor_name: string;
+  total_guarantees: number;
+  total_value: number;
+  expiring_soon: number;
+  claimed: number;
+  risk_level: "High" | "Medium" | "Low";
+}
+
+export interface DocumentStatsDto {
+  total: number;
+  verified: number;
+  with_notes: number;
+  follow_up: number;
+}
+
+export interface AnalyticsOverviewDto {
+  summary: AnalyticsSummaryDto;
+  deadline_stats: Record<string, number>;
+  department_compliance: DepartmentComplianceDto[];
+  bottlenecks: BottleneckDto[];
+  vendor_risk_index: VendorRiskDto[];
+  methods_breakdown: Record<string, number>;
+  status_breakdown: Record<string, number>;
+  stage_breakdown: Record<string, number>;
+  document_stats: DocumentStatsDto;
+}
+
 // ─── Document (Modul D1) ──────────────────────────────────────────────────
 
 export interface DocumentDto {
@@ -245,6 +298,8 @@ export const procurementApi = {
     apiFetch<GatekeeperCheckDto>(`/procurement/${id}/gatekeeper`),
   assignPic: (id: string, payload: AssignPicPayload) =>
     apiFetch<ProcurementRequestDto>(`/procurement/${id}/assign-pic`, { method: "PATCH", body: JSON.stringify(payload) }),
+  getAnalytics: () =>
+    apiFetch<AnalyticsOverviewDto>("/procurement/analytics/overview"),
 };
 
 export const documentsApi = {

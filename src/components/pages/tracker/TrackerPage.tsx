@@ -11,6 +11,7 @@ import { TrackerKanbanBoard } from "./TrackerKanbanBoard";
 import { TrackerDeadlines } from "./TrackerDeadlines";
 import { TrackerDetailModal } from "./TrackerDetailModal";
 import { TrackerStatsPanel } from "./TrackerStatsPanel";
+import { TrackerAnalyticsView } from "./TrackerAnalyticsView";
 import { DeadlineEditor, DeadlineCreator, AddRequestModal } from "./TrackerModals";
 import {
   useProcurements,
@@ -65,7 +66,7 @@ export default function TrackerPage() {
   const [addingDeadlineRequestId, setAddingDeadlineRequestId] = useState<string | null>(null);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [showFullTimeline, setShowFullTimeline] = useState(false);
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "list" | "analytics">("kanban");
   const [statusReasonDraft, setStatusReasonDraft] = useState("");
 
   const openRequestDetail = (requestId: string) => {
@@ -202,6 +203,10 @@ export default function TrackerPage() {
           openRequestDetail={openRequestDetail}
           onAddRequest={() => setShowAddModal(true)}
         />
+      )}
+
+      {viewMode === "analytics" && (
+        <TrackerAnalyticsView />
       )}
 
       <TrackerDeadlines 

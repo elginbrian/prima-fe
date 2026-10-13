@@ -23,8 +23,8 @@ export interface TrackerHeaderProps {
   setDepartmentFilter: (val: string) => void;
   operationalStatusFilter: ProcurementOperationalStatus | "All";
   setOperationalStatusFilter: (val: ProcurementOperationalStatus | "All") => void;
-  viewMode: "kanban" | "list";
-  setViewMode: (val: "kanban" | "list") => void;
+  viewMode: "kanban" | "list" | "analytics";
+  setViewMode: (val: "kanban" | "list" | "analytics") => void;
   onExport?: () => void;
 }
 

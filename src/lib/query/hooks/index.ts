@@ -24,5 +24,6 @@ export {
   useEvaluateSla,
   useEscalateDeadline,
   useSubmitRecoveryPlan,
+  useProcurementAnalytics,
 } from "./procurement/useProcurement";
 

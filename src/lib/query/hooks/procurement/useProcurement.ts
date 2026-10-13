@@ -58,6 +58,15 @@ export function useProcurementActivities(id: string) {
     enabled: !!id,
   });
 }
+export function useProcurementAnalytics() {
+  return useQuery({
+    queryKey: queryKeys.procurement.analytics(),
+    queryFn: async () => {
+      const r = await procurementApi.getAnalytics();
+      return r.data;
+    },
+  });
+}
 
 export function useProcurementGatekeeper(id: string) {
   return useQuery({
