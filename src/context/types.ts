@@ -23,6 +23,8 @@ export type ProcurementAction =
   | { type: "ADD_GUARANTEE"; guarantee: GuaranteeItem }
   | { type: "UPDATE_GUARANTEE"; id: string; changes: Partial<GuaranteeItem> }
   | { type: "ADD_ATTACHMENT"; attachment: ProcurementAttachment }
+  | { type: "INIT_ATTACHMENTS"; attachments: ProcurementAttachment[] }
+  | { type: "DELETE_ATTACHMENT"; id: string }
   | { type: "ADD_DEADLINE"; deadline: DeadlineItem }
   | { type: "UPDATE_DEADLINE"; id: string; changes: Partial<DeadlineItem> }
   | { type: "UPDATE_DEADLINE_STATUS"; id: string; status: "On Track" | "At Risk" | "Overdue" | "Selesai" }

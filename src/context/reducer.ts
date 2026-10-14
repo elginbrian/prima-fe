@@ -349,7 +349,7 @@ export function procurementReducer(
     case "ADD_ATTACHMENT":
       return {
         ...state,
-        attachments: [action.attachment, ...state.attachments],
+        attachments: [action.attachment, ...state.attachments.filter(a => a.id !== action.attachment.id)],
         history: [
           historyItem(
             action.attachment.requestId,
@@ -363,6 +363,18 @@ export function procurementReducer(
           ),
           ...state.history,
         ],
+      };
+
+    case "INIT_ATTACHMENTS":
+      return {
+        ...state,
+        attachments: action.attachments,
+      };
+
+    case "DELETE_ATTACHMENT":
+      return {
+        ...state,
+        attachments: state.attachments.filter(a => a.id !== action.id),
       };
 
     case "ADD_DEADLINE": {

@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FileText, Inbox, X } from "lucide-react";
+import { FileText, Inbox, X, Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 import { GuaranteeItem, GuaranteeStatus } from "@/types";
 import { GuaranteeFilterBar } from "@/components/widgets/guarantees/GuaranteeFilterBar";
 import { GuaranteeStats } from "@/components/widgets/stats/GuaranteeStats";
@@ -18,7 +19,8 @@ import { TableSkeleton } from "@/components/ui";
 
 export default function GuaranteesPage() {
   const { data: requests = [] } = useProcurements();
-  const { state } = useProcurement();
+  const { state, deleteAttachment } = useProcurement();
+  const toast = useToast();
   const { data: guarantees = [], isLoading: isLoadingGuarantees } = useGuarantees();
   const updateGuaranteeMutation = useUpdateGuarantee();
   const [searchQuery, setSearchQuery] = useState("");
@@ -171,10 +173,52 @@ export default function GuaranteesPage() {
           <div><h2 className="text-sm font-bold text-slate-800">Dokumen Pendukung per Pekerjaan</h2><p className="mt-1 text-xs text-slate-500">File TKDN dan dokumen lain yang disimpan tanpa ekstraksi OCR.</p></div>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{state.attachments.length} dokumen</span>
         </div>
-        {state.attachments.length > 0 ? <div className="divide-y divide-slate-100">{state.attachments.map(attachment => {
-          const request = requests.find(item => item.id === attachment.requestId);
-          return <div key={attachment.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-3"><FileText size={18} className="shrink-0 text-[#0a4d8c]" /><div className="min-w-0"><div className="truncate text-sm font-semibold text-slate-800">{attachment.fileUrl ? attachment.fileUrl.split('/').pop() : "File belum tersedia"}</div><div className="mt-1 text-xs text-slate-500">{request?.title ?? attachment.requestId} · {attachment.type} · {attachment.uploadedAt}</div></div></div><span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Tanpa ekstraksi</span></div>;
-        })}</div> : <div className="px-5 py-10 text-center text-sm text-slate-500">Belum ada dokumen pendukung yang disimpan.</div>}
+        {state.attachments.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {state.attachments.map((attachment) => {
+              const request = requests.find((item) => item.id === attachment.requestId);
+              const displayName = attachment.name || (attachment.fileUrl ? attachment.fileUrl.split("/").pop() : "Dokumen Pendukung");
+              return (
+                <div
+                  key={attachment.id}
+                  className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/60 transition-colors"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileText size={18} className="shrink-0 text-[#0a4d8c]" />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-800">
+                        {displayName}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {request?.title ?? attachment.requestId} · {attachment.type} · {attachment.uploadedAt}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                      Tanpa ekstraksi
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteAttachment(attachment.id);
+                        toast.success("Dokumen pendukung berhasil dihapus.");
+                      }}
+                      className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      title="Hapus dokumen pendukung"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="px-5 py-10 text-center text-sm text-slate-500">
+            Belum ada dokumen pendukung yang disimpan.
+          </div>
+        )}
       </section>
       {editingGuarantee && (
         <GuaranteeEditModal

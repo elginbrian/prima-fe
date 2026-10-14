@@ -295,12 +295,13 @@ export default function GuaranteeUploadPage() {
                     id: `ATT-${Date.now()}`,
                     requestId,
                     type: documentType as ProcurementAttachmentType,
-                    name: documentType,
+                    name: file.name,
                     uploadedAt: new Date().toISOString().split("T")[0],
-                    uploadedBy: { id: "ADMIN", name: "P3 - Admin" },
+                    uploadedBy: { id: currentUser?.id ?? "ADMIN", name: currentUser?.name ?? "P3 - Admin" },
                     fileUrl: "/mock-docs/" + file.name,
                     mimeType: file.type,
                   });
+                  toast.success("Dokumen pendukung berhasil disimpan.");
                   router.push('/dashboard/guarantees');
                   return;
                 }
