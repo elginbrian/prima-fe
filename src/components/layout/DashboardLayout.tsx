@@ -74,7 +74,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         aria-hidden="true"
       />
 
-      <SidebarNav />
+      <SidebarNav onLogout={logout} />
 
       <div className="flex min-w-0 flex-1 flex-col transition-all duration-300">
         <div>

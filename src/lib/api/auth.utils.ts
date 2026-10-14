@@ -34,8 +34,9 @@ export function clearSession(): void {
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
 
-  // Expire the cookie immediately
-  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
+  // Expire the cookies immediately across browsers
+  document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax`;
+  document.cookie = `${REFRESH_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax`;
 }
 
 export function getAccessToken(): string | null {

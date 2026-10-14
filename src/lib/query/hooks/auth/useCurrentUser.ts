@@ -9,7 +9,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
 import { getStoredUser, getAccessToken, clearSession } from "@/lib/api/auth.utils";
@@ -42,8 +42,10 @@ export function useCurrentUser() {
  * useLogout — clears tokens and redirects to /login
  */
 export function useLogout() {
+  const queryClient = useQueryClient();
   return () => {
     clearSession();
+    queryClient.clear();
     window.location.href = "/login";
   };
 }

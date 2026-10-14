@@ -16,6 +16,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { LogoutModal } from "@/components/ui/LogoutModal";
+import { useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
 
 const navItems: any[] = [
   { key: "documents", label: "Dokumen", icon: FileSearch },
@@ -26,12 +28,19 @@ const navItems: any[] = [
   { key: "settings", label: "Pengaturan", icon: Settings },
 ];
 
-export function SidebarNav() {
+interface SidebarNavProps {
+  onLogout?: () => void;
+}
+
+export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { data: notifications = [] } = useNotifications();
   const { data: actions = [] } = useActions();
   const pathname = usePathname();
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const defaultLogout = useLogout();
+  const handleLogout = onLogout ?? defaultLogout;
   
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const pendingActionsCount = actions.filter(a => a.status === 'Pending').length;
@@ -166,18 +175,30 @@ export function SidebarNav() {
       </nav>
 
       <div className="mt-auto border-t border-slate-200 px-3 py-4">
-        <Link
-          href="/login"
+        <button
+          type="button"
+          onClick={() => {
+            setMobileOpen(false);
+            setLogoutOpen(true);
+          }}
           className={cn(
             "flex w-full items-center justify-center gap-2 rounded-[12px] border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600",
             !effectiveCollapsed && "justify-start"
           )}
-          onClick={() => setMobileOpen(false)}
         >
           <LogOut size={16} />
           {!effectiveCollapsed && <span>Keluar</span>}
-        </Link>
+        </button>
       </div>
+
+      <LogoutModal
+        isOpen={logoutOpen}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={() => {
+          setLogoutOpen(false);
+          handleLogout();
+        }}
+      />
     </aside>
   );
 }
