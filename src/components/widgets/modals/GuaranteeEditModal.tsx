@@ -8,6 +8,7 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
 import { vendorIdFromName } from "@/lib/adapters/procurement.mutations";
 
@@ -126,8 +127,15 @@ export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalPro
         {/* Footer */}
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 p-6">
           <button type="button" onClick={onClose} className="rounded-lg px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-          <button type="submit" disabled={updateGuarantee.isPending} className="rounded-lg bg-[#0a4d8c] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:opacity-60 disabled:cursor-not-allowed">
-            {updateGuarantee.isPending ? "Menyimpan..." : "Simpan Perbaruan"}
+          <button type="submit" disabled={updateGuarantee.isPending} className="inline-flex items-center gap-2 rounded-lg bg-[#0a4d8c] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:opacity-60 disabled:cursor-not-allowed">
+            {updateGuarantee.isPending ? (
+              <>
+                <Spinner size="sm" className="border-white border-t-transparent" />
+                <span>Menyimpan...</span>
+              </>
+            ) : (
+              "Simpan Perbaruan"
+            )}
           </button>
         </div>
       </form>

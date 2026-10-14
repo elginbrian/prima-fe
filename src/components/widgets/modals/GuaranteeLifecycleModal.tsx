@@ -19,6 +19,7 @@ import {
   useClaimGuarantee,
 } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
 
 export interface GuaranteeLifecycleModalProps {
@@ -283,8 +284,17 @@ export function GuaranteeLifecycleModal({
                   disabled={isSubmitting}
                   className="inline-flex items-center gap-2 rounded-lg bg-[#0a4d8c] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#083c6d] transition-all disabled:opacity-50"
                 >
-                  <RotateCw size={13} className={isSubmitting ? "animate-spin" : ""} />
-                  {isSubmitting ? "Menyimpan..." : "Simpan Perpanjangan"}
+                  {isSubmitting ? (
+                    <>
+                      <Spinner size="xs" className="border-white border-t-transparent" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCw size={13} />
+                      <span>Simpan Perpanjangan</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -336,8 +346,17 @@ export function GuaranteeLifecycleModal({
                   disabled={isSubmitting}
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-all disabled:opacity-50"
                 >
-                  <FileCheck2 size={14} />
-                  {isSubmitting ? "Memproses..." : "Konfirmasi Pengembalian"}
+                  {isSubmitting ? (
+                    <>
+                      <Spinner size="xs" className="border-white border-t-transparent" />
+                      <span>Memproses...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileCheck2 size={14} />
+                      <span>Konfirmasi Pengembalian</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -407,8 +426,17 @@ export function GuaranteeLifecycleModal({
                   disabled={isSubmitting}
                   className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-red-700 transition-all disabled:opacity-50"
                 >
-                  <ShieldAlert size={14} />
-                  {isSubmitting ? "Mengajukan Klaim..." : "Ajukan Klaim Resmi"}
+                  {isSubmitting ? (
+                    <>
+                      <Spinner size="xs" className="border-white border-t-transparent" />
+                      <span>Mengajukan Klaim...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert size={14} />
+                      <span>Ajukan Klaim Resmi</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

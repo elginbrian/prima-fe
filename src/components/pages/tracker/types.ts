@@ -56,6 +56,7 @@ export interface TrackerDeadlinesProps {
   requests: import("@/types").ProcurementRequest[];
   openRequestDetail: (id: string) => void;
   setEditingDeadlineId: (id: string) => void;
+  isLoading?: boolean;
 }
 
 export interface TrackerDetailModalProps {

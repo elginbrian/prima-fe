@@ -1,13 +1,15 @@
 import React from "react";
 import type { HistoryItem } from "@/types";
 import type { ProcurementActivityDto } from "@/lib/api/procurement.api";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 interface ActivityLogProps {
   activities?: ProcurementActivityDto[];
   history: HistoryItem[];
+  isLoading?: boolean;
 }
 
-export function ActivityLog({ activities, history }: ActivityLogProps) {
+export function ActivityLog({ activities, history, isLoading }: ActivityLogProps) {
   const totalCount = activities ? activities.length : history.length;
 
   return (
@@ -20,11 +22,20 @@ export function ActivityLog({ activities, history }: ActivityLogProps) {
           </p>
         </div>
         <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-[#0a4d8c]">
-          {totalCount} aktivitas
+          {isLoading ? "Memuat..." : `${totalCount} aktivitas`}
         </span>
       </div>
 
-      {activities && activities.length > 0 ? (
+      {isLoading ? (
+        <div className="relative mt-4 space-y-4 border-l-2 border-slate-200 pl-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-1.5 py-1">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-64" />
+            </div>
+          ))}
+        </div>
+      ) : activities && activities.length > 0 ? (
         <div className="relative mt-4 space-y-4 border-l-2 border-slate-200 pl-5">
           {activities.map((act) => {
             const actionBadge =

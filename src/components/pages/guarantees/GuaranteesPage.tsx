@@ -14,12 +14,13 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { useGuarantees, useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import { GuaranteeEditModal } from "@/components/widgets/modals/GuaranteeEditModal";
 import { exportGuaranteesToCsv } from "@/lib/exportUtils";
-
+import { TableSkeleton } from "@/components/ui";
 
 export default function GuaranteesPage() {
   const { data: requests = [] } = useProcurements();
   const { state } = useProcurement();
-  const { data: guarantees = [] } = useGuarantees(); const updateGuaranteeMutation = useUpdateGuarantee();
+  const { data: guarantees = [], isLoading: isLoadingGuarantees } = useGuarantees();
+  const updateGuaranteeMutation = useUpdateGuarantee();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<GuaranteeStatus | "All">("All");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -129,7 +130,13 @@ export default function GuaranteesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {paginatedGuarantees.length > 0 ? (
+              {isLoadingGuarantees ? (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <TableSkeleton rows={5} columns={7} />
+                  </td>
+                </tr>
+              ) : paginatedGuarantees.length > 0 ? (
                 paginatedGuarantees.map((group) => (
                   <GuaranteeGroupRow key={group.request.id} request={group.request} guarantees={group.guarantees} onEdit={setEditingGuarantee} />
                 ))

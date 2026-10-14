@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useDocuments, useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner, Skeleton } from "@/components/ui";
 
 export default function DocumentResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
   const { state, updateDocumentStatus } = useProcurement();
-  const { data: documents = [] } = useDocuments();
+  const { data: documents = [], isLoading } = useDocuments();
   const updateDocMutation = useUpdateDocumentStatus();
 
   const docId = searchParams.get("id");
@@ -30,6 +31,37 @@ export default function DocumentResultPage() {
     }
     router.push('/dashboard/documents');
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-8 w-52 rounded-lg" />
+          <div className="flex gap-3">
+            <Skeleton className="h-9 w-32 rounded-lg" />
+            <Skeleton className="h-9 w-44 rounded-lg" />
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col lg:flex-row flex-1 min-h-[500px]">
+          <div className="w-full lg:w-[45%] bg-slate-50 border-r border-slate-200 p-6 space-y-4">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-[380px] w-full rounded-xl" />
+          </div>
+          <div className="w-full lg:w-[55%] p-6 space-y-6">
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-16 w-full rounded-lg" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
@@ -51,9 +83,16 @@ export default function DocumentResultPage() {
           <button 
             onClick={handleFollowUp}
             disabled={updateDocMutation.isPending}
-            className="px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
           >
-            {updateDocMutation.isPending ? "Memproses..." : "Tindak Lanjut (Kirim ke FPP)"}
+            {updateDocMutation.isPending ? (
+              <>
+                <Spinner size="xs" className="border-white border-t-transparent" />
+                <span>Memproses...</span>
+              </>
+            ) : (
+              "Tindak Lanjut (Kirim ke FPP)"
+            )}
           </button>
         </div>
       </div>

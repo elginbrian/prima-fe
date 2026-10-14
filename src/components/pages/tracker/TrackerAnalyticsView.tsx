@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { BarChart3, AlertTriangle, Clock, RefreshCw } from "lucide-react";
 import { useProcurementAnalytics, useEvaluateSla } from "@/lib/query/hooks/procurement/useProcurement";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui/Spinner";
 
 import { AnalyticsKpiCards } from "./analytics/AnalyticsKpiCards";
 import { BottleneckWidget } from "./analytics/BottleneckWidget";
@@ -38,7 +39,7 @@ export function TrackerAnalyticsView() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-16 bg-white rounded-xl border border-slate-200 text-center shadow-sm">
-        <div className="w-10 h-10 border-4 border-[#0a4d8c] border-t-transparent rounded-full animate-spin mb-4" />
+        <Spinner size="xl" className="mb-4" />
         <p className="text-sm font-semibold text-slate-700">
           Mengkalkulasi Analitik Eksekutif & SLA Intelligence...
         </p>
@@ -110,10 +111,17 @@ export function TrackerAnalyticsView() {
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold shadow transition-all active:scale-95 disabled:opacity-50"
             title="Jalankan Evaluasi SLA Harian Otomatis"
           >
-            <Clock size={14} />
-            <span>
-              {evaluateSlaMutation.isPending ? "Mengevaluasi..." : "Sinkronisasi SLA Harian"}
-            </span>
+            {evaluateSlaMutation.isPending ? (
+              <>
+                <Spinner size="xs" className="border-white border-t-transparent" />
+                <span>Mengevaluasi...</span>
+              </>
+            ) : (
+              <>
+                <Clock size={14} />
+                <span>Sinkronisasi SLA Harian</span>
+              </>
+            )}
           </button>
         </div>
       </div>

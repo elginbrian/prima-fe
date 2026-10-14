@@ -1,6 +1,7 @@
 import { ShieldAlert } from "lucide-react";
 import type { ProcurementStep } from "@/types";
 import type { GatekeeperCheckDto } from "@/lib/api/procurement.api";
+import { Spinner } from "@/components/ui";
 
 interface ManagerOverrideModalProps {
   pendingStep: ProcurementStep;
@@ -86,9 +87,10 @@ export function ManagerOverrideModal({
             type="button"
             disabled={isOverriding || !overrideReason.trim()}
             onClick={onConfirm}
-            className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50"
           >
-            {isOverriding ? "Menyimpan..." : "Konfirmasi Override & Lanjutkan"}
+            {isOverriding && <Spinner size="xs" color="white" />}
+            <span>{isOverriding ? "Menyimpan..." : "Konfirmasi Override & Lanjutkan"}</span>
           </button>
         </div>
       </div>

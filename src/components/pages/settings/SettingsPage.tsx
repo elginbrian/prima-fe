@@ -9,6 +9,7 @@ import { SystemTab } from "./tabs/SystemTab";
 import { SystemSettings } from "@/types";
 
 import { useToast } from "@/components/ui/Toast";
+import { Spinner, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api/errors";
 
 export default function SettingsPage() {
@@ -54,7 +55,23 @@ export default function SettingsPage() {
   ];
 
   if (isLoading || !formData) {
-    return <div className="p-8 text-center text-slate-500">Memuat pengaturan...</div>;
+    return (
+      <div className="space-y-6 pb-12 animate-in fade-in duration-200">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-10 space-y-6">
+          <div className="flex gap-4 border-b border-slate-100 pb-4">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+          <div className="space-y-4 max-w-xl">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -88,9 +105,10 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0a4d8c] px-12 py-3 text-sm font-bold tracking-wide text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0a4d8c] px-12 py-3 text-sm font-bold tracking-wide text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
-                {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                {isSaving && <Spinner size="sm" color="white" />}
+                <span>{isSaving ? "Menyimpan..." : "Simpan Perubahan"}</span>
               </button>
             </div>
           </div>

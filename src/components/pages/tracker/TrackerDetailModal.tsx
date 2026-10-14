@@ -54,7 +54,7 @@ export function TrackerDetailModal({
   setEditingDeadlineId,
 }: TrackerDetailModalProps) {
   const { data: detailData } = useProcurement(selectedRequestId);
-  const { data: activitiesData } = useProcurementActivities(selectedRequestId || "");
+  const { data: activitiesData, isLoading: isLoadingActivities } = useProcurementActivities(selectedRequestId || "");
   const { data: gatekeeperData } = useProcurementGatekeeper(selectedRequestId || "");
   const { data: usersList } = useUsers();
   const assignPicMutation = useAssignPic();
@@ -360,7 +360,7 @@ export function TrackerDetailModal({
           />
 
           {/* Activity Log Section */}
-          <ActivityLog activities={activitiesData} history={history} />
+          <ActivityLog activities={activitiesData} history={history} isLoading={isLoadingActivities} />
         </div>
       </div>
     </div>,

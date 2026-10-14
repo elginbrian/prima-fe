@@ -7,6 +7,7 @@ import { DocumentItem, DocumentStatus } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useUpdateDocumentStatus, useDocumentRevisions, useCreateDocumentRevision } from "@/lib/query/hooks";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
@@ -265,9 +266,16 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
                 type="button"
                 onClick={handleCreateRevision}
                 disabled={isSubmittingRevision || !revisionNotes.trim()}
-                className="w-full rounded-lg bg-amber-600 py-2.5 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 py-2.5 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
               >
-                {isSubmittingRevision ? "Mengunggah Revisi..." : `Kirim Revisi Dokumen v${(doc.versionNumber ?? 1) + 1}`}
+                {isSubmittingRevision ? (
+                  <>
+                    <Spinner size="xs" className="border-white border-t-transparent" />
+                    <span>Mengunggah Revisi...</span>
+                  </>
+                ) : (
+                  `Kirim Revisi Dokumen v${(doc.versionNumber ?? 1) + 1}`
+                )}
               </button>
             </div>
           )}
@@ -294,8 +302,15 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
           </div>
           <div className="flex gap-2.5">
             <button type="button" onClick={onClose} disabled={updateDocMutation.isPending} className="rounded-lg px-3.5 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200/50 disabled:opacity-50">Batal</button>
-            <button type="button" onClick={handleSave} disabled={updateDocMutation.isPending} className="rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] disabled:opacity-50">
-              {updateDocMutation.isPending ? "Menyimpan..." : "Simpan Status"}
+            <button type="button" onClick={handleSave} disabled={updateDocMutation.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] disabled:opacity-50">
+              {updateDocMutation.isPending ? (
+                <>
+                  <Spinner size="xs" className="border-white border-t-transparent" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                "Simpan Status"
+              )}
             </button>
           </div>
         </div>

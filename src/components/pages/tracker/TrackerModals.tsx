@@ -4,6 +4,7 @@ import { X, PlusCircle, AlertCircle } from "lucide-react";
 import { DeadlineItem, ProcurementStep, BaseUser, Department } from "@/types";
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { parseRupiah, type AddRequestFormValues } from "@/lib/adapters/procurement.mutations";
+import { Spinner } from "@/components/ui";
 
 const DEPARTMENT_OPTIONS = [
   { id: "DEPT-IT", name: "IT Infrastructure" },
@@ -94,7 +95,7 @@ export function DeadlineEditor({ deadline, onClose, onSave, isSaving = false, er
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
           {(formError || errorMessage) && <p role="alert" className="mr-auto self-center text-xs font-semibold text-red-600">{formError || errorMessage}</p>}
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-          <button type="submit" disabled={isSaving} className="rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Menyimpan..." : "Simpan SLA"}</button>
+          <button type="submit" disabled={isSaving} className="flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">{isSaving && <Spinner size="xs" color="white" />}<span>{isSaving ? "Menyimpan..." : "Simpan SLA"}</span></button>
         </div>
       </form>
     </div>
@@ -151,7 +152,7 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave, i
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
           {(formError || errorMessage) && <p role="alert" className="mr-auto self-center text-xs font-semibold text-red-600">{formError || errorMessage}</p>}
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200/50">Batal</button>
-          <button type="submit" disabled={isSaving} className="rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Menyimpan..." : "Simpan SLA"}</button>
+          <button type="submit" disabled={isSaving} className="flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] hover:shadow disabled:cursor-not-allowed disabled:opacity-60">{isSaving && <Spinner size="xs" color="white" />}<span>{isSaving ? "Menyimpan..." : "Simpan SLA"}</span></button>
         </div>
       </form>
     </div>

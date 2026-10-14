@@ -7,6 +7,7 @@ import { DeadlineItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useUpdateDeadline, useProcurements, useEscalateDeadline, useSubmitRecoveryPlan } from "@/lib/query/hooks";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
 
 interface SLAActionModalProps {
@@ -230,10 +231,19 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                     type="button"
                     onClick={handleSaveRecoveryPlan}
                     disabled={isSubmittingRecovery}
-                    className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors disabled:opacity-50"
                   >
-                    <Send size={12} />
-                    <span>{isSubmittingRecovery ? "Menyimpan..." : "Simpan Plan"}</span>
+                    {isSubmittingRecovery ? (
+                      <>
+                        <Spinner size="xs" className="border-white border-t-transparent" />
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={12} />
+                        <span>Simpan Plan</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -283,8 +293,17 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                   disabled={escalateDeadline.isPending}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow hover:bg-amber-700 disabled:opacity-50"
                 >
-                  <ShieldAlert size={13} />
-                  <span>{escalateDeadline.isPending ? "Mengirim..." : "Kirim ke Manajer"}</span>
+                  {escalateDeadline.isPending ? (
+                    <>
+                      <Spinner size="xs" className="border-white border-t-transparent" />
+                      <span>Mengirim...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert size={13} />
+                      <span>Kirim ke Manajer</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -345,8 +364,17 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                 disabled={updateDeadline.isPending}
                 className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
               >
-                <CheckCircle2 size={14} />
-                {updateDeadline.isPending ? "Menyimpan..." : "Tandai Selesai"}
+                {updateDeadline.isPending ? (
+                  <>
+                    <Spinner size="xs" className="border-white border-t-transparent" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={14} />
+                    <span>Tandai Selesai</span>
+                  </>
+                )}
               </button>
             )}
             {deadline.status === "Selesai" && (

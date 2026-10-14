@@ -12,12 +12,15 @@ import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { useProcurement } from "@/context/ProcurementContext";
 import { exportDocumentsToCsv } from "@/lib/exportUtils";
+import { useDocuments } from "@/lib/query/hooks/procurement/useProcurement";
+import { TableSkeleton } from "@/components/ui";
 
 
 export default function DocumentsPage() {
   const router = useRouter();
   const { state } = useProcurement();
-  const documents = state.documents;
+  const { data: serverDocs, isLoading: isLoadingDocs } = useDocuments();
+  const documents = serverDocs && serverDocs.length > 0 ? serverDocs : state.documents;
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | "All">("All");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -190,7 +193,13 @@ export default function DocumentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {paginatedDocuments.length > 0 ? (
+              {isLoadingDocs ? (
+                <tr>
+                  <td colSpan={5} className="p-0">
+                    <TableSkeleton rows={5} columns={5} />
+                  </td>
+                </tr>
+              ) : paginatedDocuments.length > 0 ? (
                 paginatedDocuments.map((group) => (
                   <DocumentGroupRow key={group.request.id} request={group.request} documents={group.documents} />
                 ))

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bell, CheckCircle2, AlertCircle, FileText, Clock, Settings, Search, CheckSquare } from "lucide-react";
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/query/hooks/procurement/useNotifications";
 import type { NotificationType, NotificationItem } from "@/types";
+import { Skeleton } from "@/components/ui";
 
 export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useNotifications();
@@ -100,8 +101,19 @@ export default function NotificationsPage() {
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="divide-y divide-slate-100 bg-white">
           {isLoading ? (
-            <div className="flex justify-center p-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1d4ed8]/20 border-t-[#1d4ed8]" />
+            <div className="divide-y divide-slate-100">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="flex gap-4 px-6 py-4 sm:px-8 animate-in fade-in duration-200">
+                  <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                    <Skeleton className="h-3 w-full max-w-md" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">

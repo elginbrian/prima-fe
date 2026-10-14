@@ -11,6 +11,7 @@ import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } fr
 import { useActions } from "@/lib/query/hooks/procurement/useActions";
 import { useEvaluateSla } from "@/lib/query/hooks";
 import { useToast } from "@/components/ui/Toast";
+import { TableSkeleton } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api/errors";
 import { exportActionsToCsv } from "@/lib/exportUtils";
 
@@ -137,7 +138,14 @@ export default function NextActionPage() {
                 <SortableTableHeader label="Status" direction={sort.key === "status" ? sort.direction : null} onClick={() => toggleSort("status")} />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">{isLoading ? (<tr><td colSpan={5}><div className="flex justify-center p-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#1d4ed8]/20 border-t-[#1d4ed8]" /></div></td></tr>) : paginatedActions.length > 0 ? (
+            <tbody className="divide-y divide-slate-200">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="p-0">
+                    <TableSkeleton rows={5} columns={5} />
+                  </td>
+                </tr>
+              ) : paginatedActions.length > 0 ? (
                 paginatedActions.map((item) => (
                   <ActionRow key={item.id} item={item} />
                 ))

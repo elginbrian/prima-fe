@@ -32,8 +32,13 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
   if (!currentUser) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f4f7fb]">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#1d4ed8]/20 border-t-[#1d4ed8]" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#eaf3ff] via-[#f8fbff] to-[#edf6ff] p-4 text-center">
+        <div className="flex flex-col items-center max-w-sm w-full p-8 rounded-2xl border border-slate-200/80 bg-white/95 shadow-xl backdrop-blur-sm animate-in fade-in zoom-in-95 duration-300">
+          <img src="/pertamina-full.png" alt="Pertamina" className="h-8 w-auto object-contain mb-6" />
+          <div className="w-10 h-10 border-4 border-blue-100 border-t-[#0a4d8c] rounded-full animate-spin mb-4" />
+          <p className="text-sm font-bold text-slate-800">Menghubungkan Sesi PRIMA</p>
+          <p className="mt-1 text-xs text-slate-500">Memverifikasi otentikasi dan hak akses akun...</p>
+        </div>
       </div>
     );
   }

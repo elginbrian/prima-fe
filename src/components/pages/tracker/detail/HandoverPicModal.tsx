@@ -1,4 +1,5 @@
 import { ArrowRightLeft } from "lucide-react";
+import { Spinner } from "@/components/ui";
 
 interface HandoverPicModalProps {
   currentPic: { id: string; name: string };
@@ -97,9 +98,10 @@ export function HandoverPicModal({
             type="button"
             disabled={isSubmitting || !targetPicId || !handoverNotes.trim()}
             onClick={onSubmit}
-            className="rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#093e6f] disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#093e6f] disabled:opacity-50"
           >
-            {isSubmitting ? "Memproses..." : "Konfirmasi Delegasi"}
+            {isSubmitting && <Spinner size="xs" color="white" />}
+            <span>{isSubmitting ? "Memproses..." : "Konfirmasi Delegasi"}</span>
           </button>
         </div>
       </div>

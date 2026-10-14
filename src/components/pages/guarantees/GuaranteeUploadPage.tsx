@@ -8,6 +8,7 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { vendorIdFromName } from "@/lib/adapters/procurement.mutations";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useUploadGuaranteeWithFile, useExtractGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";

@@ -24,6 +24,7 @@ import {
   useCreateDeadline,
 } from "@/lib/query/hooks/procurement/useProcurement";
 import { useToast } from "@/components/ui/Toast";
+import { KanbanSkeleton, TableSkeleton } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api/errors";
 import { requestFormToCreatePayload, deadlineToCreatePayload, deadlineChangesToUpdatePayload } from "@/lib/adapters/procurement.mutations";
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
@@ -184,25 +185,35 @@ export default function TrackerPage() {
           </div>
           {/* List table — fills grid cell, scrolls horizontally inside */}
           <div className="min-w-0">
-            <TrackerList 
-              filteredItems={filteredItems} 
-              timeStatusMap={timeStatusMap} 
-              documentsMap={documentsMap}
-              openRequestDetail={openRequestDetail} 
-            />
+            {isLoadingProcurements ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <TableSkeleton rows={5} columns={6} showCardHeader />
+              </div>
+            ) : (
+              <TrackerList 
+                filteredItems={filteredItems} 
+                timeStatusMap={timeStatusMap} 
+                documentsMap={documentsMap}
+                openRequestDetail={openRequestDetail} 
+              />
+            )}
           </div>
         </div>
       )}
 
       {viewMode === "kanban" && (
-        <TrackerKanbanBoard 
-          totalItemsCount={totalItemsCount} onGoingCount={onGoingCount} onHoldCount={onHoldCount} cancelledCount={cancelledCount}
-          itemsByStage={itemsByStage} timeStatusMap={timeStatusMap}
-          expandedCardId={expandedCardId} setExpandedCardId={setExpandedCardId}
-          handleDragStart={handleDragStart} handleDragOver={handleDragOver} handleDrop={handleDrop}
-          openRequestDetail={openRequestDetail}
-          onAddRequest={() => setShowAddModal(true)}
-        />
+        isLoadingProcurements ? (
+          <KanbanSkeleton />
+        ) : (
+          <TrackerKanbanBoard 
+            totalItemsCount={totalItemsCount} onGoingCount={onGoingCount} onHoldCount={onHoldCount} cancelledCount={cancelledCount}
+            itemsByStage={itemsByStage} timeStatusMap={timeStatusMap}
+            expandedCardId={expandedCardId} setExpandedCardId={setExpandedCardId}
+            handleDragStart={handleDragStart} handleDragOver={handleDragOver} handleDrop={handleDrop}
+            openRequestDetail={openRequestDetail}
+            onAddRequest={() => setShowAddModal(true)}
+          />
+        )
       )}
 
       {viewMode === "analytics" && (
@@ -212,6 +223,7 @@ export default function TrackerPage() {
       <TrackerDeadlines 
         deadlines={deadlines} requests={requests}
         openRequestDetail={openRequestDetail} setEditingDeadlineId={setEditingDeadlineId}
+        isLoading={isLoadingProcurements}
       />
 
       {editingDeadlineId && (() => {

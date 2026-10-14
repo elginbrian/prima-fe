@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
+import { TableSkeleton } from "@/components/ui";
 
 import { TrackerDeadlinesProps } from "./types";
 
-export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEditingDeadlineId }: TrackerDeadlinesProps) {
+export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEditingDeadlineId, isLoading }: TrackerDeadlinesProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
@@ -61,34 +62,48 @@ export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEd
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedDeadlines.map(deadline => {
-              const request = requests.find(item => item.id === deadline.requestId);
-              return (
-                <tr key={deadline.id} className="hover:bg-slate-50/70">
-                  <td className="px-5 py-3">
-                    <button onClick={() => openRequestDetail(deadline.requestId)} className="text-left hover:text-[#0a4d8c]">
-                      <div className="font-medium text-slate-800">{deadline.taskName}</div>
-                      <div className="mt-0.5 text-xs text-slate-500">{request?.title ?? deadline.requestId} · {deadline.milestone}</div>
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">{deadline.pic?.name || "-"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-600">
-                    <div>{deadline.startDate ?? "Belum diatur"}</div>
-                    <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${deadline.status === "Overdue" ? "border-red-200 bg-red-50 text-red-700" : deadline.status === "At Risk" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-                      {deadline.status} · {deadline.status === "Selesai" ? "Selesai" : deadline.daysRemaining < 0 ? `${Math.abs(deadline.daysRemaining)} hari terlambat` : `${deadline.daysRemaining} hari`}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <button onClick={() => setEditingDeadlineId(deadline.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-[#0a4d8c] hover:bg-blue-100">
-                      Edit SLA
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className="p-0">
+                  <TableSkeleton rows={4} columns={5} />
+                </td>
+              </tr>
+            ) : paginatedDeadlines.length > 0 ? (
+              paginatedDeadlines.map(deadline => {
+                const request = requests.find(item => item.id === deadline.requestId);
+                return (
+                  <tr key={deadline.id} className="hover:bg-slate-50/70">
+                    <td className="px-5 py-3">
+                      <button onClick={() => openRequestDetail(deadline.requestId)} className="text-left hover:text-[#0a4d8c]">
+                        <div className="font-medium text-slate-800">{deadline.taskName}</div>
+                        <div className="mt-0.5 text-xs text-slate-500">{request?.title ?? deadline.requestId} · {deadline.milestone}</div>
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600">{deadline.pic?.name || "-"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600">
+                      <div>{deadline.startDate ?? "Belum diatur"}</div>
+                      <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${deadline.status === "Overdue" ? "border-red-200 bg-red-50 text-red-700" : deadline.status === "At Risk" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+                        {deadline.status} · {deadline.status === "Selesai" ? "Selesai" : deadline.daysRemaining < 0 ? `${Math.abs(deadline.daysRemaining)} hari terlambat` : `${deadline.daysRemaining} hari`}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <button onClick={() => setEditingDeadlineId(deadline.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-[#0a4d8c] hover:bg-blue-100">
+                        Edit SLA
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-xs text-slate-500 italic">
+                  Tidak ada SLA pekerjaan yang ditemukan.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
         <TablePagination
