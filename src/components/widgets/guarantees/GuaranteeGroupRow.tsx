@@ -182,6 +182,18 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                       >
                         {guarantee.status}
                       </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewGuarantee(guarantee);
+                        }}
+                        title="Lihat Pratinjau Dokumen"
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:border-[#0a4d8c] hover:bg-blue-50 hover:text-[#0a4d8c] transition-colors"
+                      >
+                        <Eye size={13} className="text-[#0a4d8c]" />
+                        <span>Pratinjau</span>
+                      </button>
                       {expandedGuaranteeId === guarantee.id ? (
                         <ChevronDown className="shrink-0 text-slate-400" size={16} />
                       ) : (

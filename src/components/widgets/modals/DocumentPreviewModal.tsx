@@ -128,23 +128,23 @@ export function DocumentPreviewModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 md:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 md:p-6 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="relative flex h-full max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900 text-white shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative flex h-full max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/90 px-4 py-3 sm:px-6">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0a4d8c] text-white shadow-sm">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0a4d8c] shadow-xs">
               <FileText size={18} />
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold text-white sm:text-base">{title}</h2>
-              <p className="truncate text-[11px] text-slate-400">
-                {resolvedFileName} · <span className="text-blue-400 font-medium">Tautan Aman Presigned</span>
+              <h2 className="truncate text-sm font-bold text-slate-800 sm:text-base">{title}</h2>
+              <p className="truncate text-[11px] text-slate-500">
+                {resolvedFileName} · <span className="text-[#0a4d8c] font-medium">Tautan Aman Terverifikasi</span>
               </p>
             </div>
           </div>
@@ -152,13 +152,13 @@ export function DocumentPreviewModal({
           {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Zoom Controls */}
-            <div className="hidden sm:flex items-center rounded-lg border border-slate-700/60 bg-slate-800/80 p-0.5">
+            <div className="hidden sm:flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               <button
                 type="button"
                 onClick={handleZoomOut}
                 disabled={zoom <= 50}
                 title="Perkecil"
-                className="rounded-md p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30"
+                className="rounded-md p-1.5 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 disabled:opacity-30 transition-colors"
               >
                 <ZoomOut size={15} />
               </button>
@@ -166,7 +166,7 @@ export function DocumentPreviewModal({
                 type="button"
                 onClick={handleResetZoom}
                 title="Reset Zoom"
-                className="px-2 text-xs font-semibold text-slate-300 hover:text-white"
+                className="px-2 text-xs font-semibold text-slate-700 hover:text-slate-900"
               >
                 {zoom}%
               </button>
@@ -175,7 +175,7 @@ export function DocumentPreviewModal({
                 onClick={handleZoomIn}
                 disabled={zoom >= 200}
                 title="Perbesar"
-                className="rounded-md p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30"
+                className="rounded-md p-1.5 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 disabled:opacity-30 transition-colors"
               >
                 <ZoomIn size={15} />
               </button>
@@ -186,7 +186,7 @@ export function DocumentPreviewModal({
               type="button"
               onClick={handleRotate}
               title="Putar Dokumen 90°"
-              className="rounded-lg border border-slate-700/60 bg-slate-800/80 p-2 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+              className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
             >
               <RotateCw size={15} />
             </button>
@@ -200,7 +200,7 @@ export function DocumentPreviewModal({
                 className={`rounded-lg border p-2 transition-colors ${
                   showMetadata
                     ? "border-[#0a4d8c] bg-[#0a4d8c] text-white"
-                    : "border-slate-700/60 bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 <Info size={15} />
@@ -214,7 +214,7 @@ export function DocumentPreviewModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Buka Dokumen di Tab Baru"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
               >
                 <ExternalLink size={14} />
                 <span>Tab Baru</span>
@@ -241,7 +241,7 @@ export function DocumentPreviewModal({
               type="button"
               onClick={onClose}
               title="Tutup (Esc)"
-              className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors ml-1"
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors ml-1"
             >
               <X size={19} />
             </button>
@@ -249,27 +249,29 @@ export function DocumentPreviewModal({
         </header>
 
         {/* Content Body */}
-        <div className="relative flex flex-1 overflow-hidden bg-slate-950">
+        <div className="relative flex flex-1 overflow-hidden bg-slate-100/70">
           {/* Main Viewer Area */}
           <div className="relative flex flex-1 items-center justify-center overflow-auto p-4 sm:p-6">
             {loading ? (
-              <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
+              <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
                 <Loader2 size={36} className="animate-spin text-[#0a4d8c]" />
-                <p className="text-sm font-medium">Memuat pratinjau dokumen aman...</p>
-                <p className="text-xs text-slate-500">Menghubungkan ke secure presigned storage</p>
+                <p className="text-sm font-semibold text-slate-700">Memuat pratinjau dokumen...</p>
+                <p className="text-xs text-slate-400">Menghubungkan ke secure presigned storage</p>
               </div>
             ) : error ? (
-              <div className="max-w-md rounded-2xl border border-red-900/50 bg-red-950/40 p-6 text-center shadow-lg">
-                <AlertCircle size={36} className="mx-auto mb-3 text-red-400" />
-                <h3 className="text-base font-bold text-red-200">Tidak Dapat Menampilkan Pratinjau</h3>
-                <p className="mt-1 text-xs text-red-300/80 leading-relaxed">{error}</p>
+              <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">
+                <AlertCircle size={36} className="mx-auto mb-3 text-amber-500" />
+                <h3 className="text-base font-bold text-slate-800">Tidak Dapat Menampilkan Pratinjau</h3>
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                  {error || "Dokumen belum memiliki berkas terunggah di cloud storage."}
+                </p>
                 {resolvedUrl && (
                   <div className="mt-4">
                     <a
                       href={resolvedUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700"
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white hover:bg-[#083c6d] transition-colors"
                     >
                       <Download size={14} />
                       Coba Buka / Unduh Berkas Langsung
@@ -290,13 +292,13 @@ export function DocumentPreviewModal({
                   <img
                     src={resolvedUrl}
                     alt={title}
-                    className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+                    className="max-h-full max-w-full rounded-xl object-contain shadow-md border border-slate-200 bg-white"
                   />
                 ) : (
                   <iframe
                     src={`${resolvedUrl}#toolbar=1&navpanes=0`}
                     title={title}
-                    className="h-full w-full rounded-lg border border-slate-800 bg-white shadow-2xl"
+                    className="h-full w-full rounded-xl border border-slate-200 bg-white shadow-md"
                   />
                 )}
               </div>
@@ -305,13 +307,13 @@ export function DocumentPreviewModal({
 
           {/* Right Metadata Drawer */}
           {showMetadata && metadata.length > 0 && (
-            <aside className="w-80 shrink-0 border-l border-slate-800 bg-slate-900/95 p-5 text-slate-300 shadow-xl overflow-y-auto animate-in slide-in-from-right duration-200">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Informasi Berkas</h3>
+            <aside className="w-80 shrink-0 border-l border-slate-200 bg-white p-5 text-slate-700 shadow-xl overflow-y-auto animate-in slide-in-from-right duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Informasi Berkas</h3>
                 <button
                   type="button"
                   onClick={() => setShowMetadata(false)}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                 >
                   <X size={15} />
                 </button>
@@ -319,25 +321,25 @@ export function DocumentPreviewModal({
 
               <div className="mt-4 space-y-4 text-xs">
                 <div>
-                  <div className="text-[10px] font-bold uppercase text-slate-500">Nama Dokumen</div>
-                  <div className="mt-0.5 font-semibold text-white break-words">{title}</div>
+                  <div className="text-[10px] font-bold uppercase text-slate-400">Nama Dokumen</div>
+                  <div className="mt-0.5 font-semibold text-slate-800 break-words">{title}</div>
                 </div>
 
                 <div>
-                  <div className="text-[10px] font-bold uppercase text-slate-500">Nama Berkas</div>
-                  <div className="mt-0.5 text-slate-300 break-words font-mono text-[11px]">{resolvedFileName}</div>
+                  <div className="text-[10px] font-bold uppercase text-slate-400">Nama Berkas</div>
+                  <div className="mt-0.5 text-slate-600 break-words font-mono text-[11px]">{resolvedFileName}</div>
                 </div>
 
                 {metadata.map((item, index) => (
                   <div key={index}>
-                    <div className="text-[10px] font-bold uppercase text-slate-500">{item.label}</div>
-                    <div className="mt-0.5 text-slate-200">{item.value}</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-400">{item.label}</div>
+                    <div className="mt-0.5 text-slate-800 font-medium">{item.value}</div>
                   </div>
                 ))}
 
-                <div className="mt-6 rounded-xl border border-blue-900/40 bg-blue-950/40 p-3 text-[11px] leading-relaxed text-blue-200/90">
-                  <div className="flex items-center gap-1.5 font-semibold text-blue-300 mb-1">
-                    <ShieldCheck size={14} className="text-blue-400 shrink-0" />
+                <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[11px] leading-relaxed text-[#0a4d8c]">
+                  <div className="flex items-center gap-1.5 font-semibold text-[#0a4d8c] mb-1">
+                    <ShieldCheck size={14} className="text-[#0a4d8c] shrink-0" />
                     Akses Aman Terenkripsi
                   </div>
                   Dokumen ini diakses melalui Amazon S3 Presigned URL dengan kedaluwarsa 30 menit. Tidak ada dokumen publik tanpa otorisasi.

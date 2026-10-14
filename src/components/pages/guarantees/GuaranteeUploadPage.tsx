@@ -96,6 +96,24 @@ export default function GuaranteeUploadPage() {
     }
   }, [file, requiresExtraction, selectedRequest]);
 
+  const handleUseProcurementDefaults = () => {
+    if (!file) return;
+    const cleanBaseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 25);
+    const defaultRef = `JAM-${cleanBaseName}`;
+    const today = new Date().toISOString().split("T")[0];
+    const nextYear = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
+    setFormData(prev => ({
+      ...prev,
+      vendor: prev.vendor || selectedRequest?.title || "Rekanan Pengadaan",
+      issuer: prev.issuer || "Penerbit Jaminan",
+      referenceNo: prev.referenceNo || defaultRef,
+      value: prev.value || (selectedRequest?.amount ? "Rp " + selectedRequest.amount.toLocaleString("id-ID") : "Rp 0"),
+      issueDate: prev.issueDate || today,
+      expiryDate: prev.expiryDate || nextYear,
+    }));
+    setOcrError(null);
+  };
+
   const isFormValid = Boolean(
     file &&
     requestId &&
@@ -133,48 +151,41 @@ export default function GuaranteeUploadPage() {
       return;
     }
 
-    if (!requiresExtraction) {
-      addAttachment({
-        id: `ATT-${Date.now()}`,
-        requestId,
-        type: documentType as ProcurementAttachmentType,
-        name: file.name,
-        uploadedAt: new Date().toISOString().split("T")[0],
-        uploadedBy: { id: currentUser?.id ?? "USR-ADMIN", name: currentUser?.name ?? "Administrator" },
-        fileUrl: "/mock-docs/" + file.name,
-        mimeType: file.type || "application/pdf",
-      });
-      toast.success("Dokumen pendukung berhasil disimpan.");
-      router.push('/dashboard/guarantees');
-      return;
-    }
+    const cleanBaseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 25);
+    const refNo = formData.referenceNo.trim() || `JAM-${cleanBaseName}`;
+    const vendorName = formData.vendor.trim() || selectedRequest?.title || "Rekanan Pengadaan";
+    const issuerName = formData.issuer.trim() || (requiresExtraction ? "Penerbit Jaminan" : "Penyedia Dokumen");
+    const today = new Date().toISOString().split("T")[0];
+    const defaultExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
+    const issueDateStr = formData.issueDate || today;
+    const expiryDateStr = formData.expiryDate || defaultExpiry;
 
-    const expiryTime = new Date(formData.expiryDate).getTime();
+    const expiryTime = new Date(expiryDateStr).getTime();
     const remainingDays = Number.isNaN(expiryTime) ? 0 : Math.ceil((expiryTime - Date.now()) / 86400000);
-    const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= state.settings.slaWarningDays ? "Mendekati Expiry" : "Aktif";
-    const valueRaw = Number(formData.value.replace(/[^0-9]/g, "")) || 0;
+    const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= (state.settings?.slaWarningDays ?? 3) ? "Mendekati Expiry" : "Aktif";
+    const valueRaw = Number(formData.value.replace(/[^0-9]/g, "")) || (selectedRequest?.amount ? Math.round(selectedRequest.amount * 0.05) : 0);
 
     uploadGuaranteeMutation.mutate({
       file: file,
       payload: {
         request_id: requestId,
-        reference_no: formData.referenceNo.trim(),
-        type: formData.type,
+        reference_no: refNo,
+        type: formData.type || (documentType as GuaranteeItem["type"]),
         value: valueRaw,
-        issuer: formData.issuer.trim(),
-        issuer_type: formData.issuerType,
+        issuer: issuerName,
+        issuer_type: formData.issuerType || "Lainnya",
         beneficiary: formData.beneficiary.trim() || "PT Pertamina Patra Niaga",
-        vendor_id: vendorIdFromName(formData.vendor) || "V-001",
-        vendor_name: formData.vendor.trim() || "Vendor",
-        issue_date: toIsoDate(formData.issueDate),
-        expiry_date: toIsoDate(formData.expiryDate),
+        vendor_id: vendorIdFromName(vendorName) || "V-001",
+        vendor_name: vendorName,
+        issue_date: toIsoDate(issueDateStr),
+        expiry_date: toIsoDate(expiryDateStr),
         pic_id: currentUser?.id ?? "USR-ADMIN",
         pic_name: currentUser?.name ?? "Administrator",
         status,
       }
     }, {
       onSuccess: () => {
-        toast.success("Jaminan berhasil disimpan ke sistem dan cloud storage.");
+        toast.success("Dokumen jaminan berhasil disimpan ke sistem dan cloud storage.");
         router.push('/dashboard/guarantees');
       },
       onError: (err) => {
@@ -284,17 +295,97 @@ export default function GuaranteeUploadPage() {
                 }}
                 className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 bg-white focus:outline-none focus:border-[#0a4d8c]"
               >
-                <option value="Jaminan Pelaksanaan">Jaminan Pelaksanaan — ekstraksi OCR</option>
-                <option value="Jaminan Pemeliharaan">Jaminan Pemeliharaan — ekstraksi OCR</option>
-                <option value="Dokumen Pendukung Lain">Dokumen Pendukung Lain — simpan tanpa ekstraksi</option>
+                <option value="Jaminan Pelaksanaan">Jaminan Pelaksanaan (Ekstraksi OCR Otomatis)</option>
+                <option value="Jaminan Pemeliharaan">Jaminan Pemeliharaan (Ekstraksi OCR Otomatis)</option>
+                <option value="Dokumen Pendukung Lain">Dokumen Jaminan / Pendukung Lain (Tanpa OCR)</option>
               </select>
-              <p className="mt-1.5 text-xs text-slate-500">{requiresExtraction ? "Data jaminan akan ditampilkan untuk diperiksa dan dikoreksi manual." : "File disimpan pada pekerjaan tanpa menjalankan ekstraksi OCR."}</p>
+              <p className="mt-1.5 text-xs text-slate-500">{requiresExtraction ? "Data jaminan akan diekstrak otomatis dan ditampilkan untuk verifikasi." : "Dokumen langsung disimpan dan dikaitkan ke pengadaan ini tanpa ekstraksi OCR."}</p>
             </div>
 
             {file && requiresExtraction && !isExtracting && ocrError && (
-              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                <div className="font-semibold">Ekstraksi otomatis gagal</div>
-                <p className="mt-0.5 text-xs">{ocrError}. Anda tetap bisa mengisi data jaminan secara manual di bawah, atau klik "Ganti File" untuk mencoba lagi.</p>
+              <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-900 shadow-2xs">
+                <div className="font-bold flex items-center gap-2 text-amber-900">
+                  <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+                  <span>Dokumen merupakan scan fisik tanpa teks digital</span>
+                </div>
+                <p className="mt-1 text-xs text-amber-800/90 leading-relaxed">
+                  OCR tidak mendeteksi teks digital otomatis pada berkas ini (misalnya scan kertas fisik). Dokumen tetap akan disimpan dan diunggah ke storage cloud serta masuk ke tabel jaminan per pengadaan.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUseProcurementDefaults}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 shadow-2xs hover:bg-amber-100 transition-colors"
+                  >
+                    Gunakan Data Pengadaan & Lanjutkan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDocumentType("Dokumen Pendukung Lain");
+                      setOcrError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Simpan Tanpa Ekstraksi OCR
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {file && !requiresExtraction && (
+              <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#0a4d8c]"></div>
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Informasi Dokumen Jaminan (Tanpa OCR)</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Judul / Keterangan Dokumen</label>
+                    <input
+                      type="text"
+                      value={formData.referenceNo}
+                      onChange={(e) => setFormData(prev => ({ ...prev, referenceNo: e.target.value }))}
+                      placeholder={file.name.replace(/\.[^/.]+$/, "")}
+                      className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Kategori Dokumen</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
+                      className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]"
+                    >
+                      <option value="Jaminan Pelaksanaan">Jaminan Pelaksanaan</option>
+                      <option value="Jaminan Masa Pemeliharaan">Jaminan Masa Pemeliharaan</option>
+                      <option value="Jaminan Uang Muka">Jaminan Uang Muka</option>
+                      <option value="Dokumen Pendukung">Dokumen Pendukung Lain</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Nama Rekanan / Vendor (Opsional)</label>
+                    <input
+                      type="text"
+                      value={formData.vendor}
+                      onChange={(e) => setFormData(prev => ({ ...prev, vendor: e.target.value }))}
+                      placeholder={selectedRequest?.title || "Nama rekanan"}
+                      className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Nilai Nominal (Opsional)</label>
+                    <input
+                      type="text"
+                      value={formData.value}
+                      onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+                      placeholder={selectedRequest?.amount ? "Rp " + selectedRequest.amount.toLocaleString("id-ID") : "Rp 0"}
+                      className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 

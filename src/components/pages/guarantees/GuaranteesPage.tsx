@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FileText, Inbox, X, Trash2 } from "lucide-react";
+import { FileText, Inbox, X, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { GuaranteeItem, GuaranteeStatus } from "@/types";
 import { GuaranteeFilterBar } from "@/components/widgets/guarantees/GuaranteeFilterBar";
@@ -14,6 +14,7 @@ import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useGuarantees, useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import { GuaranteeEditModal } from "@/components/widgets/modals/GuaranteeEditModal";
+import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
 import { exportGuaranteesToCsv } from "@/lib/exportUtils";
 import { TableSkeleton } from "@/components/ui";
 
@@ -29,12 +30,40 @@ export default function GuaranteesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [editingGuarantee, setEditingGuarantee] = useState<GuaranteeItem | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<any | null>(null);
   const [sort, setSort] = useState<{ key: "title" | "count" | "value" | "expiry" | "status"; direction: SortDirection }>({ key: "title", direction: null });
 
-  const aktifCount = guarantees.filter(d => d.status === "Aktif").length;
-  const mendekatiCount = guarantees.filter(d => d.status === "Mendekati Expiry").length;
-  const expiredCount = guarantees.filter(d => d.status === "Expired").length;
-  const totalCount = guarantees.length;
+  // Merge any context attachments into guarantees so non-OCR files are always represented
+  const allGuarantees = useMemo(() => {
+    const list = [...guarantees];
+    state.attachments.forEach(att => {
+      if (!list.some(g => g.id === att.id || (g.requestId === att.requestId && g.referenceNo === att.name))) {
+        list.push({
+          id: att.id,
+          requestId: att.requestId,
+          referenceNo: att.name || "DOK-PENDUKUNG",
+          type: (att.type as any) || "Jaminan Pelaksanaan",
+          value: 0,
+          issuer: "Penyedia Dokumen",
+          issuerType: "Lainnya",
+          beneficiary: "PT Pertamina Patra Niaga",
+          vendor: { id: att.uploadedBy.id, name: att.uploadedBy.name },
+          issueDate: att.uploadedAt || new Date().toISOString().split("T")[0],
+          expiryDate: "-",
+          pic: att.uploadedBy,
+          status: "Aktif",
+          fileUrl: att.fileUrl,
+          mimeType: att.mimeType,
+        });
+      }
+    });
+    return list;
+  }, [guarantees, state.attachments]);
+
+  const aktifCount = allGuarantees.filter(d => d.status === "Aktif").length;
+  const mendekatiCount = allGuarantees.filter(d => d.status === "Mendekati Expiry").length;
+  const expiredCount = allGuarantees.filter(d => d.status === "Expired").length;
+  const totalCount = allGuarantees.length;
   
   const aktifPct = totalCount ? (aktifCount / totalCount) * 100 : 0;
   const mendekatiPct = totalCount ? (mendekatiCount / totalCount) * 100 : 0;
@@ -53,7 +82,7 @@ export default function GuaranteesPage() {
   }, [editingGuarantee]);
 
   const filteredGuarantees = useMemo(() => {
-    return guarantees.filter((item) => {
+    return allGuarantees.filter((item) => {
       const request = requests.find(requestItem => requestItem.id === item.requestId);
       const matchesSearch = item.referenceNo.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             item.pic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,19 +94,49 @@ export default function GuaranteesPage() {
       
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [guarantees, requests, searchQuery, statusFilter, typeFilter]);
+  }, [allGuarantees, requests, searchQuery, statusFilter, typeFilter]);
 
-  const guaranteeGroups = useMemo(() => requests
-    .map(request => ({
+  const guaranteeGroups = useMemo(() => {
+    const knownRequestIds = new Set(requests.map(r => r.id));
+    const groups = requests.map(request => ({
       request,
       guarantees: filteredGuarantees.filter(guarantee => guarantee.requestId === request.id),
-    }))
-    .filter(group => {
+    }));
+
+    // Include any guarantees for requestId that is not in the requests list
+    const orphanGuarantees = filteredGuarantees.filter(g => !knownRequestIds.has(g.requestId));
+    if (orphanGuarantees.length > 0) {
+      const orphanMap: Record<string, typeof orphanGuarantees> = {};
+      orphanGuarantees.forEach(g => {
+        if (!orphanMap[g.requestId]) orphanMap[g.requestId] = [];
+        orphanMap[g.requestId].push(g);
+      });
+      Object.entries(orphanMap).forEach(([reqId, items]) => {
+        groups.push({
+          request: {
+            id: reqId,
+            title: `Pengadaan: ${reqId}`,
+            department: { id: "DEPT-GEN", name: "Pengadaan Terkait" },
+            pic: items[0]?.pic || { id: "USR-GEN", name: "PIC Terkait" },
+            amount: items.reduce((sum, item) => sum + item.value, 0),
+            stage: "Pelaksanaan",
+            operationalStatus: "On Going",
+            currentStep: "Jaminan",
+            stageStartedAt: items[0]?.issueDate || "",
+            isUrgent: false,
+          } as any,
+          guarantees: items,
+        });
+      });
+    }
+
+    return groups.filter(group => {
       const requestMatchesSearch = !searchQuery || [group.request.id, group.request.title, group.request.pic.name]
         .some(value => value.toLowerCase().includes(searchQuery.toLowerCase()));
       const hasActiveFilters = statusFilter !== "All" || typeFilter !== "All";
       return hasActiveFilters ? group.guarantees.length > 0 : requestMatchesSearch || group.guarantees.length > 0;
-    }), [requests, filteredGuarantees, searchQuery, statusFilter, typeFilter]);
+    });
+  }, [requests, filteredGuarantees, searchQuery, statusFilter, typeFilter]);
 
   const sortedGuaranteeGroups = useMemo(() => sortRecords(guaranteeGroups, sort.direction, group => {
     if (sort.key === "title") return group.request.title;
@@ -200,6 +259,15 @@ export default function GuaranteesPage() {
                     </span>
                     <button
                       type="button"
+                      onClick={() => setPreviewAttachment(attachment)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:border-[#0a4d8c] hover:bg-blue-50 hover:text-[#0a4d8c] transition-colors"
+                      title="Pratinjau Dokumen"
+                    >
+                      <Eye size={13} className="text-[#0a4d8c]" />
+                      <span>Pratinjau</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         deleteAttachment(attachment.id);
                         toast.success("Dokumen pendukung berhasil dihapus.");
@@ -224,6 +292,24 @@ export default function GuaranteesPage() {
         <GuaranteeEditModal
           guarantee={editingGuarantee}
           onClose={() => setEditingGuarantee(null)}
+        />
+      )}
+
+      {previewAttachment && (
+        <DocumentPreviewModal
+          title={`Dokumen: ${previewAttachment.name || "Dokumen Pendukung"}`}
+          fileId={previewAttachment.id}
+          fileType="guarantee"
+          directUrl={previewAttachment.fileUrl}
+          fileName={previewAttachment.name || "dokumen.pdf"}
+          metadata={[
+            { label: "Nama Dokumen", value: previewAttachment.name || "Dokumen Pendukung" },
+            { label: "ID Pengadaan", value: previewAttachment.requestId },
+            { label: "Tipe", value: previewAttachment.type },
+            { label: "Diupload Oleh", value: previewAttachment.uploadedBy?.name || "User" },
+            { label: "Tanggal Upload", value: previewAttachment.uploadedAt },
+          ]}
+          onClose={() => setPreviewAttachment(null)}
         />
       )}
     </div>
