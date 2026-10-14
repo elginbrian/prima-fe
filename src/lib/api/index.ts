@@ -7,12 +7,13 @@ export type { UserDto, TokenDto, DepartmentDto, LoginPayload, RegisterPayload } 
 export { settingsApi } from "./settings.api";
 export type { SystemSettingsDto } from "./settings.api";
 
-export { procurementApi, documentsApi, guaranteesApi, deadlinesApi } from "./procurement.api";
+export { procurementApi } from "./procurement.api";
+export { documentsApi } from "./documents.api";
+export { guaranteesApi } from "./guarantees.api";
+export { deadlinesApi } from "./deadlines.api";
+
 export type {
   ProcurementRequestDto,
-  DocumentDto,
-  GuaranteeDto,
-  DeadlineDto,
   BaseUserDto,
   CreateProcurementPayload,
   MoveStagePaylod,
@@ -25,5 +26,9 @@ export type {
   VendorRiskDto,
   DocumentStatsDto,
 } from "./procurement.api";
+
+export type { DocumentDto } from "./documents.api";
+export type { GuaranteeDto, PresignedPost, ExtractedGuaranteeDto } from "./guarantees.api";
+export type { DeadlineDto, EvaluateSlaResponseDto } from "./deadlines.api";
 
 export { usersApi } from "./users.api";

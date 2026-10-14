@@ -1,6 +1,20 @@
-import { ProcurementState, ProcurementStep, ProcurementStage, HistoryItem, GuaranteeItem, ActionItem, DeadlineItem, NotificationItem, DocumentItem } from "@/types";
+import {
+  ProcurementState,
+  ProcurementStep,
+  ProcurementStage,
+  GuaranteeItem,
+  NotificationItem,
+} from "@/types";
 import { ProcurementAction } from "./types";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
+import {
+  historyItem,
+  actionForDocument,
+  actionForGuarantee,
+  actionForDeadline,
+} from "./actionGenerators";
+
+export { actionForDocument, actionForGuarantee, actionForDeadline, historyItem };
 
 const stageForStep: Record<ProcurementStep, ProcurementStage> = {
   // Tender Terbuka
@@ -27,87 +41,29 @@ const stageForStep: Record<ProcurementStep, ProcurementStage> = {
   "Klarifikasi & Negosiasi Harga": "Evaluasi",
 };
 
-function historyItem(requestId: string, category: HistoryItem["category"], title: string, description: string): HistoryItem {
-  return { id: `HIST-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, requestId, category, title, description, createdAt: new Date().toISOString() };
-}
-
-export function actionForDocument(doc: DocumentItem): ActionItem | null {
-  if (doc.status === "Lulus Verifikasi") return null;
-  
-  const isActionNeeded = doc.status === "Catatan Procurement" || doc.status === "Tindak Lanjut FPP";
-  if (!isActionNeeded) return null;
-
-  return {
-    id: `ACT-DOC-${doc.id}`,
-    requestId: doc.requestId,
-    referenceId: doc.id,
-    title: doc.status === "Tindak Lanjut FPP" ? `Tindak Lanjut Dokumen: ${doc.name}` : `Catatan Dokumen: ${doc.name}`,
-    source: "Dokumen",
-    priority: doc.status === "Tindak Lanjut FPP" ? "High" : "Medium",
-    dateAdded: new Date().toISOString().split("T")[0],
-    dueDate: new Date(Date.now() + 2 * 86400000).toISOString().split("T")[0], // 2 days
-    description: doc.nextAction ?? `Terdapat temuan pada dokumen ${doc.name} yang perlu segera ditindaklanjuti.`,
-    assignee: doc.pic,
-    status: "Pending",
-    actionType: "Follow Up",
-  };
-}
-
-export function actionForGuarantee(guarantee: GuaranteeItem): ActionItem | null {
-  if (guarantee.status === "Aktif" && !guarantee.nextAction) return null;
-
-  const isExpired = guarantee.status === "Expired";
-  return {
-    id: `ACT-GUAR-${guarantee.id}`,
-    requestId: guarantee.requestId,
-    referenceId: guarantee.id,
-    title: isExpired ? `Eskalasi Jaminan Expired: ${guarantee.referenceNo}` : `Tindak Lanjut Jaminan: ${guarantee.referenceNo}`,
-    source: "Jaminan",
-    priority: isExpired ? "High" : "Medium",
-    dateAdded: new Date().toISOString().split("T")[0],
-    dueDate: new Date(Date.now() + (isExpired ? 86400000 : 3 * 86400000)).toISOString().split("T")[0],
-    description: guarantee.nextAction ?? `Pantau jaminan ${guarantee.referenceNo} dan koordinasikan tindak lanjut sebelum expiry.`,
-    assignee: guarantee.pic,
-    status: "Pending",
-    actionType: isExpired ? "Eskalasi" : "Follow Up",
-  };
-}
-
-export function actionForDeadline(deadline: DeadlineItem): ActionItem | null {
-  if (deadline.status === "Selesai") return null;
-
-  const isEsc = Boolean(deadline.isEscalated);
-
-  return {
-    id: `ACT-DL-${deadline.id}`,
-    requestId: deadline.requestId,
-    referenceId: deadline.id,
-    title: isEsc ? `[ESKALASI MANAJER] ${deadline.taskName}` : (deadline.nextAction ?? `Tindak Lanjut SLA: ${deadline.taskName}`),
-    source: "Deadline",
-    priority: isEsc || deadline.status === "Overdue" || deadline.urgencyLevel === "Critical" ? "High" : "Medium",
-    dateAdded: new Date().toISOString().split("T")[0],
-    dueDate: deadline.targetDate,
-    description: isEsc
-      ? `Task dieskalasi ke ${deadline.escalatedTo || "Manager Pengadaan"}. Keterlambatan SLA melampaui batas toleransi. Input recovery plan diperlukan.`
-      : `SLA "${deadline.taskName}" pada milestone ${deadline.milestone} perlu dipantau oleh ${deadline.pic.name}.`,
-    assignee: deadline.pic,
-    status: "Pending",
-    actionType: isEsc || deadline.status === "Overdue" ? "Eskalasi" : "Follow Up",
-  };
-}
-
-export function procurementReducer(state: ProcurementState, action: ProcurementAction): ProcurementState {
+export function procurementReducer(
+  state: ProcurementState,
+  action: ProcurementAction
+): ProcurementState {
   switch (action.type) {
     case "ADD_REQUEST": {
       return {
         ...state,
         requests: [action.request, ...state.requests],
-        history: [historyItem(action.request.id, "Pekerjaan", "Pekerjaan dibuat", `${action.request.title} ditambahkan ke tracker.`), ...state.history],
+        history: [
+          historyItem(
+            action.request.id,
+            "Pekerjaan",
+            "Pekerjaan dibuat",
+            `${action.request.title} ditambahkan ke tracker.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "MOVE_REQUEST": {
-      const request = state.requests.find(r => r.id === action.id);
+      const request = state.requests.find((r) => r.id === action.id);
       if (!request) return state;
 
       const notification: NotificationItem = {
@@ -123,7 +79,7 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
 
       return {
         ...state,
-        requests: state.requests.map(r =>
+        requests: state.requests.map((r) =>
           r.id === action.id
             ? { ...r, stage: action.stage, updatedAt: new Date().toISOString().split("T")[0] }
             : r
@@ -133,27 +89,44 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
     }
 
     case "UPDATE_REQUEST_OPERATIONAL_STATUS": {
-      const request = state.requests.find(r => r.id === action.id);
+      const request = state.requests.find((r) => r.id === action.id);
       if (!request) return state;
 
       return {
         ...state,
-        requests: state.requests.map(r => r.id === action.id
-          ? { ...r, operationalStatus: action.status, operationalStatusReason: action.reason, updatedAt: new Date().toISOString().split("T")[0] }
-          : r
+        requests: state.requests.map((r) =>
+          r.id === action.id
+            ? {
+                ...r,
+                operationalStatus: action.status,
+                operationalStatusReason: action.reason,
+                updatedAt: new Date().toISOString().split("T")[0],
+              }
+            : r
         ),
-        history: [historyItem(action.id, "Pekerjaan", "Status pekerjaan diperbarui", `Status diubah menjadi ${action.status}${action.reason ? `: ${action.reason}` : "."}`), ...state.history],
-        notifications: [{
-          id: `NOTIF-${Date.now()}`,
-          requestId: action.id,
-          title: `Status Pekerjaan Diperbarui: ${request.id}`,
-          description: `${request.title} sekarang berstatus ${action.status}.`,
-          time: "Baru saja",
-          isRead: false,
-          type: "success",
-          category: "Hari Ini",
-        }, ...state.notifications],
-        deadlines: state.deadlines.map(d => {
+        history: [
+          historyItem(
+            action.id,
+            "Pekerjaan",
+            "Status pekerjaan diperbarui",
+            `Status diubah menjadi ${action.status}${action.reason ? `: ${action.reason}` : "."}`
+          ),
+          ...state.history,
+        ],
+        notifications: [
+          {
+            id: `NOTIF-${Date.now()}`,
+            requestId: action.id,
+            title: `Status Pekerjaan Diperbarui: ${request.id}`,
+            description: `${request.title} sekarang berstatus ${action.status}.`,
+            time: "Baru saja",
+            isRead: false,
+            type: "success",
+            category: "Hari Ini",
+          },
+          ...state.notifications,
+        ],
+        deadlines: state.deadlines.map((d) => {
           if (d.requestId !== action.id) return d;
           if (action.status === "On Hold" && request.operationalStatus !== "On Hold") {
             return { ...d, pausedAt: new Date().toISOString() };
@@ -164,7 +137,11 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
               const diffMs = new Date().getTime() - new Date(d.pausedAt).getTime();
               additionalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             }
-            return { ...d, accumulatedPausedDays: (d.accumulatedPausedDays || 0) + additionalDays, pausedAt: undefined };
+            return {
+              ...d,
+              accumulatedPausedDays: (d.accumulatedPausedDays || 0) + additionalDays,
+              pausedAt: undefined,
+            };
           }
           return d;
         }),
@@ -172,7 +149,7 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
     }
 
     case "MOVE_REQUEST_STEP": {
-      const request = state.requests.find(r => r.id === action.id);
+      const request = state.requests.find((r) => r.id === action.id);
       if (!request) return state;
 
       const notification: NotificationItem = {
@@ -188,36 +165,58 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
 
       return {
         ...state,
-        requests: state.requests.map(r => r.id === action.id
-          ? { ...r, stage: stageForStep[action.step], currentStep: action.step, updatedAt: new Date().toISOString().split("T")[0] }
-          : r
+        requests: state.requests.map((r) =>
+          r.id === action.id
+            ? {
+                ...r,
+                stage: stageForStep[action.step],
+                currentStep: action.step,
+                updatedAt: new Date().toISOString().split("T")[0],
+              }
+            : r
         ),
-        milestones: state.milestones.map(m => {
+        milestones: state.milestones.map((m) => {
           if (m.requestId !== action.id) return m;
           const currentIndex = Object.keys(stageForStep).indexOf(action.step);
           const milestoneIndex = Object.keys(stageForStep).indexOf(m.step);
           return {
             ...m,
-            status: milestoneIndex < currentIndex 
-              ? (m.status === "Pending" ? "Skipped" : m.status) 
-              : milestoneIndex === currentIndex 
-                ? "In Progress" 
+            status:
+              milestoneIndex < currentIndex
+                ? m.status === "Pending"
+                  ? "Skipped"
+                  : m.status
+                : milestoneIndex === currentIndex
+                ? "In Progress"
                 : "Pending",
-            date: milestoneIndex <= currentIndex ? new Date().toISOString().split("T")[0] : m.date,
+            date:
+              milestoneIndex <= currentIndex
+                ? new Date().toISOString().split("T")[0]
+                : m.date,
           };
         }),
         notifications: [notification, ...state.notifications],
-        history: [historyItem(action.id, "Timeline", "Tahap timeline diperbarui", `Tahap aktif diubah menjadi ${action.step}.`), ...state.history],
+        history: [
+          historyItem(
+            action.id,
+            "Timeline",
+            "Tahap timeline diperbarui",
+            `Tahap aktif diubah menjadi ${action.step}.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "ADD_DOCUMENT": {
-      const request = state.requests.find(r => r.id === action.document.requestId);
+      const request = state.requests.find((r) => r.id === action.document.requestId);
       const newNotif: NotificationItem = {
         id: `NOTIF-${Date.now()}`,
         requestId: action.document.requestId,
         title: `Dokumen Baru Diupload: ${action.document.name}`,
-        description: `File baru untuk ${request?.title ?? action.document.requestId} telah diunggah dan menunggu pemeriksaan.`,
+        description: `File baru untuk ${
+          request?.title ?? action.document.requestId
+        } telah diunggah dan menunggu pemeriksaan.`,
         time: "Baru saja",
         isRead: false,
         type: "document",
@@ -227,20 +226,30 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
         ...state,
         documents: [action.document, ...state.documents],
         milestones: action.document.procurementStep
-          ? state.milestones.map(m => m.requestId === action.document.requestId && m.step === action.document.procurementStep
-            ? { ...m, documentId: action.document.id }
-            : m
-          )
+          ? state.milestones.map((m) =>
+              m.requestId === action.document.requestId &&
+              m.step === action.document.procurementStep
+                ? { ...m, documentId: action.document.id }
+                : m
+            )
           : state.milestones,
         notifications: [newNotif, ...state.notifications],
-        history: [historyItem(action.document.requestId, "Dokumen", "Dokumen ditambahkan", `${action.document.name} ditambahkan untuk pemeriksaan.`), ...state.history],
+        history: [
+          historyItem(
+            action.document.requestId,
+            "Dokumen",
+            "Dokumen ditambahkan",
+            `${action.document.name} ditambahkan untuk pemeriksaan.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "UPDATE_DOCUMENT_STATUS": {
-      const doc = state.documents.find(d => d.id === action.id);
+      const doc = state.documents.find((d) => d.id === action.id);
       if (!doc) return state;
-      const request = state.requests.find(r => r.id === doc.requestId);
+      const request = state.requests.find((r) => r.id === doc.requestId);
       const isPass = action.status === "Lulus Verifikasi";
       const newNotif: NotificationItem = {
         id: `NOTIF-${Date.now()}`,
@@ -249,7 +258,9 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
           ? `Dokumen Lulus Verifikasi: ${doc.name}`
           : `Catatan pada Dokumen: ${doc.name}`,
         description: isPass
-          ? `"${doc.name}" untuk ${request?.title ?? doc.requestId} telah divalidasi dan dinyatakan lengkap.`
+          ? `"${doc.name}" untuk ${
+              request?.title ?? doc.requestId
+            } telah divalidasi dan dinyatakan lengkap.`
           : `"${doc.name}" untuk ${request?.title ?? doc.requestId} memerlukan tindak lanjut.`,
         time: "Baru saja",
         isRead: false,
@@ -258,22 +269,31 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
       };
       return {
         ...state,
-        documents: state.documents.map(d =>
+        documents: state.documents.map((d) =>
           d.id === action.id ? { ...d, status: action.status } : d
         ),
         notifications: [newNotif, ...state.notifications],
-        history: [historyItem(doc.requestId, "Dokumen", "Status dokumen diperbarui", `${doc.name} diubah menjadi ${action.status}.`), ...state.history],
+        history: [
+          historyItem(
+            doc.requestId,
+            "Dokumen",
+            "Status dokumen diperbarui",
+            `${doc.name} diubah menjadi ${action.status}.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "ADD_GUARANTEE": {
-      const request = state.requests.find(r => r.id === action.guarantee.requestId);
-      const newAction = actionForGuarantee(action.guarantee);
+      const request = state.requests.find((r) => r.id === action.guarantee.requestId);
       const newNotif: NotificationItem = {
         id: `NOTIF-${Date.now()}`,
         requestId: action.guarantee.requestId,
         title: `Jaminan Baru Ditambahkan: ${action.guarantee.referenceNo}`,
-        description: `${action.guarantee.type} dari ${action.guarantee.vendor.name} telah berhasil diregistrasi untuk ${request?.title ?? action.guarantee.requestId}.`,
+        description: `${action.guarantee.type} dari ${action.guarantee.vendor.name} telah berhasil diregistrasi untuk ${
+          request?.title ?? action.guarantee.requestId
+        }.`,
         time: "Baru saja",
         isRead: false,
         type: "success",
@@ -283,62 +303,122 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
         ...state,
         guarantees: [action.guarantee, ...state.guarantees],
         notifications: [newNotif, ...state.notifications],
-        history: [historyItem(action.guarantee.requestId, "Jaminan", "Jaminan ditambahkan", `${action.guarantee.type} ${action.guarantee.referenceNo} ditambahkan.`), ...state.history],
+        history: [
+          historyItem(
+            action.guarantee.requestId,
+            "Jaminan",
+            "Jaminan ditambahkan",
+            `${action.guarantee.type} ${action.guarantee.referenceNo} ditambahkan.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "UPDATE_GUARANTEE": {
-      const existing = state.guarantees.find(guarantee => guarantee.id === action.id);
+      const existing = state.guarantees.find((guarantee) => guarantee.id === action.id);
       if (!existing) return state;
       const updated = { ...existing, ...action.changes };
       const expiryTime = new Date(`${updated.expiryDate}T23:59:59`).getTime();
-      const remainingDays = Number.isNaN(expiryTime) ? 0 : Math.ceil((expiryTime - Date.now()) / 86400000);
-      const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= state.settings.slaWarningDays ? "Mendekati Expiry" : "Aktif";
+      const remainingDays = Number.isNaN(expiryTime)
+        ? 0
+        : Math.ceil((expiryTime - Date.now()) / 86400000);
+      const status: GuaranteeItem["status"] =
+        remainingDays < 0
+          ? "Expired"
+          : remainingDays <= state.settings.slaWarningDays
+          ? "Mendekati Expiry"
+          : "Aktif";
       return {
         ...state,
-        guarantees: state.guarantees.map(guarantee => guarantee.id === action.id ? { ...updated, status } : guarantee),
-        history: [historyItem(updated.requestId, "Jaminan", "Data jaminan dikoreksi", `${updated.referenceNo} diperbarui melalui koreksi manual hasil ekstraksi.`), ...state.history],
+        guarantees: state.guarantees.map((guarantee) =>
+          guarantee.id === action.id ? { ...updated, status } : guarantee
+        ),
+        history: [
+          historyItem(
+            updated.requestId,
+            "Jaminan",
+            "Data jaminan dikoreksi",
+            `${updated.referenceNo} diperbarui melalui koreksi manual hasil ekstraksi.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "ADD_ATTACHMENT":
-      return { ...state, attachments: [action.attachment, ...state.attachments], history: [historyItem(action.attachment.requestId, "Dokumen", "Dokumen pendukung ditambahkan", `${action.attachment.fileUrl ? action.attachment.fileUrl.split('/').pop() : "File"} disimpan tanpa ekstraksi.`), ...state.history] };
+      return {
+        ...state,
+        attachments: [action.attachment, ...state.attachments],
+        history: [
+          historyItem(
+            action.attachment.requestId,
+            "Dokumen",
+            "Dokumen pendukung ditambahkan",
+            `${
+              action.attachment.fileUrl
+                ? action.attachment.fileUrl.split("/").pop()
+                : "File"
+            } disimpan tanpa ekstraksi.`
+          ),
+          ...state.history,
+        ],
+      };
 
     case "ADD_DEADLINE": {
       const timing = getDeadlineTiming(action.deadline, state.settings.slaWarningDays);
       const deadline = { ...action.deadline, ...timing };
-      const newAction = actionForDeadline(deadline);
       return {
         ...state,
         deadlines: [deadline, ...state.deadlines],
-        history: [historyItem(deadline.requestId, "SLA", "SLA ditambahkan", `${deadline.taskName} ditetapkan hingga ${deadline.targetDate}.`), ...state.history],
+        history: [
+          historyItem(
+            deadline.requestId,
+            "SLA",
+            "SLA ditambahkan",
+            `${deadline.taskName} ditetapkan hingga ${deadline.targetDate}.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "UPDATE_DEADLINE": {
-      const existing = state.deadlines.find(d => d.id === action.id);
+      const existing = state.deadlines.find((d) => d.id === action.id);
       if (!existing) return state;
       const updated = { ...existing, ...action.changes };
       const timing = getDeadlineTiming(updated, state.settings.slaWarningDays);
       return {
         ...state,
-        deadlines: state.deadlines.map(d => d.id === action.id ? { ...updated, ...timing } : d),
-        history: [historyItem(updated.requestId, "SLA", "SLA diperbarui", `${updated.taskName} diperbarui; target ${updated.targetDate}.`), ...state.history],
+        deadlines: state.deadlines.map((d) =>
+          d.id === action.id ? { ...updated, ...timing } : d
+        ),
+        history: [
+          historyItem(
+            updated.requestId,
+            "SLA",
+            "SLA diperbarui",
+            `${updated.taskName} diperbarui; target ${updated.targetDate}.`
+          ),
+          ...state.history,
+        ],
       };
     }
 
     case "UPDATE_DEADLINE_STATUS": {
-      const dl = state.deadlines.find(d => d.id === action.id);
+      const dl = state.deadlines.find((d) => d.id === action.id);
       if (!dl) return state;
       const isDone = action.status === "Selesai";
       let newNotif: NotificationItem | null = null;
       if (isDone) {
-        const request = state.requests.find(r => r.id === dl.requestId);
+        const request = state.requests.find((r) => r.id === dl.requestId);
         newNotif = {
           id: `NOTIF-${Date.now()}`,
           requestId: dl.requestId,
           title: `Deadline Selesai: ${dl.taskName}`,
-          description: `Tugas "${dl.taskName}" untuk ${request?.title ?? dl.requestId} telah ditandai selesai oleh ${dl.pic.name}.`,
+          description: `Tugas "${dl.taskName}" untuk ${
+            request?.title ?? dl.requestId
+          } telah ditandai selesai oleh ${dl.pic.name}.`,
           time: "Baru saja",
           isRead: false,
           type: "success",
@@ -347,7 +427,7 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
       }
       return {
         ...state,
-        deadlines: state.deadlines.map(d =>
+        deadlines: state.deadlines.map((d) =>
           d.id === action.id ? { ...d, status: action.status as any } : d
         ),
         notifications: newNotif ? [newNotif, ...state.notifications] : state.notifications,
@@ -355,7 +435,7 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
     }
 
     case "UPDATE_ACTION_STATUS": {
-      const act = state.actions.find(a => a.id === action.id);
+      const act = state.actions.find((a) => a.id === action.id);
       if (!act) return state;
       const isDone = action.status === "Done";
       let newNotif: NotificationItem | null = null;
@@ -373,11 +453,11 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
       }
       return {
         ...state,
-        actions: state.actions.map(a =>
+        actions: state.actions.map((a) =>
           a.id === action.id ? { ...a, status: action.status } : a
         ),
-        deadlines: state.deadlines.map(d => 
-          (d.id === act.referenceId && isDone) ? { ...d, status: "Selesai" as any } : d
+        deadlines: state.deadlines.map((d) =>
+          d.id === act.referenceId && isDone ? { ...d, status: "Selesai" as any } : d
         ),
         notifications: newNotif ? [newNotif, ...state.notifications] : state.notifications,
       };
@@ -389,7 +469,7 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
     case "MARK_NOTIFICATION_READ":
       return {
         ...state,
-        notifications: state.notifications.map(n =>
+        notifications: state.notifications.map((n) =>
           n.id === action.id ? { ...n, isRead: true } : n
         ),
       };
@@ -397,7 +477,7 @@ export function procurementReducer(state: ProcurementState, action: ProcurementA
     case "MARK_ALL_READ":
       return {
         ...state,
-        notifications: state.notifications.map(n => ({ ...n, isRead: true })),
+        notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
       };
 
     case "ADD_NOTIFICATION":
