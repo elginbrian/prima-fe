@@ -203,7 +203,10 @@ export function useUpdateDeadline() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof deadlinesApi.update>[1] }) =>
       deadlinesApi.update(id, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
+    },
   });
 }
 
@@ -211,7 +214,10 @@ export function useCreateDeadline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: Parameters<typeof deadlinesApi.add>[0]) => deadlinesApi.add(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
+      qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
+    },
   });
 }
 

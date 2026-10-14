@@ -1,6 +1,7 @@
 import React from "react";
 import { CheckCircle2, CalendarClock, ChevronDown, ChevronRight } from "lucide-react";
 import type { ProcurementMilestone, DeadlineItem } from "@/types";
+import { getDeadlineTiming } from "@/lib/deadlineUtils";
 
 interface ProcurementTimelineProps {
   stage?: string;
@@ -50,7 +51,9 @@ export function ProcurementTimeline({
           const milestoneIndex = timelineStart + index;
           const isDone = milestone.status === "Done";
           const isCurrent = milestone.status === "In Progress";
-          const milestoneSlas = slas.filter((sla) => sla.milestone === milestone.step);
+          const milestoneSlas = slas.filter(
+            (sla) => sla.milestone?.trim().toLowerCase() === milestone.step?.trim().toLowerCase()
+          );
           return (
             <div key={milestone.id} className="relative flex gap-4 py-2">
               <div
@@ -101,64 +104,73 @@ export function ProcurementTimeline({
 
                 {milestoneSlas.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    {milestoneSlas.map((s) => (
-                      <div
-                        key={s.id}
-                        className="overflow-hidden rounded-md border border-slate-200 bg-white/60"
-                      >
-                        <button
-                          onClick={() =>
-                            setExpandedRelatedId((current) =>
-                              current === `sla-${s.id}` ? null : `sla-${s.id}`
-                            )
-                          }
-                          className="flex w-full items-center justify-between gap-3 px-2.5 py-2 text-left transition hover:bg-white"
+                    {milestoneSlas.map((s) => {
+                      const targetStr = s.targetDate ? String(s.targetDate).split("T")[0] : "-";
+                      const startStr = s.startDate ? String(s.startDate).split("T")[0] : "-";
+                      const timing = s.daysRemaining !== undefined && s.status
+                        ? { daysRemaining: s.daysRemaining, status: s.status }
+                        : getDeadlineTiming(s);
+
+                      return (
+                        <div
+                          key={s.id}
+                          className="overflow-hidden rounded-md border border-slate-200 bg-white/60"
                         >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <CalendarClock size={14} className="text-slate-400" />
-                              <span className="truncate text-xs font-semibold text-slate-700">
-                                {s.taskName}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-[11px] text-slate-500">
-                              PIC: {s.pic.name} • Target: {s.targetDate}
-                            </div>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <span
-                              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                                s.status === "On Track" || s.status === "Selesai"
-                                  ? "bg-blue-50 text-[#0a4d8c] border-blue-200"
-                                  : s.status === "At Risk"
-                                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                                  : "bg-red-50 text-red-700 border-red-200"
-                              }`}
-                            >
-                              {s.status === "Overdue"
-                                ? `${Math.abs(s.daysRemaining ?? 0)}h lewat`
-                                : s.status === "Selesai"
-                                ? "Selesai"
-                                : `${s.daysRemaining ?? 0}h sisa`}
-                            </span>
-                            {expandedRelatedId === `sla-${s.id}` ? (
-                              <ChevronDown size={14} className="text-slate-400" />
-                            ) : (
-                              <ChevronRight size={14} className="text-slate-400" />
-                            )}
-                          </div>
-                        </button>
-                        {expandedRelatedId === `sla-${s.id}` && (
-                          <div className="border-t border-slate-100 bg-slate-50 px-3 py-3 text-[11px] text-slate-600">
-                            <div>
-                              <span className="font-semibold">SLA:</span> {s.startDate ?? "-"} s.d.{" "}
-                              {s.targetDate} • Urgensi: {s.urgencyLevel}
-                            </div>
-                            {s.status === "Overdue" && s.overdueReason && (
-                              <div className="mt-1 text-red-600 font-medium">
-                                Alasan telat: {s.overdueReason}
+                          <button
+                            onClick={() =>
+                              setExpandedRelatedId((current) =>
+                                current === `sla-${s.id}` ? null : `sla-${s.id}`
+                              )
+                            }
+                            className="flex w-full items-center justify-between gap-3 px-2.5 py-2 text-left transition hover:bg-white"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <CalendarClock size={14} className="text-slate-400" />
+                                <span className="truncate text-xs font-semibold text-slate-700">
+                                  {s.taskName}
+                                </span>
                               </div>
-                            )}
+                              <div className="mt-1 text-[11px] text-slate-500">
+                                PIC: {s.pic.name} • Target: {targetStr}
+                              </div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <span
+                                className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                                  timing.status === "On Track" || timing.status === "Selesai"
+                                    ? "bg-blue-50 text-[#0a4d8c] border-blue-200"
+                                    : timing.status === "At Risk"
+                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                    : "bg-red-50 text-red-700 border-red-200"
+                                }`}
+                              >
+                                {timing.status === "Selesai"
+                                  ? "Selesai"
+                                  : timing.daysRemaining < 0 || timing.status === "Overdue"
+                                  ? `${Math.abs(timing.daysRemaining)}h lewat`
+                                  : timing.daysRemaining === 0
+                                  ? "Hari ini"
+                                  : `${timing.daysRemaining}h sisa`}
+                              </span>
+                              {expandedRelatedId === `sla-${s.id}` ? (
+                                <ChevronDown size={14} className="text-slate-400" />
+                              ) : (
+                                <ChevronRight size={14} className="text-slate-400" />
+                              )}
+                            </div>
+                          </button>
+                          {expandedRelatedId === `sla-${s.id}` && (
+                            <div className="border-t border-slate-100 bg-slate-50 px-3 py-3 text-[11px] text-slate-600">
+                              <div>
+                                <span className="font-semibold">SLA:</span> {startStr} s.d.{" "}
+                                {targetStr} • Urgensi: {s.urgencyLevel}
+                              </div>
+                              {timing.status === "Overdue" && s.overdueReason && (
+                                <div className="mt-1 text-red-600 font-medium">
+                                  Alasan telat: {s.overdueReason}
+                                </div>
+                              )}
                             {s.nextAction && (
                               <div className="mt-1">
                                 <span className="font-semibold text-[#0a4d8c]">Next Action:</span>{" "}
@@ -174,8 +186,9 @@ export function ProcurementTimeline({
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
                 )}
                 {!isDone && (
                   <button

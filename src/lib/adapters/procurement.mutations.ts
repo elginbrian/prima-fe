@@ -98,7 +98,15 @@ export function requestFormToCreatePayload(values: AddRequestFormValues): Create
 
 // ─── Deadlines / SLA ─────────────────────────────────────────────────────
 
+function cleanDateOrNull(val: string | null | undefined): string | null {
+  if (!val) return null;
+  const clean = String(val).trim().split("T")[0];
+  return clean || null;
+}
+
 export function deadlineToCreatePayload(deadline: Omit<DeadlineItem, "id">): Partial<DeadlineDto> {
+  const cleanTarget = cleanDateOrNull(deadline.targetDate);
+  const cleanStart = cleanDateOrNull(deadline.startDate);
   return {
     request_id: deadline.requestId,
     task_name: deadline.taskName,
@@ -107,8 +115,8 @@ export function deadlineToCreatePayload(deadline: Omit<DeadlineItem, "id">): Par
     pic_name: deadline.pic.name,
     department_id: deadline.department.id,
     department_name: deadline.department.name,
-    start_date: deadline.startDate,
-    target_date: deadline.targetDate,
+    start_date: cleanStart ? `${cleanStart}T00:00:00Z` : undefined,
+    target_date: cleanTarget ? `${cleanTarget}T00:00:00Z` : deadline.targetDate,
     status: deadline.status,
     urgency_level: deadline.urgencyLevel,
     next_action: deadline.nextAction,
@@ -129,11 +137,18 @@ export function deadlineChangesToUpdatePayload(changes: Partial<DeadlineItem>): 
     payload.department_id = changes.department.id;
     payload.department_name = changes.department.name;
   }
-  if (changes.startDate !== undefined) payload.start_date = changes.startDate;
-  if (changes.targetDate !== undefined) payload.target_date = changes.targetDate;
+  if (changes.startDate !== undefined) {
+    const cleanStart = cleanDateOrNull(changes.startDate);
+    payload.start_date = cleanStart ? `${cleanStart}T00:00:00Z` : (null as any);
+  }
+  if (changes.targetDate !== undefined) {
+    const cleanTarget = cleanDateOrNull(changes.targetDate);
+    if (cleanTarget) payload.target_date = `${cleanTarget}T00:00:00Z`;
+  }
   if (changes.status !== undefined) payload.status = changes.status;
   if (changes.urgencyLevel !== undefined) payload.urgency_level = changes.urgencyLevel;
   if (changes.nextAction !== undefined) payload.next_action = changes.nextAction;
   if (changes.overdueReason !== undefined) payload.overdue_reason = changes.overdueReason;
   return payload;
 }
+

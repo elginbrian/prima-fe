@@ -41,29 +41,33 @@ export function DeadlineEditor({ deadline, onClose, onSave, isSaving = false, er
   
   if (typeof document === 'undefined') return null;
   
+  const initialStartDate = deadline.startDate ? String(deadline.startDate).split("T")[0] : "";
+  const initialTargetDate = deadline.targetDate ? String(deadline.targetDate).split("T")[0] : "";
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex min-h-dvh items-center justify-center overflow-y-auto bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300" onClick={onClose}>
-      <form
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-300 ease-out"
-        onClick={(event) => event.stopPropagation()}
+      <form 
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-300 ease-out" 
+        onClick={(event) => event.stopPropagation()} 
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
-          const startDate = String(formData.get("startDate"));
-          const targetDate = String(formData.get("targetDate"));
-          if (targetDate < startDate) {
+          const startDate = String(formData.get("startDate") || "").trim();
+          const targetDate = String(formData.get("targetDate") || "").trim();
+          if (startDate && targetDate && targetDate < startDate) {
             setFormError("Target selesai tidak boleh lebih awal dari tanggal mulai.");
             return;
           }
           setFormError(null);
+          const picId = String(formData.get("pic"));
           onSave({
             taskName: String(formData.get("taskName")),
             pic: { 
-              id: String(formData.get("pic")), 
-              name: users?.find(u => u.id === String(formData.get("pic")))?.name || "" 
+              id: picId, 
+              name: users?.find(u => u.id === picId)?.name || deadline.pic.name 
             },
             milestone: String(formData.get("milestone")),
-            startDate,
+            startDate: startDate || undefined,
             targetDate,
             nextAction: String(formData.get("nextAction")),
             overdueReason: String(formData.get("overdueReason")),
@@ -87,8 +91,8 @@ export function DeadlineEditor({ deadline, onClose, onSave, isSaving = false, er
             </select>
           </label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Milestone</span><input required name="milestone" defaultValue={deadline.milestone} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
-          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal mulai</span><input required type="date" name="startDate" defaultValue={deadline.startDate ?? ""} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
-          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Target selesai</span><input required type="date" name="targetDate" defaultValue={deadline.targetDate} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
+          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal mulai</span><input type="date" name="startDate" defaultValue={initialStartDate} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
+          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Target selesai</span><input required type="date" name="targetDate" defaultValue={initialTargetDate} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Next action</span><textarea required name="nextAction" rows={3} defaultValue={deadline.nextAction ?? ""} className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Alasan keterlambatan</span><textarea name="overdueReason" rows={2} defaultValue={deadline.overdueReason ?? ""} placeholder="Diisi bila SLA melewati target selesai" className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
         </div>
@@ -111,6 +115,7 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave, i
 
   const { data: users } = useUsers();
   const [formError, setFormError] = useState<string | null>(null);
+  const todayDate = new Date().toISOString().split("T")[0];
 
   if (typeof document === 'undefined') return null;
   
@@ -119,12 +124,24 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave, i
       <form className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-300 ease-out" onClick={(event) => event.stopPropagation()} onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        const startDate = String(formData.get("startDate"));
-        const targetDate = String(formData.get("targetDate"));
-        if (targetDate < startDate) { setFormError("Target selesai tidak boleh lebih awal dari tanggal mulai."); return; }
+        const startDate = String(formData.get("startDate") || "").trim();
+        const targetDate = String(formData.get("targetDate") || "").trim();
+        if (startDate && targetDate && targetDate < startDate) { setFormError("Target selesai tidak boleh lebih awal dari tanggal mulai."); return; }
         setFormError(null);
         const picId = String(formData.get("pic"));
-        onSave({ requestId, taskName: String(formData.get("taskName")), milestone: String(formData.get("milestone")), pic: { id: picId, name: users?.find(u => u.id === picId)?.name || "" }, department, startDate, targetDate, status: "On Track", urgencyLevel: formData.get("urgencyLevel") as DeadlineItem["urgencyLevel"], nextAction: String(formData.get("nextAction")), overdueReason: String(formData.get("overdueReason")) });
+        onSave({ 
+          requestId, 
+          taskName: String(formData.get("taskName")), 
+          milestone: String(formData.get("milestone")), 
+          pic: { id: picId, name: users?.find(u => u.id === picId)?.name || "" }, 
+          department, 
+          startDate: startDate || undefined, 
+          targetDate, 
+          status: "On Track", 
+          urgencyLevel: formData.get("urgencyLevel") as DeadlineItem["urgencyLevel"], 
+          nextAction: String(formData.get("nextAction")), 
+          overdueReason: String(formData.get("overdueReason")) 
+        });
       }}>
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
           <div>
@@ -143,7 +160,7 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave, i
             </select>
           </label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Milestone</span><select required name="milestone" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">{PROCUREMENT_STEPS.map(step => <option key={step} value={step}>{step}</option>)}</select></label>
-          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal mulai</span><input required type="date" name="startDate" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
+          <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal mulai</span><input required type="date" name="startDate" defaultValue={todayDate} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Target selesai</span><input required type="date" name="targetDate" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Urgensi</span><select name="urgencyLevel" defaultValue="Medium" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></label>
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Next action</span><textarea required name="nextAction" rows={3} placeholder="Tindakan yang harus dilakukan PIC" className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>

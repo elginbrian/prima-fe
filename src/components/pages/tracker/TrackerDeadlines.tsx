@@ -81,12 +81,12 @@ export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEd
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">{deadline.pic?.name || "-"}</td>
                     <td className="px-4 py-3 text-xs text-slate-600">
-                      <div>{deadline.startDate ?? "Belum diatur"}</div>
-                      <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate}</div>
+                      <div>{deadline.startDate ? deadline.startDate.split("T")[0] : "Belum diatur"}</div>
+                      <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate ? deadline.targetDate.split("T")[0] : "-"}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${deadline.status === "Overdue" ? "border-red-200 bg-red-50 text-red-700" : deadline.status === "At Risk" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-blue-200 bg-blue-50 text-[#0a4d8c]"}`}>
-                        {deadline.status} · {deadline.status === "Selesai" ? "Selesai" : deadline.daysRemaining < 0 ? `${Math.abs(deadline.daysRemaining)} hari terlambat` : `${deadline.daysRemaining} hari`}
+                        {deadline.status} · {deadline.status === "Selesai" ? "Selesai" : deadline.daysRemaining < 0 ? `${Math.abs(deadline.daysRemaining)} hari terlambat` : deadline.daysRemaining === 0 ? "Hari ini" : `${deadline.daysRemaining} hari sisa`}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right">

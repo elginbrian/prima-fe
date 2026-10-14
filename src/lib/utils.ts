@@ -22,8 +22,12 @@ export function calculateDaysBetween(startDateStr: string, endDateStr?: string):
 }
 
 export function calculateDaysRemaining(targetDateStr: string): number {
-  const target = new Date(targetDateStr).getTime();
-  const now = Date.now();
-  const diffTime = target - now;
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (!targetDateStr) return 0;
+  const cleanStr = String(targetDateStr).split("T")[0];
+  const parts = cleanStr.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return 0;
+  const targetMidnight = Date.UTC(parts[0], parts[1] - 1, parts[2]);
+  const now = new Date();
+  const todayMidnight = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((targetMidnight - todayMidnight) / 86400000);
 }
