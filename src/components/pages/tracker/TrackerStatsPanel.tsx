@@ -59,7 +59,7 @@ export function TrackerStatsPanel({
         {/* CTA Card */}
         <div className="relative overflow-hidden rounded-xl bg-[#0a4d8c] px-4 py-4 text-white shadow-sm">
           <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full border-[16px] border-blue-300/15" />
-          <div className="pointer-events-none absolute -bottom-10 right-4 h-20 w-20 rounded-full border-[12px] border-cyan-300/10" />
+          <div className="pointer-events-none absolute -bottom-10 right-4 h-20 w-20 rounded-full border-[12px] border-blue-300/10" />
           <div className="relative z-10">
             <p className="text-[12px] font-semibold leading-snug">
               Daftarkan pekerjaan baru ke sistem

@@ -10,7 +10,7 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
   const getStatusStyle = (status: GuaranteeStatus) => {
     switch (status) {
       case "Aktif": 
-        return { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <ShieldCheck size={16} /> };
+        return { color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <ShieldCheck size={16} /> };
       case "Mendekati Expiry": 
         return { color: "bg-amber-50 text-amber-700 border-amber-200", icon: <AlertTriangle size={16} /> };
       case "Expired": 
@@ -74,7 +74,7 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
             <div className="text-sm font-bold text-slate-800">{guarantee.expiryDate}</div>
             <div className={`text-xs font-medium mt-0.5 ${
               guarantee.status === 'Expired' ? 'text-red-600' : 
-              guarantee.status === 'Mendekati Expiry' ? 'text-amber-600' : 'text-emerald-600'
+              guarantee.status === 'Mendekati Expiry' ? 'text-amber-600' : 'text-[#0a4d8c]'
             }`}>
               {calculateDaysRemaining(guarantee.expiryDate) < 0 ? `Terlewat ${Math.abs(calculateDaysRemaining(guarantee.expiryDate))} hari` : `${calculateDaysRemaining(guarantee.expiryDate)} hari lagi`}
             </div>
@@ -88,7 +88,7 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
           className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center cursor-pointer group"
           onClick={() => setIsExpanded(true)}
         >
-          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 group-hover:text-orange-600 transition-colors">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 group-hover:text-[#0a4d8c] transition-colors">
             <AlertTriangle size={14} className={guarantee.status === 'Expired' ? 'text-red-500' : 'text-amber-500'} />
             <span>Lihat Rekomendasi Tindakan</span>
             <ChevronDown size={14} />
@@ -99,15 +99,15 @@ export function GuaranteeCard({ guarantee }: { guarantee: GuaranteeItem }) {
       {/* Expanded Next Action Area */}
       {hasAction && isExpanded && (
         <div className="mt-5 pt-5 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex bg-gradient-to-br from-[#fff8f0] to-[#fff4e6] border border-orange-100 rounded-xl p-4 shadow-sm relative">
+          <div className="flex bg-blue-50/60 border border-blue-200/80 rounded-xl p-4 shadow-sm relative">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle size={16} className="text-orange-500" />
-                <h4 className="text-xs font-bold text-orange-800 uppercase tracking-widest">Next Action</h4>
+                <AlertTriangle size={16} className="text-[#0a4d8c]" />
+                <h4 className="text-xs font-bold text-[#0a4d8c] uppercase tracking-widest">Next Action</h4>
               </div>
-              <p className="text-sm text-orange-950 font-medium leading-relaxed">{guarantee.nextAction}</p>
+              <p className="text-sm text-slate-800 font-medium leading-relaxed">{guarantee.nextAction}</p>
               
-              <button className="mt-4 flex items-center gap-2 bg-white border border-orange-200 hover:border-orange-400 hover:bg-orange-50 text-orange-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm">
+              <button className="mt-4 flex items-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm">
                 <span>Tandai Sudah Dikoordinasikan</span>
                 <ArrowRight size={14} />
               </button>

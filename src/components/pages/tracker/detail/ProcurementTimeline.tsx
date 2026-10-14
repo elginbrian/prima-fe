@@ -56,7 +56,7 @@ export function ProcurementTimeline({
               <div
                 className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-[11px] font-bold ${
                   isDone
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-[#0a4d8c] text-white"
                     : isCurrent
                     ? "bg-[#0a4d8c] text-white ring-4 ring-blue-100"
                     : "bg-slate-100 text-slate-400"
@@ -69,7 +69,7 @@ export function ProcurementTimeline({
                   isCurrent
                     ? "border-blue-200 bg-blue-50/60"
                     : isDone
-                    ? "border-emerald-100 bg-emerald-50/40"
+                    ? "border-slate-200 bg-slate-50/60"
                     : "border-slate-100 bg-white"
                 }`}
               >
@@ -84,7 +84,7 @@ export function ProcurementTimeline({
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider ${
                       isDone
-                        ? "text-emerald-600"
+                        ? "text-[#0a4d8c]"
                         : isCurrent
                         ? "text-[#0a4d8c]"
                         : "text-slate-400"
@@ -129,7 +129,7 @@ export function ProcurementTimeline({
                             <span
                               className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                                 s.status === "On Track" || s.status === "Selesai"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  ? "bg-blue-50 text-[#0a4d8c] border-blue-200"
                                   : s.status === "At Risk"
                                   ? "bg-amber-50 text-amber-700 border-amber-200"
                                   : "bg-red-50 text-red-700 border-red-200"

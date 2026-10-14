@@ -22,12 +22,12 @@ export function GuaranteeStats({ totalCount, aktifCount, mendekatiCount, expired
         <div className="flex justify-between items-start">
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-[#0a4d8c]"></div>
               Aktif
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{aktifCount}</div>
           </div>
-          <div className="bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-100">
+          <div className="bg-blue-50 text-[#0a4d8c] text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-100">
             {aktifPct.toFixed(0)}%
           </div>
         </div>
@@ -39,12 +39,12 @@ export function GuaranteeStats({ totalCount, aktifCount, mendekatiCount, expired
         <div className="flex justify-between items-start">
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#0a4d8c]"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
               Mendekati Expiry
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{mendekatiCount}</div>
           </div>
-          <div className="bg-blue-50 text-[#0a4d8c] text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-100">
+          <div className="bg-amber-50 text-amber-700 text-xs font-medium px-2.5 py-0.5 rounded-full border border-amber-100">
             {mendekatiPct.toFixed(0)}%
           </div>
         </div>

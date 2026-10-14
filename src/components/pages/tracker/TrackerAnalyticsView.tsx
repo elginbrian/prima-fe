@@ -31,7 +31,7 @@ export function TrackerAnalyticsView() {
 
   const complianceBadgeColor = useMemo(() => {
     const rate = analytics?.summary.overall_compliance_rate ?? 100;
-    if (rate >= 85) return "text-emerald-700 bg-emerald-50 border-emerald-200";
+    if (rate >= 85) return "text-[#0a4d8c] bg-blue-50 border-blue-200";
     if (rate >= 70) return "text-amber-700 bg-amber-50 border-amber-200";
     return "text-red-700 bg-red-50 border-red-200";
   }, [analytics?.summary.overall_compliance_rate]);
@@ -108,7 +108,7 @@ export function TrackerAnalyticsView() {
             type="button"
             onClick={handleRunEvaluation}
             disabled={evaluateSlaMutation.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold shadow transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-xs font-bold shadow transition-all active:scale-95 disabled:opacity-50"
             title="Jalankan Evaluasi SLA Harian Otomatis"
           >
             {evaluateSlaMutation.isPending ? (

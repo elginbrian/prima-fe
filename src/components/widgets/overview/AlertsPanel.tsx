@@ -11,7 +11,7 @@ export function AlertsPanel() {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
-        <div className="rounded-xl bg-amber-100 p-2 text-amber-700">
+        <div className="rounded-xl bg-blue-50 p-2 text-[#0a4d8c]">
           <BellRing size={16} />
         </div>
         <div>

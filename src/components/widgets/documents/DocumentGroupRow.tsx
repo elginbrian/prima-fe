@@ -6,7 +6,7 @@ import { DocumentGroupRowProps } from "./types";
 import { DocumentPreviewModal } from "../modals/DocumentPreviewModal";
 
 function statusClass(status: DocumentItem["status"]) {
-  if (status === "Lulus Verifikasi") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (status === "Lulus Verifikasi") return "bg-blue-50 text-[#0a4d8c] border-blue-200";
   if (status === "Tindak Lanjut FPP") return "bg-red-50 text-red-700 border-red-200";
   return "bg-amber-50 text-amber-700 border-amber-200";
 }
@@ -43,7 +43,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
                 <span
                   className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${
                     request.operationalStatus === "On Going"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      ? "border-blue-200 bg-blue-50 text-[#0a4d8c]"
                       : request.operationalStatus === "On Hold"
                       ? "border-amber-200 bg-amber-50 text-amber-700"
                       : "border-red-200 bg-red-50 text-red-700"
@@ -62,7 +62,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
         <td className="px-4 py-4 text-sm text-slate-600">{request.pic.name}</td>
         <td className="px-4 py-4">
           <div className="flex flex-wrap gap-1.5">
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[#0a4d8c]">
               {readyCount} lulus
             </span>
             {attentionCount > 0 && (
@@ -127,7 +127,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
                           </ul>
                         </div>
                       ) : (
-                        <div className="text-xs text-emerald-700">Tidak ada temuan pemeriksaan.</div>
+                        <div className="text-xs text-[#0a4d8c]">Tidak ada temuan pemeriksaan.</div>
                       )}
                       {document.nextAction && (
                         <div className="mt-3 text-xs text-slate-600">

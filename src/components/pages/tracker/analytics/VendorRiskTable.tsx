@@ -11,7 +11,7 @@ export function VendorRiskTable({ vendorRiskIndex }: VendorRiskTableProps) {
     <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/70">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="text-cyan-700" size={18} />
+          <ShieldCheck className="text-[#0a4d8c]" size={18} />
           <h3 className="text-sm font-bold text-slate-800">
             Vendor Risk Index & Garansi Bank (Modul D2)
           </h3>
@@ -74,7 +74,7 @@ export function VendorRiskTable({ vendorRiskIndex }: VendorRiskTableProps) {
                             ? "bg-red-50 text-red-700 border border-red-200"
                             : isMed
                             ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-blue-50 text-[#0a4d8c] border border-blue-200"
                         }`}
                       >
                         {isHigh && (
@@ -91,7 +91,7 @@ export function VendorRiskTable({ vendorRiskIndex }: VendorRiskTableProps) {
                         )}
                         {!isHigh && !isMed && (
                           <>
-                            <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
+                            <CheckCircle2 size={11} className="text-[#0a4d8c] shrink-0" />
                             <span>Low Risk</span>
                           </>
                         )}

@@ -42,8 +42,8 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
               act.action === "CREATE"
                 ? {
                     label: "Pengadaan Dibuat",
-                    bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                    dot: "bg-emerald-500",
+                    bg: "bg-blue-50 text-[#0a4d8c] border-blue-200",
+                    dot: "bg-[#0a4d8c]",
                   }
                 : act.action === "HANDOVER_PIC"
                 ? {
@@ -60,8 +60,8 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
                 : act.action === "UPDATE_STATUS"
                 ? {
                     label: `Status: ${act.new_state}`,
-                    bg: "bg-amber-50 text-amber-700 border-amber-200",
-                    dot: "bg-amber-500",
+                    bg: "bg-slate-100 text-slate-700 border-slate-200",
+                    dot: "bg-slate-500",
                   }
                 : act.action === "MOVE_STAGE"
                 ? {
@@ -71,8 +71,8 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
                   }
                 : {
                     label: `Langkah: ${act.new_state}`,
-                    bg: "bg-sky-50 text-sky-700 border-sky-200 font-medium",
-                    dot: "bg-sky-500",
+                    bg: "bg-blue-50 text-[#0a4d8c] border-blue-100 font-medium",
+                    dot: "bg-[#0a4d8c]",
                   };
 
             return (
@@ -116,12 +116,12 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
               <span
                 className={`absolute -left-[25px] top-1.5 h-3 w-3 rounded-full border-2 border-white ${
                   item.category === "SLA"
-                    ? "bg-amber-500"
+                    ? "bg-[#0a4d8c]"
                     : item.category === "Jaminan"
-                    ? "bg-emerald-500"
+                    ? "bg-[#0a4d8c]"
                     : item.category === "Dokumen"
-                    ? "bg-blue-500"
-                    : "bg-slate-500"
+                    ? "bg-blue-400"
+                    : "bg-slate-400"
                 }`}
               />
               <div className="flex flex-wrap items-center gap-2">

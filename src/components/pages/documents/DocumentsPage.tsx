@@ -116,7 +116,7 @@ export default function DocumentsPage() {
           </div>
         </div>
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border-[32px] border-blue-300/15" />
-        <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full border-[24px] border-cyan-300/10" />
+        <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full border-[24px] border-blue-300/10" />
       </section>
 
       <section className="order-3 grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_1fr]">
@@ -136,7 +136,7 @@ export default function DocumentsPage() {
                 </button>
                 {expandedReviewId === document.id && (
                   <div className="border-x border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-12">
-                    {document.issues.length > 0 ? <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-600">{document.issues.map((issue, index) => <li key={`${document.id}-review-issue-${index}`}>{issue}</li>)}</ul> : <div className="text-xs text-emerald-700">Tidak ada temuan pemeriksaan.</div>}
+                    {document.issues.length > 0 ? <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-600">{document.issues.map((issue, index) => <li key={`${document.id}-review-issue-${index}`}>{issue}</li>)}</ul> : <div className="text-xs text-[#0a4d8c] font-medium">Tidak ada temuan pemeriksaan.</div>}
                     {document.nextAction && <div className="mt-3 text-xs text-slate-600"><span className="font-semibold text-[#0a4d8c]">Next Action:</span> {document.nextAction}</div>}
                     <button onClick={() => router.push(`/dashboard/documents/result?id=${document.id}`)} className="mt-3 text-xs font-semibold text-[#0a4d8c] hover:underline">Buka hasil pemeriksaan</button>
                   </div>
@@ -148,7 +148,7 @@ export default function DocumentsPage() {
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-start justify-between gap-4"><div><h2 className="text-base font-bold text-slate-800">Kelengkapan dokumen per kategori</h2><p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500">Dokumen Lulus Verifikasi dibandingkan dengan total dokumen pada setiap tipe.</p></div><CheckCircle2 className="text-emerald-500" size={20} /></div>
+          <div className="flex items-start justify-between gap-4"><div><h2 className="text-base font-bold text-slate-800">Kelengkapan dokumen per kategori</h2><p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500">Dokumen Lulus Verifikasi dibandingkan dengan total dokumen pada setiap tipe.</p></div><CheckCircle2 className="text-[#0a4d8c]" size={20} /></div>
           <div className="mt-6 space-y-5">
             {readinessByType.map(item => <div key={item.type}><div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold text-slate-700">{item.type}</span><span className="font-bold text-slate-500">{item.complete} Lulus / {item.total} total</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#0a4d8c] transition-all" style={{ width: `${item.percent}%` }} /></div><div className="mt-1 text-right text-[11px] font-medium text-slate-400">{item.percent}% siap</div></div>)}
           </div>

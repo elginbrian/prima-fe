@@ -30,7 +30,7 @@ export function DepartmentComplianceWidget({
             {departmentCompliance.map((dept, idx) => {
               const rate = dept.compliance_rate;
               const barColor =
-                rate >= 85 ? "bg-emerald-500" : rate >= 70 ? "bg-amber-500" : "bg-red-500";
+                rate >= 85 ? "bg-[#0a4d8c]" : rate >= 70 ? "bg-amber-500" : "bg-red-500";
               return (
                 <div key={idx} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
@@ -63,7 +63,7 @@ export function DepartmentComplianceWidget({
 
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" /> &gt;= 85% Memuaskan
+            <span className="w-2 h-2 rounded-full bg-[#0a4d8c]" /> &gt;= 85% Memuaskan
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-500" /> 70-84% Waspada

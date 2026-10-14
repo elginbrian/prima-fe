@@ -27,17 +27,17 @@ export function DocumentCard({ doc }: { doc: DocumentItem }) {
   
   const getStatusColor = (status: DocumentStatus) => {
     switch (status) {
-      case "Lulus Verifikasi": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "Catatan Procurement": return "bg-blue-50 text-[#0a4d8c] border-blue-200";
+      case "Lulus Verifikasi": return "bg-blue-50 text-[#0a4d8c] border-blue-200";
+      case "Catatan Procurement": return "bg-blue-50/80 text-[#0a4d8c] border-blue-200";
       case "Tindak Lanjut FPP": return "bg-red-50 text-red-700 border-red-200";
     }
   };
 
   const getStatusIcon = (status: DocumentStatus) => {
     switch (status) {
-      case "Lulus Verifikasi": return <CheckCircle2 size={16} />;
-      case "Catatan Procurement": return <AlertCircle size={16} />;
-      case "Tindak Lanjut FPP": return <XCircle size={16} />;
+      case "Lulus Verifikasi": return <CheckCircle2 size={16} className="text-[#0a4d8c]" />;
+      case "Catatan Procurement": return <AlertCircle size={16} className="text-[#0a4d8c]" />;
+      case "Tindak Lanjut FPP": return <XCircle size={16} className="text-red-600" />;
     }
   };
 
@@ -150,9 +150,9 @@ export function DocumentCard({ doc }: { doc: DocumentItem }) {
                   {doc.status !== "Lulus Verifikasi" && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); updateDocumentStatus(doc.id, "Lulus Verifikasi"); }}
-                      className="flex items-center gap-2 bg-white border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                      className="group flex items-center gap-2 bg-white border border-slate-300 hover:border-[#0a4d8c] hover:bg-blue-50 text-slate-700 hover:text-[#0a4d8c] px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm"
                     >
-                      <CheckCircle2 size={16} className="text-slate-400 group-hover:text-emerald-500" />
+                      <CheckCircle2 size={16} className="text-slate-400 group-hover:text-[#0a4d8c]" />
                       <span>Override: Tandai Lulus Verifikasi</span>
                     </button>
                   )}

@@ -58,7 +58,7 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col gap-1 items-start">
-                    <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${item.operationalStatus === "On Going" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : item.operationalStatus === "On Hold" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${item.operationalStatus === "On Going" ? "border-blue-200 bg-blue-50 text-[#0a4d8c]" : item.operationalStatus === "On Hold" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-red-200 bg-red-50 text-red-700"}`}>
                       {item.operationalStatus}
                     </span>
                     {item.operationalStatus === "On Hold" && (
@@ -79,8 +79,8 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                     const allValid = docStats.valid === docStats.total;
                     return (
                       <div className="flex items-center gap-1.5">
-                        <FileText size={14} className={allValid ? "text-emerald-500" : "text-amber-500"} />
-                        <span className={`font-semibold ${allValid ? "text-emerald-600" : "text-amber-600"}`}>
+                        <FileText size={14} className={allValid ? "text-[#0a4d8c]" : "text-amber-600"} />
+                        <span className={`font-semibold ${allValid ? "text-[#0a4d8c]" : "text-amber-600"}`}>
                           {docStats.valid}/{docStats.total} <span className="font-normal opacity-80">Valid</span>
                         </span>
                       </div>

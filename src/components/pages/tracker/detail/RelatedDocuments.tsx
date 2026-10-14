@@ -52,7 +52,7 @@ export function RelatedDocuments({
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                       d.status === "Lulus Verifikasi"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        ? "bg-blue-50 text-[#0a4d8c] border-blue-200"
                         : "bg-red-50 text-red-700 border-red-200"
                     }`}
                   >

@@ -41,7 +41,7 @@ export function AnalyticsKpiCards({
           <div
             className={`h-full ${
               summary.overall_compliance_rate >= 85
-                ? "bg-emerald-500"
+                ? "bg-[#0a4d8c]"
                 : summary.overall_compliance_rate >= 70
                 ? "bg-amber-500"
                 : "bg-red-500"
@@ -50,7 +50,7 @@ export function AnalyticsKpiCards({
           />
         </div>
         <p className="mt-2 text-[11px] text-slate-400 flex items-center gap-1">
-          <CheckCircle2 size={12} className="text-emerald-500" />
+          <CheckCircle2 size={12} className="text-[#0a4d8c]" />
           {summary.total_deadlines - summary.overdue_deadlines} tepat waktu / selesai
         </p>
       </div>
@@ -114,7 +114,7 @@ export function AnalyticsKpiCards({
         <p className="mt-4 text-[11px] text-slate-400 flex items-center gap-1">
           <AlertCircle
             size={12}
-            className={summary.overdue_deadlines > 0 ? "text-red-500" : "text-emerald-500"}
+            className={summary.overdue_deadlines > 0 ? "text-red-500" : "text-[#0a4d8c]"}
           />
           {summary.escalated_deadlines > 0
             ? "Membutuhkan intervensi manajerial segera"
@@ -128,7 +128,7 @@ export function AnalyticsKpiCards({
           <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
             Kualitas Dokumen (D1)
           </span>
-          <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+          <div className="p-1.5 bg-blue-50 text-[#0a4d8c] rounded-lg">
             <FileCheck2 size={16} />
           </div>
         </div>

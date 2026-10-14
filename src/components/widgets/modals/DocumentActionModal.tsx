@@ -18,8 +18,8 @@ interface DocumentActionModalProps {
 }
 
 const STATUS_LABELS: { value: DocumentStatus; label: string; icon: React.ReactNode; color: string }[] = [
-  { value: "Lulus Verifikasi", label: "Lulus Verifikasi", icon: <CheckCircle2 size={14} />, color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" },
-  { value: "Catatan Procurement", label: "Catatan Procurement", icon: <AlertCircle size={14} />, color: "bg-blue-50 text-[#0a4d8c] border-blue-200 hover:bg-blue-100" },
+  { value: "Lulus Verifikasi", label: "Lulus Verifikasi", icon: <CheckCircle2 size={14} />, color: "bg-blue-50 text-[#0a4d8c] border-blue-200 hover:bg-blue-100" },
+  { value: "Catatan Procurement", label: "Catatan Procurement", icon: <AlertCircle size={14} />, color: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
   { value: "Tindak Lanjut FPP", label: "Tindak Lanjut FPP", icon: <XCircle size={14} />, color: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" },
 ];
 
@@ -147,9 +147,9 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
             <>
               {/* Revision Notes on current doc */}
               {doc.revisionNotes && (
-                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs">
-                  <div className="font-bold text-emerald-900 mb-0.5">Catatan Perbaikan Versi Ini:</div>
-                  <p className="text-emerald-800">{doc.revisionNotes}</p>
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs">
+                  <div className="font-bold text-[#0a4d8c] mb-0.5">Catatan Perbaikan Versi Ini:</div>
+                  <p className="text-slate-700">{doc.revisionNotes}</p>
                 </div>
               )}
 

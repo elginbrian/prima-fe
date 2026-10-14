@@ -20,7 +20,7 @@ import { DocumentPreviewModal } from "../modals/DocumentPreviewModal";
 import { GuaranteeLifecycleModal } from "../modals/GuaranteeLifecycleModal";
 
 function statusClass(status: GuaranteeItem["status"]) {
-  if (status === "Aktif") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (status === "Aktif") return "bg-blue-50 text-[#0a4d8c] border-blue-200";
   if (status === "Expired") return "bg-red-50 text-red-700 border-red-200";
   if (status === "Mendekati Expiry") return "bg-amber-50 text-amber-700 border-amber-200";
   if (status === "Klaim Diajukan") return "bg-rose-50 text-rose-700 border-rose-300 font-bold";
@@ -99,7 +99,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                 </span>
               )}
               {expiredCount === 0 && attentionCount === 0 && claimCount === 0 && (
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[#0a4d8c]">
                   Aman
                 </span>
               )}
@@ -286,9 +286,9 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                           <button
                             type="button"
                             onClick={() => setLifecycleGuarantee({ guarantee, action: "release" })}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-[#0a4d8c] hover:bg-blue-100 transition-colors"
                           >
-                            <CalendarCheck size={13} className="text-emerald-600" />
+                            <CalendarCheck size={13} className="text-[#0a4d8c]" />
                             Pengembalian (BAST)
                           </button>
 

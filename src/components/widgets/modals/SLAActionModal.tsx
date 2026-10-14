@@ -16,10 +16,10 @@ interface SLAActionModalProps {
 }
 
 const STATUS_MAP = {
-  "On Track": { label: "On Track", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <CheckCircle2 size={14} /> },
+  "On Track": { label: "On Track", color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <CheckCircle2 size={14} /> },
   "At Risk": { label: "At Risk", color: "bg-amber-50 text-amber-700 border-amber-200", icon: <AlertTriangle size={14} /> },
   "Overdue": { label: "Overdue", color: "bg-red-50 text-red-700 border-red-200", icon: <AlertTriangle size={14} /> },
-  "Selesai": { label: "Selesai", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <CheckCircle2 size={14} /> },
+  "Selesai": { label: "Selesai", color: "bg-slate-100 text-slate-700 border-slate-200", icon: <CheckCircle2 size={14} /> },
 };
 
 const URGENCY_MAP = {
@@ -362,7 +362,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                 type="button"
                 onClick={handleMarkDone}
                 disabled={updateDeadline.isPending}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#093e6f] disabled:opacity-50"
               >
                 {updateDeadline.isPending ? (
                   <>
@@ -378,7 +378,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               </button>
             )}
             {deadline.status === "Selesai" && (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-[#0a4d8c]">
                 <CheckCircle2 size={16} /> SLA Sudah Selesai
               </span>
             )}

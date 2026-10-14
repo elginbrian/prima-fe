@@ -11,7 +11,7 @@ export function NotificationTab({ formData, handleChange, users }: SettingsTabPr
             <div className="font-semibold text-slate-800 text-sm">Notifikasi Email</div>
             <div className="text-xs text-slate-500 mt-1">Kirim ringkasan SLA dan tindakan harian ke email.</div>
           </div>
-          <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.emailNotifications ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+          <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.emailNotifications ? 'bg-[#0a4d8c]' : 'bg-slate-300'}`}>
             <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${formData.emailNotifications ? 'left-7' : 'left-1'}`}></div>
           </div>
         </div>
@@ -21,7 +21,7 @@ export function NotificationTab({ formData, handleChange, users }: SettingsTabPr
             <div className="font-semibold text-slate-800 text-sm">Notifikasi WhatsApp</div>
             <div className="text-xs text-slate-500 mt-1">Kirim peringatan instan saat SLA akan Overdue atau Jaminan Expired.</div>
           </div>
-          <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.whatsappNotifications ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+          <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.whatsappNotifications ? 'bg-[#0a4d8c]' : 'bg-slate-300'}`}>
             <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${formData.whatsappNotifications ? 'left-7' : 'left-1'}`}></div>
           </div>
         </div>
@@ -32,7 +32,7 @@ export function NotificationTab({ formData, handleChange, users }: SettingsTabPr
               <div className="font-semibold text-slate-800 text-sm">Auto-Eskalasi ke Atasan</div>
               <div className="text-xs text-slate-500 mt-1">Otomatiskan pemberitahuan eskalasi pekerjaan jika SLA terlewat.</div>
             </div>
-            <div className={`w-12 h-6 rounded-full relative transition-colors shrink-0 ${formData.autoEscalation ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+            <div className={`w-12 h-6 rounded-full relative transition-colors shrink-0 ${formData.autoEscalation ? 'bg-[#0a4d8c]' : 'bg-slate-300'}`}>
               <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${formData.autoEscalation ? 'left-7' : 'left-1'}`}></div>
             </div>
           </div>

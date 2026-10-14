@@ -201,7 +201,7 @@ export default function GuaranteeUploadPage() {
               ) : (
               <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-[#0a4d8c]"></div>
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hasil Ekstraksi Otomatis</h3>
                 </div>
                 

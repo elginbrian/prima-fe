@@ -12,9 +12,9 @@ export function GuaranteeRow({ guarantee, onEdit }: { guarantee: GuaranteeItem; 
   const getStatusStyle = (status: GuaranteeStatus) => {
     switch (status) {
       case "Aktif": 
-        return { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <ShieldCheck size={14} /> };
+        return { color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <ShieldCheck size={14} /> };
       case "Mendekati Expiry": 
-        return { color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <AlertTriangle size={14} /> };
+        return { color: "bg-amber-50 text-amber-700 border-amber-200", icon: <AlertTriangle size={14} /> };
       case "Expired": 
         return { color: "bg-red-50 text-red-700 border-red-200", icon: <ShieldAlert size={14} /> };
       case "Klaim Diajukan":
@@ -48,7 +48,7 @@ export function GuaranteeRow({ guarantee, onEdit }: { guarantee: GuaranteeItem; 
           <div className="text-[13px] font-medium text-slate-700">{guarantee.expiryDate}</div>
           <div className={`text-xs mt-0.5 font-medium ${
             guarantee.status === 'Expired' ? 'text-red-600' : 
-            guarantee.status === 'Mendekati Expiry' ? 'text-[#0a4d8c]' : 'text-emerald-600'
+            guarantee.status === 'Mendekati Expiry' ? 'text-amber-600' : 'text-[#0a4d8c]'
           }`}>
             {calculateDaysRemaining(guarantee.expiryDate) < 0 ? `Terlewat ${Math.abs(calculateDaysRemaining(guarantee.expiryDate))} hari` : `${calculateDaysRemaining(guarantee.expiryDate)} hari lagi`}
           </div>
@@ -70,7 +70,7 @@ export function GuaranteeRow({ guarantee, onEdit }: { guarantee: GuaranteeItem; 
       {isExpanded && (
         <tr>
           <td colSpan={5} className="p-0 border-b border-slate-200 whitespace-normal">
-            <div className={`px-5 py-4 bg-slate-50/50 inner-shadow-sm border-l-4 ${hasAction ? 'border-l-[#0a4d8c]' : 'border-l-emerald-500'}`}>
+            <div className={`px-5 py-4 bg-slate-50/50 inner-shadow-sm border-l-4 ${hasAction ? 'border-l-[#0a4d8c]' : 'border-l-blue-600'}`}>
               <div className="max-w-5xl">
                 {hasAction ? (
                   <div className="flex flex-col xl:flex-row gap-8">
@@ -125,10 +125,10 @@ export function GuaranteeRow({ guarantee, onEdit }: { guarantee: GuaranteeItem; 
                 ) : (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
                     <div className="flex items-center gap-3">
-                      <ShieldCheck size={20} className="text-emerald-500" />
+                      <ShieldCheck size={20} className="text-[#0a4d8c]" />
                       <div>
-                        <h4 className="text-[13px] font-semibold text-emerald-800">Jaminan dalam Status Aman</h4>
-                        <p className="text-[12px] text-emerald-600/80 mt-0.5">Masa berlaku masih panjang. Sistem akan memberikan notifikasi otomatis saat mendekati masa kedaluwarsa.</p>
+                        <h4 className="text-[13px] font-semibold text-[#0a4d8c]">Jaminan dalam Status Aman</h4>
+                        <p className="text-[12px] text-slate-500 mt-0.5">Masa berlaku masih panjang. Sistem akan memberikan notifikasi otomatis saat mendekati masa kedaluwarsa.</p>
                       </div>
                     </div>
                     

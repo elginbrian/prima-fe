@@ -118,14 +118,14 @@ export function ValidationSimulationModal({ isOpen, onClose, onComplete, documen
               </div>
             </div>
           ) : (
-            <div className={`mb-6 rounded-xl border p-4 text-center ${hasFailed ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
-              <div className={`mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full ${hasFailed ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"}`}>
+            <div className={`mb-6 rounded-xl border p-4 text-center ${hasFailed ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50/70"}`}>
+              <div className={`mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full ${hasFailed ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-[#0a4d8c]"}`}>
                 {hasFailed ? <AlertTriangle size={24} /> : <CheckCircle2 size={24} />}
               </div>
-              <h4 className={`text-sm font-bold ${hasFailed ? "text-amber-800" : "text-emerald-800"}`}>
+              <h4 className={`text-sm font-bold ${hasFailed ? "text-amber-800" : "text-[#0a4d8c]"}`}>
                 {hasFailed ? "Validasi Selesai dengan Temuan" : "Dokumen Lulus Verifikasi"}
               </h4>
-              <p className={`mt-1 text-xs ${hasFailed ? "text-amber-700" : "text-emerald-700"}`}>
+              <p className={`mt-1 text-xs ${hasFailed ? "text-amber-700" : "text-slate-600"}`}>
                 {hasFailed ? "Sistem menemukan beberapa ketidaksesuaian yang perlu diperiksa manual." : "Semua syarat dokumen D1 terpenuhi. Anda dapat melanjutkan proses."}
               </p>
             </div>
@@ -137,7 +137,7 @@ export function ValidationSimulationModal({ isOpen, onClose, onComplete, documen
               <div key={check.id} className="flex items-start gap-3">
                 <div className="mt-0.5 shrink-0">
                   {check.status === "pending" && <div className="flex h-4 w-4 items-center justify-center rounded-full border border-slate-200 bg-slate-50"><Loader2 size={10} className="animate-spin text-slate-400" /></div>}
-                  {check.status === "passed" && <CheckCircle2 size={16} className="text-emerald-500" />}
+                  {check.status === "passed" && <CheckCircle2 size={16} className="text-[#0a4d8c]" />}
                   {check.status === "failed" && <XCircle size={16} className="text-amber-500" />}
                 </div>
                 <div className={`text-xs ${check.status === "pending" ? "text-slate-400" : check.status === "passed" ? "text-slate-700" : "font-medium text-amber-700"}`}>

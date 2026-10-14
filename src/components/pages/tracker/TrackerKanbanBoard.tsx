@@ -122,7 +122,7 @@ export function TrackerKanbanBoard({
                           ? 'bg-red-50 text-red-600 border-red-200'
                           : timeStatusMap[item.id] === 'At Risk'
                           ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-blue-50 text-[#0a4d8c] border-blue-200'
                       }`}>
                         <Clock size={10} />
                         {timeStatusMap[item.id]}

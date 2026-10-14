@@ -31,8 +31,8 @@ export function ActionRow({ item }: ActionRowProps) {
 
   const getStatusBadge = (status: ActionItem["status"]) => {
     switch (status) {
-      case "Done": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "In Progress": return "bg-blue-50 text-[#0a4d8c] border-blue-200";
+      case "Done": return "bg-blue-50 text-[#0a4d8c] border-blue-200";
+      case "In Progress": return "bg-blue-50/80 text-[#0a4d8c] border-blue-200";
       case "Cancelled": return "bg-red-50 text-red-700 border-red-200";
       case "Pending":
       default: return "bg-slate-50 text-slate-700 border-slate-200";
@@ -43,15 +43,15 @@ export function ActionRow({ item }: ActionRowProps) {
     switch (priority) {
       case "High": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">HIGH</span>;
       case "Medium": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-[#0a4d8c] border border-blue-200 uppercase tracking-wider">MEDIUM</span>;
-      case "Low": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">LOW</span>;
+      case "Low": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">LOW</span>;
     }
   };
 
   const getSourceIcon = () => {
     switch (item.source) {
-      case "Dokumen": return <FileText size={13} className="text-blue-500 shrink-0" />;
-      case "Jaminan": return <Shield size={13} className="text-amber-500 shrink-0" />;
-      case "Deadline": return <Clock size={13} className="text-red-500 shrink-0" />;
+      case "Dokumen": return <FileText size={13} className="text-[#0a4d8c] shrink-0" />;
+      case "Jaminan": return <Shield size={13} className="text-[#0a4d8c] shrink-0" />;
+      case "Deadline": return <Clock size={13} className="text-slate-500 shrink-0" />;
       default: return <Clock size={13} className="text-slate-400 shrink-0" />;
     }
   };
@@ -109,7 +109,7 @@ export function ActionRow({ item }: ActionRowProps) {
       {isExpanded && (
         <tr>
           <td colSpan={5} className="p-0 border-b border-slate-200">
-            <div className={`px-6 py-5 bg-slate-50/50 border-l-4 ${item.priority === "High" ? "border-l-red-500" : item.priority === "Medium" ? "border-l-[#0a4d8c]" : "border-l-emerald-500"}`}>
+            <div className={`px-6 py-5 bg-slate-50/50 border-l-4 ${item.priority === "High" ? "border-l-red-500" : item.priority === "Medium" ? "border-l-[#0a4d8c]" : "border-l-slate-300"}`}>
               <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
 
                 {/* Left: Description */}

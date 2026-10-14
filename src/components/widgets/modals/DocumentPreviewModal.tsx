@@ -144,7 +144,7 @@ export function DocumentPreviewModal({
             <div className="min-w-0">
               <h2 className="truncate text-sm font-bold text-white sm:text-base">{title}</h2>
               <p className="truncate text-[11px] text-slate-400">
-                {resolvedFileName} · <span className="text-emerald-400 font-medium">Tautan Aman Presigned</span>
+                {resolvedFileName} · <span className="text-blue-400 font-medium">Tautan Aman Presigned</span>
               </p>
             </div>
           </div>

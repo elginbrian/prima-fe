@@ -23,7 +23,7 @@ export function BottleneckWidget({ bottlenecks }: BottleneckWidgetProps) {
       <div className="p-5 flex-1 flex flex-col justify-between">
         {bottlenecks.length === 0 ? (
           <div className="py-8 text-center text-slate-400">
-            <CheckCircle2 size={32} className="mx-auto text-emerald-500 mb-2" />
+            <CheckCircle2 size={32} className="mx-auto text-[#0a4d8c] mb-2" />
             <p className="text-xs font-medium">
               Tidak ada kemacetan terdeteksi. Semua tahapan pengadaan memenuhi SLA tepat waktu.
             </p>

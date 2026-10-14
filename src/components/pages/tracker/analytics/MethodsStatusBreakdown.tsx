@@ -48,23 +48,23 @@ export function MethodsStatusBreakdown({
             Status Pengadaan
           </span>
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100">
-              <span className="text-lg font-bold text-emerald-700 block">
+            <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-200">
+              <span className="text-lg font-bold text-[#0a4d8c] block">
                 {statusBreakdown["On Going"] ?? 0}
               </span>
-              <span className="text-[10px] text-emerald-600 font-medium">On Going</span>
+              <span className="text-[10px] text-[#0a4d8c] font-semibold">On Going</span>
             </div>
-            <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-100">
-              <span className="text-lg font-bold text-amber-700 block">
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-lg font-bold text-slate-700 block">
                 {statusBreakdown["On Hold"] ?? 0}
               </span>
-              <span className="text-[10px] text-amber-600 font-medium">On Hold</span>
+              <span className="text-[10px] text-slate-500 font-medium">On Hold</span>
             </div>
-            <div className="p-2.5 rounded-lg bg-red-50 border border-red-100">
-              <span className="text-lg font-bold text-red-700 block">
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-lg font-bold text-slate-700 block">
                 {statusBreakdown["Batal"] ?? 0}
               </span>
-              <span className="text-[10px] text-red-600 font-medium">Batal</span>
+              <span className="text-[10px] text-slate-500 font-medium">Batal</span>
             </div>
           </div>
         </div>

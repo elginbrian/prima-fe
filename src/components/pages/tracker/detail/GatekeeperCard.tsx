@@ -8,12 +8,12 @@ export function GatekeeperCard({ data }: { data: GatekeeperCheckDto }) {
   return (
     <div className={`mt-4 rounded-xl border p-4 text-xs transition-all ${
       ready
-        ? "border-emerald-200 bg-emerald-50/70 text-emerald-950"
-        : "border-amber-300 bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-rose-50/60 text-slate-800 shadow-xs"
+        ? "border-blue-200 bg-blue-50/60 text-slate-800"
+        : "border-slate-200 bg-slate-50 text-slate-800 shadow-xs"
     }`}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className={`mt-0.5 rounded-lg p-2 ${ready ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>
+          <div className={`mt-0.5 rounded-lg p-2 ${ready ? "bg-blue-100 text-[#0a4d8c]" : "bg-rose-50 text-rose-600 border border-rose-200"}`}>
             {ready ? <CheckCircle2 size={18} /> : <ShieldAlert size={18} />}
           </div>
           <div>
@@ -25,7 +25,7 @@ export function GatekeeperCard({ data }: { data: GatekeeperCheckDto }) {
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 ready
-                  ? "bg-emerald-200/70 text-emerald-800"
+                  ? "bg-blue-100 text-[#0a4d8c]"
                   : "bg-rose-100 text-rose-700 border border-rose-200"
               }`}>
                 {ready ? "Siap Lanjut" : "Perlu Tindakan"}
@@ -47,10 +47,10 @@ export function GatekeeperCard({ data }: { data: GatekeeperCheckDto }) {
       </div>
 
       {data.blockers.length > 0 && (
-        <div className="mt-3.5 pt-3 border-t border-amber-200/70 space-y-2">
+        <div className="mt-3.5 pt-3 border-t border-slate-200 space-y-2">
           <div className="text-[10px] font-bold uppercase tracking-wider text-rose-800">Daftar Kendala Yang Memblokir:</div>
           {data.blockers.map((b, idx) => (
-            <div key={idx} className="flex items-start gap-2 bg-white/95 p-2.5 rounded-lg border border-amber-200/90 shadow-2xs">
+            <div key={idx} className="flex items-start gap-2 bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
               <ShieldAlert size={16} className="text-rose-600 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-slate-800">{b.title}</div>
@@ -65,14 +65,14 @@ export function GatekeeperCard({ data }: { data: GatekeeperCheckDto }) {
       )}
 
       {data.warnings.length > 0 && (
-        <div className="mt-2.5 pt-2 border-t border-amber-200/50 space-y-1.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Peringatan:</div>
+        <div className="mt-2.5 pt-2 border-t border-slate-200 space-y-1.5">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Peringatan:</div>
           {data.warnings.map((w, idx) => (
-            <div key={idx} className="flex items-start gap-2 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60 text-[11px]">
+            <div key={idx} className="flex items-start gap-2 bg-white p-2 rounded-lg border border-slate-200 text-[11px]">
               <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
-                <span className="font-semibold text-amber-900">{w.title}:</span>{" "}
-                <span className="text-amber-800">{w.description}</span>
+                <span className="font-semibold text-slate-800">{w.title}:</span>{" "}
+                <span className="text-slate-600">{w.description}</span>
               </div>
             </div>
           ))}

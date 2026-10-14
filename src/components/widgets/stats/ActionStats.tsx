@@ -56,12 +56,12 @@ export function ActionStats({ totalCount, highCount, mediumCount, lowCount, high
         <div className="flex justify-between items-start">
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
               Low Priority
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{lowCount}</div>
           </div>
-          <div className="bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-100">
+          <div className="bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-0.5 rounded-full border border-slate-200">
             {(100 - highPct - mediumPct).toFixed(0)}%
           </div>
         </div>

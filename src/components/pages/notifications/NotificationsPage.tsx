@@ -24,23 +24,24 @@ export default function NotificationsPage() {
 
   const getIcon = (type: NotificationType) => {
     switch (type) {
-      case "success": return <CheckCircle2 size={18} className="text-emerald-500" />;
-      case "alert": return <AlertCircle size={18} className="text-amber-500" />;
-      case "deadline": return <Clock size={18} className="text-red-500" />;
+      case "success": return <CheckCircle2 size={18} className="text-[#0a4d8c]" />;
+      case "alert": return <AlertCircle size={18} className="text-amber-600" />;
+      case "deadline": return <Clock size={18} className="text-rose-600" />;
       case "document": return <FileText size={18} className="text-[#0a4d8c]" />;
       case "system": return <Settings size={18} className="text-slate-500" />;
     }
   };
 
   const getBgStyle = (type: NotificationType, isRead: boolean) => {
-    if (isRead) return "bg-slate-50 border-slate-200 text-slate-500";
+    if (isRead) return "bg-slate-50/70 border-slate-200 text-slate-500";
     
     switch (type) {
-      case "success": return "bg-emerald-50 border-emerald-200";
-      case "alert": return "bg-amber-50 border-amber-200";
-      case "deadline": return "bg-red-50 border-red-200";
-      case "document": return "bg-blue-50 border-blue-200";
-      case "system": return "bg-slate-100 border-slate-300";
+      case "deadline": return "bg-white border-rose-200 shadow-2xs";
+      case "alert": return "bg-white border-amber-200 shadow-2xs";
+      case "document":
+      case "success":
+      case "system":
+      default: return "bg-white border-blue-200 shadow-2xs";
     }
   };
 

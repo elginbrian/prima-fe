@@ -188,11 +188,11 @@ export function GuaranteeLifecycleModal({
             onClick={() => setActiveTab("release")}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition-all ${
               activeTab === "release"
-                ? "bg-white text-emerald-700 shadow-sm font-bold border border-slate-200/80"
+                ? "bg-white text-[#0a4d8c] shadow-sm font-bold border border-slate-200/80"
                 : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/60"
             }`}
           >
-            <CalendarCheck size={14} className={activeTab === "release" ? "text-emerald-600" : ""} />
+            <CalendarCheck size={14} className={activeTab === "release" ? "text-[#0a4d8c]" : ""} />
             Pengembalian (Release)
           </button>
 
@@ -303,10 +303,10 @@ export function GuaranteeLifecycleModal({
           {/* TAB 2: RELEASE */}
           {activeTab === "release" && (
             <form onSubmit={handleReleaseSubmit} className="space-y-4">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-xs leading-relaxed text-emerald-900">
-                <span className="font-bold text-emerald-800">Pengembalian Jaminan:</span> Digunakan jika
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-xs leading-relaxed text-blue-900">
+                <span className="font-bold text-[#0a4d8c]">Pengembalian Jaminan:</span> Digunakan jika
                 pekerjaan telah tuntas diserahterimakan (BAST terbit). Dokumen jaminan asli dikembalikan ke
-                vendor dan status jaminan ditutup menjadi <span className="font-semibold text-emerald-900">Dikembalikan</span>.
+                vendor dan status jaminan ditutup menjadi <span className="font-semibold text-slate-800">Dikembalikan</span>.
               </div>
 
               <div>
@@ -317,7 +317,7 @@ export function GuaranteeLifecycleModal({
                   required
                   name="bast_no"
                   placeholder="Contoh: BAST-099/PRIMA/X/2026"
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
@@ -329,7 +329,7 @@ export function GuaranteeLifecycleModal({
                   name="release_notes"
                   rows={2}
                   placeholder="Contoh: Berkas asli telah diserahkan kembali kepada PIC vendor dalam keadaan baik."
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
@@ -344,7 +344,7 @@ export function GuaranteeLifecycleModal({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-all disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#0a4d8c] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#083c6d] transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
