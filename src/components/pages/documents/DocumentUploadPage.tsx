@@ -4,7 +4,11 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, UploadCloud, FileText, ArrowRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
-import type { DocumentItem, DocumentKind, DocumentType } from "@/types";
+import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
+import { documentsApi } from "@/lib/api/documents.api";
+import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
+import { useToast } from "@/components/ui/Toast";
+import type { DocumentItem, DocumentKind, DocumentType, ProcurementStep } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 import { ValidationSimulationModal } from "@/components/widgets/upload/ValidationSimulationModal";
 
@@ -20,6 +24,10 @@ const VALIDATION_RULES: Record<DocumentKind, string[]> = {
 export default function DocumentUploadPage() {
   const router = useRouter();
   const { state, addDocument } = useProcurement();
+  const { data: serverRequests = [] } = useProcurements();
+  const requests = serverRequests.length > 0 ? serverRequests : state.requests;
+  const { data: currentUser } = useCurrentUser();
+  const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [docType, setDocType] = useState<DocumentType | "">("");
@@ -33,7 +41,7 @@ export default function DocumentUploadPage() {
   const suggestedRequest = useMemo(() => {
     const normalizedWorkName = extractedData.workName.trim().toLowerCase();
     if (!normalizedWorkName) return null;
-    return state.requests
+    return requests
       .map(request => {
         const title = request.title.toLowerCase();
         const exact = title === normalizedWorkName;
@@ -262,26 +270,73 @@ export default function DocumentUploadPage() {
         workName={extractedData.workName}
         onComplete={(findings, isValid) => {
           setIsSimulating(false);
-          const newDoc: DocumentItem = {
-            id: `DOC-${Date.now()}`,
-            requestId,
-            name: file!.name.replace(/\.[^/.]+$/, ""),
+          const docName = file!.name.replace(/\.[^/.]+$/, "");
+          const status = isValid ? "Lulus Verifikasi" : "Catatan Procurement";
+          const nextAction = isValid ? "Informasi dokumen lengkap dan valid." : "Harap lengkapi atau perbaiki bagian yang menjadi temuan.";
+          const procurementStep = ((requests.find(request => request.id === requestId) || state.requests.find(request => request.id === requestId))?.currentStep || "Penyusunan RKS / Spesifikasi Teknis") as ProcurementStep;
+          const today = new Date().toISOString().split("T")[0];
+
+          documentsApi.add({
+            request_id: requestId,
+            name: docName,
             type: docType as DocumentType,
-            documentKind: documentKind as DocumentKind,
-            status: isValid ? "Lulus Verifikasi" : "Catatan Procurement",
-            uploadDate: new Date().toISOString().split("T")[0],
-            pic: { id: "USR-ADMIN", name: "Admin" },
+            document_kind: documentKind as DocumentKind,
+            status,
+            upload_date: today,
+            pic_id: currentUser?.id || "USR-ADMIN",
+            pic_name: currentUser?.name || "Administrator",
             issues: findings,
-            nextAction: isValid ? "Informasi dokumen lengkap dan valid." : "Harap lengkapi atau perbaiki bagian yang menjadi temuan.",
-            procurementStep: state.requests.find(request => request.id === requestId)?.currentStep,
-            documentDate: new Date().toISOString().split("T")[0],
-            canGenerateAiDraft: true,
-            fileUrl: `https://storage.pertamina.com/mock/${file!.name}`,
-            mimeType: file!.type || "application/octet-stream",
-            extractedData,
-          };
-          addDocument(newDoc);
-          router.push(`/dashboard/documents/result?id=${newDoc.id}`);
+            next_action: nextAction,
+            procurement_step: procurementStep,
+            document_date: extractedData.documentDate || today,
+            document_number: extractedData.tenderNumber || undefined,
+            file_url: `/uploads/${file!.name}`,
+            mime_type: file!.type || "application/pdf",
+          }).then((res) => {
+            const created = res.data;
+            const newDoc: DocumentItem = {
+              id: created.id,
+              requestId: created.request_id,
+              name: created.name,
+              type: created.type as DocumentType,
+              documentKind: (created.document_kind as DocumentKind) || (documentKind as DocumentKind),
+              status: (created.status as any) || status,
+              uploadDate: created.upload_date,
+              pic: { id: created.pic_id, name: created.pic_name },
+              issues: created.issues || [],
+              nextAction: created.next_action || nextAction,
+              procurementStep: created.procurement_step as ProcurementStep | undefined,
+              documentDate: created.document_date,
+              canGenerateAiDraft: true,
+              fileUrl: created.file_url,
+              mimeType: created.mime_type,
+              extractedData,
+            };
+            addDocument(newDoc);
+            toast.success("Dokumen pra-tender berhasil disimpan ke database sistem.");
+            router.push(`/dashboard/documents/result?id=${created.id}`);
+          }).catch(() => {
+            const fallbackDoc: DocumentItem = {
+              id: `DOC-${Date.now()}`,
+              requestId,
+              name: docName,
+              type: docType as DocumentType,
+              documentKind: documentKind as DocumentKind,
+              status,
+              uploadDate: today,
+              pic: { id: currentUser?.id || "USR-ADMIN", name: currentUser?.name || "Administrator" },
+              issues: findings,
+              nextAction,
+              procurementStep,
+              documentDate: today,
+              canGenerateAiDraft: true,
+              fileUrl: `/uploads/${file!.name}`,
+              mimeType: file!.type || "application/octet-stream",
+              extractedData,
+            };
+            addDocument(fallbackDoc);
+            router.push(`/dashboard/documents/result?id=${fallbackDoc.id}`);
+          });
         }}
       />
     </div>

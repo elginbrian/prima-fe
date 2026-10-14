@@ -1,5 +1,6 @@
 import React from "react";
-import { CheckCircle2, CalendarClock, ChevronDown, ChevronRight } from "lucide-react";
+import { CheckCircle2, CalendarClock, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
 import type { ProcurementMilestone, DeadlineItem } from "@/types";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 
@@ -32,6 +33,8 @@ export function ProcurementTimeline({
   onAddSla,
   onEditSla,
 }: ProcurementTimelineProps) {
+  const [previewDoc, setPreviewDoc] = React.useState<{ id: string; title: string } | null>(null);
+
   return (
     <section>
       <div className="flex items-end justify-between gap-3 border-b border-slate-200 pb-3">
@@ -99,7 +102,16 @@ export function ProcurementTimeline({
                 <div className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-slate-500">
                   {milestone.date && <span>{milestone.date}</span>}
                   {milestone.pic && <span>PIC: {milestone.pic.name}</span>}
-                  {milestone.documentId && <span>Dokumen tertaut: {milestone.documentId}</span>}
+                  {milestone.documentId && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDoc({ id: milestone.documentId!, title: `${milestone.step} - Dokumen` })}
+                      className="inline-flex items-center gap-1 font-semibold text-[#0a4d8c] hover:underline hover:text-blue-700 transition"
+                    >
+                      <FileText size={12} className="shrink-0" />
+                      <span>Dokumen tertaut: {milestone.documentId}</span>
+                    </button>
+                  )}
                 </div>
 
                 {milestoneSlas.length > 0 && (
@@ -221,6 +233,19 @@ export function ProcurementTimeline({
         >
           Ringkas timeline
         </button>
+      )}
+      {previewDoc && (
+        <DocumentPreviewModal
+          title={previewDoc.title}
+          fileId={previewDoc.id}
+          fileType="document"
+          fileName={previewDoc.id}
+          metadata={[
+            { label: "Tahapan", value: previewDoc.title },
+            { label: "ID Dokumen", value: previewDoc.id },
+          ]}
+          onClose={() => setPreviewDoc(null)}
+        />
       )}
     </section>
   );

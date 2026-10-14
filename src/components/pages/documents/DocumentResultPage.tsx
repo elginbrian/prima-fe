@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, AlertTriangle, FileText, ArrowLeft, Download } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, ArrowLeft, Download, Printer } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useDocuments, useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
@@ -73,14 +73,17 @@ export default function DocumentResultPage() {
         >
           <ArrowLeft size={16} /> Kembali ke Daftar Dokumen
         </button>
-        <div className="flex gap-3">
+        <div className="flex gap-3 print:hidden">
           <button 
-            onClick={() => toast.info('Mengunduh Laporan Hasil Pemeriksaan (PDF)...')}
+            type="button"
+            onClick={() => window.print()}
+            title="Cetak atau Simpan sebagai PDF"
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
           >
-            <Download size={16} /> Unduh Laporan
+            <Printer size={16} /> Cetak / Simpan PDF
           </button>
           <button 
+            type="button"
             onClick={handleFollowUp}
             disabled={updateDocMutation.isPending}
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"

@@ -139,8 +139,7 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave, i
           targetDate, 
           status: "On Track", 
           urgencyLevel: formData.get("urgencyLevel") as DeadlineItem["urgencyLevel"], 
-          nextAction: String(formData.get("nextAction")), 
-          overdueReason: String(formData.get("overdueReason")) 
+          nextAction: String(formData.get("nextAction")),
         });
       }}>
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
@@ -164,7 +163,6 @@ export function DeadlineCreator({ requestId, pic, department, onClose, onSave, i
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Target selesai</span><input required type="date" name="targetDate" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
           <label><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Urgensi</span><select name="urgencyLevel" defaultValue="Medium" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></label>
           <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Next action</span><textarea required name="nextAction" rows={3} placeholder="Tindakan yang harus dilakukan PIC" className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Alasan keterlambatan</span><textarea name="overdueReason" rows={2} placeholder="Opsional; isi bila target nantinya terlambat" className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" /></label>
         </div>
         <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
           {(formError || errorMessage) && <p role="alert" className="mr-auto self-center text-xs font-semibold text-red-600">{formError || errorMessage}</p>}

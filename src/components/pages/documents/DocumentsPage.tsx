@@ -12,13 +12,15 @@ import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { useProcurement } from "@/context/ProcurementContext";
 import { exportDocumentsToCsv } from "@/lib/exportUtils";
-import { useDocuments } from "@/lib/query/hooks/procurement/useProcurement";
+import { useDocuments, useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { TableSkeleton } from "@/components/ui";
 
 
 export default function DocumentsPage() {
   const router = useRouter();
   const { state } = useProcurement();
+  const { data: serverRequests = [] } = useProcurements();
+  const requests = serverRequests.length > 0 ? serverRequests : state.requests;
   const { data: serverDocs, isLoading: isLoadingDocs } = useDocuments();
   const documents = serverDocs && serverDocs.length > 0 ? serverDocs : state.documents;
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +59,7 @@ export default function DocumentsPage() {
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
-      const request = state.requests.find(item => item.id === doc.requestId);
+      const request = requests.find(item => item.id === doc.requestId);
       const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             doc.pic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             doc.requestId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,14 +70,44 @@ export default function DocumentsPage() {
       
       return matchesSearch && matchesStatus && matchesType && matchesWorkStatus;
     });
-  }, [documents, state.requests, searchQuery, statusFilter, typeFilter, workStatusFilter]);
+  }, [documents, requests, searchQuery, statusFilter, typeFilter, workStatusFilter]);
 
-  const documentGroups = useMemo(() => state.requests
-    .map(request => ({
-      request,
-      documents: filteredDocuments.filter(document => document.requestId === request.id),
-    }))
-    .filter(group => group.documents.length > 0), [state.requests, filteredDocuments]);
+  const documentGroups = useMemo(() => {
+    const knownIds = new Set(requests.map(r => r.id));
+    const groups = requests
+      .map(request => ({
+        request,
+        documents: filteredDocuments.filter(document => document.requestId === request.id),
+      }))
+      .filter(group => group.documents.length > 0);
+
+    const orphanDocs = filteredDocuments.filter(d => !knownIds.has(d.requestId));
+    if (orphanDocs.length > 0) {
+      const orphanMap: Record<string, typeof orphanDocs> = {};
+      orphanDocs.forEach(d => {
+        if (!orphanMap[d.requestId]) orphanMap[d.requestId] = [];
+        orphanMap[d.requestId].push(d);
+      });
+      Object.entries(orphanMap).forEach(([reqId, items]) => {
+        groups.push({
+          request: {
+            id: reqId,
+            title: `Pengadaan: ${reqId}`,
+            department: { id: "DEPT-GEN", name: "Pengadaan Terkait" },
+            pic: items[0]?.pic || { id: "USR-GEN", name: "PIC Terkait" },
+            amount: 0,
+            stage: "Persiapan",
+            operationalStatus: "On Going",
+            currentStep: "Dokumen",
+            stageStartedAt: items[0]?.uploadDate || "",
+            isUrgent: false,
+          } as any,
+          documents: items,
+        });
+      });
+    }
+    return groups;
+  }, [requests, filteredDocuments]);
 
   const sortedDocumentGroups = useMemo(() => sortRecords(documentGroups, sort.direction, group => {
     if (sort.key === "title") return group.request.title;

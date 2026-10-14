@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, AlertCircle, ArrowRight, ExternalLink, Shield, FileText, Clock, Flame } from "lucide-react";
 import { ActionItem } from "@/types";
 import { useProcurement } from "@/context/ProcurementContext";
@@ -13,6 +14,7 @@ import { DocumentActionModal } from "@/components/widgets/modals/DocumentActionM
 import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
 
 export function ActionRow({ item }: ActionRowProps) {
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showGuaranteeModal, setShowGuaranteeModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -135,43 +137,63 @@ export function ActionRow({ item }: ActionRowProps) {
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Aksi Cepat</div>
 
                   {item.source === "Dokumen" && (
-                    <button
-                      onClick={e => { e.stopPropagation(); setShowDocumentModal(true); }}
-                      disabled={!linkedDoc}
-                      className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
-                    >
-                      <FileText size={14} />
-                      Tinjau & Update Dokumen
-                    </button>
+                    linkedDoc ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); setShowDocumentModal(true); }}
+                        className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
+                      >
+                        <FileText size={14} />
+                        Tinjau & Update Dokumen
+                      </button>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); router.push('/dashboard/documents'); }}
+                        className="w-full flex items-center justify-center gap-2 border border-[#0a4d8c] text-[#0a4d8c] hover:bg-blue-50 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
+                      >
+                        <FileText size={14} />
+                        Buka Modul Dokumen
+                      </button>
+                    )
                   )}
 
                   {item.source === "Jaminan" && (
-                    <button
-                      onClick={e => { e.stopPropagation(); setShowGuaranteeModal(true); }}
-                      disabled={!linkedGuarantee}
-                      className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
-                    >
-                      <Shield size={14} />
-                      Perbarui Data Jaminan
-                    </button>
+                    linkedGuarantee ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); setShowGuaranteeModal(true); }}
+                        className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
+                      >
+                        <Shield size={14} />
+                        Perbarui Data Jaminan
+                      </button>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); router.push('/dashboard/guarantees'); }}
+                        className="w-full flex items-center justify-center gap-2 border border-[#0a4d8c] text-[#0a4d8c] hover:bg-blue-50 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
+                      >
+                        <Shield size={14} />
+                        Buka Modul Jaminan
+                      </button>
+                    )
                   )}
 
                   {(item.source === "Deadline" || item.source === "SLA/Jatuh Tempo") && (
-                    <button
-                      onClick={e => { e.stopPropagation(); setShowSlaModal(true); }}
-                      disabled={!linkedDeadline}
-                      className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
-                    >
-                      <ArrowRight size={14} />
-                      Lihat Detail & Update SLA
-                    </button>
-                  )}
-
-                  {!linkedDoc && item.source === "Dokumen" && (
-                    <p className="text-[11px] text-slate-400 text-center mt-1">Dokumen tidak ditemukan di sistem</p>
-                  )}
-                  {!linkedGuarantee && item.source === "Jaminan" && (
-                    <p className="text-[11px] text-slate-400 text-center mt-1">Jaminan tidak ditemukan di sistem</p>
+                    linkedDeadline ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); setShowSlaModal(true); }}
+                        className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
+                      >
+                        <ArrowRight size={14} />
+                        Lihat Detail & Update SLA
+                      </button>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); router.push('/dashboard/tracker'); }}
+                        className="w-full flex items-center justify-center gap-2 border border-[#0a4d8c] text-[#0a4d8c] hover:bg-blue-50 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
+                      >
+                        <ArrowRight size={14} />
+                        Buka Tracker Pengadaan
+                      </button>
+                    )
                   )}
                 </div>
 

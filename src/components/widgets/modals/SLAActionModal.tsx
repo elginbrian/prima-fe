@@ -64,16 +64,6 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
     }
   };
 
-  const handleEscalateToRisk = async () => {
-    try {
-      await updateDeadline.mutateAsync({ id: deadline.id, payload: { status: "At Risk" } });
-      toast.warning(`SLA "${deadline.taskName}" telah diubah ke status At Risk`);
-      onClose();
-    } catch (err) {
-      toast.error(`Gagal memperbarui SLA: ${getErrorMessage(err)}`);
-    }
-  };
-
   const handleManagerEscalation = async () => {
     if (!escalateReason.trim()) {
       toast.warning("Mohon isi alasan eskalasi ke manajerial.");
@@ -346,17 +336,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                 Eskalasi ke Manajer
               </button>
             )}
-            {deadline.status !== "Overdue" && deadline.status !== "Selesai" && (
-              <button
-                type="button"
-                onClick={handleEscalateToRisk}
-                disabled={updateDeadline.isPending}
-                className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
-              >
-                <AlertTriangle size={14} />
-                Tandai At Risk
-              </button>
-            )}
+
             {deadline.status !== "Selesai" && (
               <button
                 type="button"
