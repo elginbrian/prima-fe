@@ -23,7 +23,8 @@ export default function GuaranteeUploadPage() {
   const extractGuaranteeMutation = useExtractGuarantee();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [requestId] = useState(() => searchParams.get("requestId") ?? "");
+  const initialRequestId = searchParams.get("requestId") ?? "";
+  const [requestId, setRequestId] = useState(() => initialRequestId);
   const selectedRequest = requests.find(request => request.id === requestId);
   const [documentType, setDocumentType] = useState<"Jaminan Pelaksanaan" | "Jaminan Pemeliharaan" | ProcurementAttachmentType>("Jaminan Pelaksanaan");
   const [isExtracting, setIsExtracting] = useState(false);
@@ -76,14 +77,14 @@ export default function GuaranteeUploadPage() {
           setFormData(prev => ({
             ...prev,
             type: (data.type as GuaranteeItem["type"]) || prev.type,
-            vendor: data.vendor_name || "",
-            issuer: data.issuer || "",
-            issuerType: data.issuer_type || "Bank",
-            beneficiary: data.beneficiary || "",
-            referenceNo: data.reference_no || "",
-            value: data.value ? "Rp " + data.value.toLocaleString('id-ID') : "",
-            issueDate: data.issue_date ? data.issue_date.split("T")[0] : "",
-            expiryDate: data.expiry_date ? data.expiry_date.split("T")[0] : "",
+            vendor: data.vendor_name || prev.vendor || "",
+            issuer: data.issuer || prev.issuer || "",
+            issuerType: data.issuer_type || prev.issuerType || "Bank",
+            beneficiary: data.beneficiary || prev.beneficiary || "PT Pertamina Patra Niaga",
+            referenceNo: data.reference_no || prev.referenceNo || "",
+            value: data.value ? "Rp " + data.value.toLocaleString('id-ID') : prev.value,
+            issueDate: data.issue_date ? data.issue_date.split("T")[0] : prev.issueDate,
+            expiryDate: data.expiry_date ? data.expiry_date.split("T")[0] : prev.expiryDate,
           }));
         })
         .catch(err => {
@@ -93,7 +94,94 @@ export default function GuaranteeUploadPage() {
           setIsExtracting(false);
         });
     }
-  }, [file, requiresExtraction]);
+  }, [file, requiresExtraction, selectedRequest]);
+
+  const isFormValid = Boolean(
+    file &&
+    requestId &&
+    (!requiresExtraction || (
+      formData.vendor.trim() &&
+      formData.issuer.trim() &&
+      formData.referenceNo.trim() &&
+      formData.value.trim() &&
+      formData.issueDate &&
+      formData.expiryDate
+    ))
+  );
+
+  const missingFields: string[] = [];
+  if (!file) missingFields.push("File Dokumen");
+  if (!requestId) missingFields.push("Paket Pengadaan");
+  if (requiresExtraction) {
+    if (!formData.vendor.trim()) missingFields.push("Nama Vendor");
+    if (!formData.issuer.trim()) missingFields.push("Penerbit");
+    if (!formData.referenceNo.trim()) missingFields.push("No. Jaminan");
+    if (!formData.value.trim()) missingFields.push("Nilai");
+    if (!formData.issueDate) missingFields.push("Tgl Terbit");
+    if (!formData.expiryDate) missingFields.push("Tgl Jatuh Tempo");
+  }
+
+  const toIsoDate = (d: string) => {
+    if (!d) return new Date().toISOString();
+    if (d.includes("T")) return d;
+    return `${d}T00:00:00Z`;
+  };
+
+  const handleSubmit = () => {
+    if (!file || !requestId) {
+      toast.error("Harap pilih file dan paket pengadaan terlebih dahulu.");
+      return;
+    }
+
+    if (!requiresExtraction) {
+      addAttachment({
+        id: `ATT-${Date.now()}`,
+        requestId,
+        type: documentType as ProcurementAttachmentType,
+        name: file.name,
+        uploadedAt: new Date().toISOString().split("T")[0],
+        uploadedBy: { id: currentUser?.id ?? "USR-ADMIN", name: currentUser?.name ?? "Administrator" },
+        fileUrl: "/mock-docs/" + file.name,
+        mimeType: file.type || "application/pdf",
+      });
+      toast.success("Dokumen pendukung berhasil disimpan.");
+      router.push('/dashboard/guarantees');
+      return;
+    }
+
+    const expiryTime = new Date(formData.expiryDate).getTime();
+    const remainingDays = Number.isNaN(expiryTime) ? 0 : Math.ceil((expiryTime - Date.now()) / 86400000);
+    const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= state.settings.slaWarningDays ? "Mendekati Expiry" : "Aktif";
+    const valueRaw = Number(formData.value.replace(/[^0-9]/g, "")) || 0;
+
+    uploadGuaranteeMutation.mutate({
+      file: file,
+      payload: {
+        request_id: requestId,
+        reference_no: formData.referenceNo.trim(),
+        type: formData.type,
+        value: valueRaw,
+        issuer: formData.issuer.trim(),
+        issuer_type: formData.issuerType,
+        beneficiary: formData.beneficiary.trim() || "PT Pertamina Patra Niaga",
+        vendor_id: vendorIdFromName(formData.vendor) || "V-001",
+        vendor_name: formData.vendor.trim() || "Vendor",
+        issue_date: toIsoDate(formData.issueDate),
+        expiry_date: toIsoDate(formData.expiryDate),
+        pic_id: currentUser?.id ?? "USR-ADMIN",
+        pic_name: currentUser?.name ?? "Administrator",
+        status,
+      }
+    }, {
+      onSuccess: () => {
+        toast.success("Jaminan berhasil disimpan ke sistem dan cloud storage.");
+        router.push('/dashboard/guarantees');
+      },
+      onError: (err) => {
+        toast.error(getErrorMessage(err, "Gagal mengunggah dan menyimpan jaminan."));
+      }
+    });
+  };
 
   return (
     <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
@@ -149,15 +237,37 @@ export default function GuaranteeUploadPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Terkait Pengadaan</label>
-              {selectedRequest ? (
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Terkait Pengadaan <span className="text-red-500">*</span>
+              </label>
+              {initialRequestId && selectedRequest ? (
                 <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-3">
                   <div className="text-xs font-semibold text-[#0a4d8c]">{selectedRequest.id}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-800">{selectedRequest.title}</div>
                   <div className="mt-1 text-xs text-slate-500">PIC: {selectedRequest.pic.name}</div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">Pilih pengadaan dari halaman Jaminan untuk menambahkan dokumen.</div>
+                <div>
+                  <select
+                    value={requestId}
+                    onChange={(event) => setRequestId(event.target.value)}
+                    className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 bg-white focus:outline-none focus:border-[#0a4d8c]"
+                  >
+                    <option value="">-- Pilih Paket Pengadaan --</option>
+                    {requests.map((req) => (
+                      <option key={req.id} value={req.id}>
+                        {req.id} - {req.title}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedRequest ? (
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      PIC: {selectedRequest.pic.name} · Nilai: Rp {selectedRequest.amount?.toLocaleString('id-ID') || "-"}
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 text-xs text-amber-600">Pilih paket pengadaan untuk mengaitkan jaminan ini.</p>
+                  )}
+                </div>
               )}
             </div>
 
@@ -280,43 +390,48 @@ export default function GuaranteeUploadPage() {
 
           </div>
 
-          <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 mt-auto shrink-0">
-            <button 
-              onClick={() => router.push('/dashboard/guarantees')}
-              className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
-            >
-              Batal
-            </button>
-            <button 
-              onClick={() => {
-                if (!file) return;
-                if (!requiresExtraction) {
-                  addAttachment({
-                    id: `ATT-${Date.now()}`,
-                    requestId,
-                    type: documentType as ProcurementAttachmentType,
-                    name: file.name,
-                    uploadedAt: new Date().toISOString().split("T")[0],
-                    uploadedBy: { id: currentUser?.id ?? "ADMIN", name: currentUser?.name ?? "P3 - Admin" },
-                    fileUrl: "/mock-docs/" + file.name,
-                    mimeType: file.type,
-                  });
-                  toast.success("Dokumen pendukung berhasil disimpan.");
-                  router.push('/dashboard/guarantees');
-                  return;
-                }
-                const expiryTime = new Date(formData.expiryDate).getTime();
-                const remainingDays = Number.isNaN(expiryTime) ? 0 : Math.ceil((expiryTime - Date.now()) / 86400000);
-                const status: GuaranteeItem["status"] = remainingDays < 0 ? "Expired" : remainingDays <= state.settings.slaWarningDays ? "Mendekati Expiry" : "Aktif";
-                const valueRaw = Number(formData.value.replace(/[^0-9]/g, "")) || 0;
-                uploadGuaranteeMutation.mutate({ file: file, payload: { request_id: requestId, reference_no: formData.referenceNo, type: formData.type, value: valueRaw, issuer: formData.issuer, issuer_type: formData.issuerType, beneficiary: formData.beneficiary, vendor_id: vendorIdFromName(formData.vendor), vendor_name: formData.vendor, issue_date: formData.issueDate + "T00:00:00Z", expiry_date: formData.expiryDate + "T00:00:00Z", pic_id: currentUser?.id ?? "", pic_name: currentUser?.name ?? "", status } }, { onSuccess: () => { toast.success("Jaminan berhasil disimpan."); router.push('/dashboard/guarantees'); }, onError: (err) => toast.error(getErrorMessage(err, "Gagal menyimpan jaminan.")) }); }} disabled={!file || !requestId || uploadGuaranteeMutation.isPending || (requiresExtraction && (!formData.vendor || !formData.issuer || !formData.referenceNo || !formData.value || !formData.issueDate || !formData.expiryDate))}
-              className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-sm font-medium shadow-sm transition-all ${
-                file && requestId && (!requiresExtraction || (formData.vendor && formData.issuer && formData.referenceNo && formData.value && formData.issueDate && formData.expiryDate)) ? 'bg-[#0a4d8c] hover:bg-[#093e6f] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              }`}
-            >
-              <span>{requiresExtraction ? "Simpan & Verifikasi" : "Simpan Dokumen"}</span>
-              <ArrowRight size={16} />
-            </button>
+          <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 mt-auto shrink-0">
+            <div className="text-xs text-slate-500 w-full sm:w-auto">
+              {!isFormValid && missingFields.length > 0 && (
+                <span className="text-amber-700 flex items-center gap-1.5">
+                  <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+                  <span>Harap lengkapi: {missingFields.slice(0, 3).join(", ")}{missingFields.length > 3 ? ` (+${missingFields.length - 3} lainnya)` : ""}</span>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button 
+                type="button"
+                onClick={() => router.push('/dashboard/guarantees')}
+                disabled={uploadGuaranteeMutation.isPending}
+                className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button 
+                type="button"
+                onClick={handleSubmit}
+                disabled={!isFormValid || uploadGuaranteeMutation.isPending}
+                className={`px-5 py-2.5 flex items-center justify-center gap-2 rounded-lg text-sm font-medium shadow-sm transition-all ${
+                  isFormValid && !uploadGuaranteeMutation.isPending
+                    ? 'bg-[#0a4d8c] hover:bg-[#093e6f] text-white active:scale-[0.99]' 
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {uploadGuaranteeMutation.isPending ? (
+                  <>
+                    <Spinner size="sm" className="border-white border-t-transparent" />
+                    <span>Menyimpan & Mengunggah...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{requiresExtraction ? "Simpan & Verifikasi" : "Simpan Dokumen"}</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

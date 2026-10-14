@@ -90,8 +90,20 @@ export function useUploadGuaranteeWithFile() {
       const guaranteeId = guaranteeRes.data.id;
 
       try {
+        // Safe MIME type detection
+        let contentType = file.type;
+        if (!contentType || contentType === "application/octet-stream") {
+          const ext = file.name.split(".").pop()?.toLowerCase();
+          if (ext === "pdf") contentType = "application/pdf";
+          else if (ext === "png") contentType = "image/png";
+          else if (ext === "jpg" || ext === "jpeg") contentType = "image/jpeg";
+          else contentType = "application/pdf";
+        } else if (contentType === "image/jpg") {
+          contentType = "image/jpeg";
+        }
+
         // 2. Get upload URL
-        const urlRes = await guaranteesApi.getUploadUrl(guaranteeId, file.type);
+        const urlRes = await guaranteesApi.getUploadUrl(guaranteeId, contentType);
         const { presigned_post, object_key } = urlRes.data;
 
         // 3. Upload to S3
@@ -108,7 +120,7 @@ export function useUploadGuaranteeWithFile() {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `Upload file ke storage gagal (HTTP ${uploadResponse.status}). Periksa konfigurasi CORS/bucket.`
+            `Upload file ke storage gagal (HTTP ${uploadResponse.status}). Periksa koneksi internet Anda.`
           );
         }
 
