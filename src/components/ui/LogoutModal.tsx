@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface LogoutModalProps {
   isOpen: boolean;
@@ -9,17 +11,33 @@ interface LogoutModalProps {
 }
 
 export function LogoutModal({ isOpen, onCancel, onConfirm }: LogoutModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    // Backdrop
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onCancel]);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    // Backdrop covering entire viewport
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 animate-in fade-in duration-200"
       onClick={onCancel}
     >
-      {/* Card */}
+      {/* Card centered in viewport */}
       <div
-        className="relative w-full max-w-[380px] rounded-3xl bg-white shadow-[0_24px_60px_rgba(10,77,140,0.18)] p-7 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-[400px] rounded-3xl bg-white shadow-2xl border border-slate-100 p-7 flex flex-col items-center text-center animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Illustration */}
@@ -34,7 +52,7 @@ export function LogoutModal({ isOpen, onCancel, onConfirm }: LogoutModalProps) {
         </div>
 
         {/* Text */}
-        <h2 className="text-[1.15rem] font-bold text-slate-800 leading-snug">
+        <h2 className="text-[1.2rem] font-bold text-slate-800 leading-snug">
           Apakah Anda yakin ingin keluar?
         </h2>
         <p className="mt-2 text-sm text-slate-500">
@@ -59,6 +77,7 @@ export function LogoutModal({ isOpen, onCancel, onConfirm }: LogoutModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
