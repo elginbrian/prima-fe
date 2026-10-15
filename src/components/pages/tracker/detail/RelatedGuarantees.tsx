@@ -1,7 +1,7 @@
 import React from "react";
 import { ShieldCheck, ChevronRight, ChevronDown } from "lucide-react";
 import type { GuaranteeItem } from "@/types";
-import { formatDateIndo } from "@/lib/utils";
+import { formatDateIndo, formatRupiah } from "@/lib/utils";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 interface RelatedGuaranteesProps {
@@ -83,8 +83,8 @@ export function RelatedGuarantees({
               {expandedRelatedId === `guarantee-${g.id}` && (
                 <div className="border-x border-b border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
                   <div>
-                    <span className="font-semibold">{g.referenceNo}</span> • {g.issuer} • Rp{" "}
-                    {g.value.toLocaleString("id-ID")}
+                    <span className="font-semibold">{g.referenceNo}</span> • {g.issuer} •{" "}
+                    {formatRupiah(g.value)}
                   </div>
                   {g.nextAction && (
                     <div className="mt-2">

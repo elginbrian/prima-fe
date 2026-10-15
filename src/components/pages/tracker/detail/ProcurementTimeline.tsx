@@ -100,8 +100,9 @@ export function ProcurementTimeline({
                     {isDone ? "Selesai" : isCurrent ? "Sedang berjalan" : "Berikutnya"}
                   </span>
                 </div>
-                <div className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-slate-500">
-                  {milestone.date && <span>{milestone.date}</span>}
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-500">
+                  {milestone.date && <span>{formatDateIndo(milestone.date)}</span>}
+                  {milestone.date && milestone.pic && <span>•</span>}
                   {milestone.pic && <span>PIC: {milestone.pic.name}</span>}
                   {milestone.documentId && (
                     <button

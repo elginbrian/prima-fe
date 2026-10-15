@@ -6,6 +6,7 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { useDocuments, useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner, Skeleton } from "@/components/ui";
+import { formatDateIndo } from "@/lib/utils";
 
 export default function DocumentResultPage() {
   const router = useRouter();
@@ -170,7 +171,7 @@ export default function DocumentResultPage() {
 
           {selectedDocument?.extractedData && <div className="border-b border-slate-100 bg-blue-50/40 p-6">
             <div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-bold text-slate-800">Validasi Konsistensi Antar Dokumen</h3><p className="mt-1 text-xs text-slate-500">Data dari template {selectedDocument.documentKind ?? "dokumen"} dibandingkan dengan dokumen lain pada pekerjaan ini.</p></div><span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${selectedDocument.issues.length ? "border-amber-200 bg-amber-50 text-amber-700" : "border-blue-200 bg-blue-50 text-[#0a4d8c]"}`}>{selectedDocument.issues.length ? "Perlu review" : "Konsisten"}</span></div>
-            <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3"><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Nama pekerjaan</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.workName || "Belum ditemukan"}</div></div><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Nomor tender</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.tenderNumber || "Belum ditemukan"}</div></div><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Tanggal dokumen</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.documentDate || "Belum ditemukan"}</div></div></div>
+            <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3"><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Nama pekerjaan</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.workName || "Belum ditemukan"}</div></div><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Nomor tender</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.tenderNumber || "Belum ditemukan"}</div></div><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Tanggal dokumen</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.documentDate ? formatDateIndo(selectedDocument.extractedData.documentDate) : "Belum ditemukan"}</div></div></div>
           </div>}
 
           {/* Findings */}

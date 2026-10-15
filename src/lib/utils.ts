@@ -14,9 +14,12 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function calculateDaysBetween(startDateStr: string, endDateStr?: string): number {
+export function calculateDaysBetween(startDateStr?: string | null, endDateStr?: string | null): number {
+  if (!startDateStr) return 0;
   const start = new Date(startDateStr).getTime();
+  if (isNaN(start)) return 0;
   const end = endDateStr ? new Date(endDateStr).getTime() : Date.now();
+  if (isNaN(end)) return 0;
   const diffTime = Math.abs(end - start);
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }

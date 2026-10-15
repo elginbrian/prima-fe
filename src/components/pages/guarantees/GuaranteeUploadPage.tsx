@@ -13,6 +13,7 @@ import { getErrorMessage } from "@/lib/api/errors";
 import { useUploadGuaranteeWithFile, useExtractGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
+import { formatRupiah } from "@/lib/utils";
 
 export default function GuaranteeUploadPage() {
   const router = useRouter();
@@ -463,7 +464,7 @@ export default function GuaranteeUploadPage() {
                       const numVal = parseFloat(formData.value.replace(/[^0-9]/g, '')) || 0;
                       return (
                         <div className="mt-1.5 text-[11px] text-slate-500 space-y-0.5">
-                          <div>Regulasi: Min. 5% Pagu = <strong className="text-slate-700">Rp {minReq.toLocaleString('id-ID')}</strong></div>
+                          <div>Regulasi: Min. 5% Pagu = <strong className="text-slate-700">{formatRupiah(minReq)}</strong></div>
                           {numVal > 0 && numVal < minReq && (
                             <div className="text-amber-700 font-semibold flex items-center gap-1.5">
                               <AlertTriangle size={13} className="text-amber-600 shrink-0" />

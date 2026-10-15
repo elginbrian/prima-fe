@@ -1,4 +1,5 @@
 import { SettingsTabProps } from "./types";
+import { formatRupiah } from "@/lib/utils";
 
 export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
   return (
@@ -20,6 +21,11 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
               className="w-full px-4 py-2 border border-slate-200 rounded-r-lg focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c] text-slate-800 font-medium" 
             />
           </div>
+          {Number(formData.approvalThreshold) > 0 && (
+            <p className="mt-1.5 text-xs text-slate-500">
+              Terbaca: <strong className="font-semibold text-slate-700">{formatRupiah(formData.approvalThreshold)}</strong>
+            </p>
+          )}
         </div>
 
         <div className="pt-8 border-t border-slate-100">

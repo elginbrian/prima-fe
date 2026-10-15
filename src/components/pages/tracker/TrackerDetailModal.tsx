@@ -6,6 +6,7 @@ import { useProcurement, useProcurementActivities, useProcurementGatekeeper, use
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { useToast } from "@/components/ui/Toast";
 import { getErrorMessage } from "@/lib/api/errors";
+import { formatRupiah } from "@/lib/utils";
 
 import { TrackerDetailModalProps } from "./types";
 import { GatekeeperCard } from "./detail/GatekeeperCard";
@@ -197,9 +198,7 @@ export function TrackerDetailModal({
                 </div>
               )}
               {request && (
-                <span>
-                  Rp {typeof request.amount === "number" ? request.amount.toLocaleString("id-ID") : request.amount}
-                </span>
+                <span>{formatRupiah(request.amount)}</span>
               )}
             </div>
           </div>
