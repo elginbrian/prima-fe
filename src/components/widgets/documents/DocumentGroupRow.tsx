@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { DocumentItem } from "@/types";
 import { DocumentGroupRowProps } from "./types";
 import { DocumentPreviewModal } from "../modals/DocumentPreviewModal";
+import { formatDateIndo } from "@/lib/utils";
 
 function statusClass(status: DocumentItem["status"]) {
   if (status === "Lulus Verifikasi") return "bg-blue-50 text-[#0a4d8c] border-blue-200";
@@ -96,7 +97,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
                       <div className="mt-1 truncate text-[11px] text-slate-500">
                         {document.type} ·{" "}
                         {document.fileUrl ? document.fileUrl.split("/").pop() : "File belum tersedia"} ·{" "}
-                        {document.uploadDate}
+                        {formatDateIndo(document.uploadDate)}
                       </div>
                     </div>
                     <span
@@ -174,7 +175,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
             { label: "Pengadaan", value: request.title },
             { label: "Tipe Dokumen", value: previewDocument.type },
             { label: "PIC Dokumen", value: previewDocument.pic.name },
-            { label: "Tanggal Unggah", value: previewDocument.uploadDate },
+            { label: "Tanggal Unggah", value: formatDateIndo(previewDocument.uploadDate) },
             { label: "Status Verifikasi", value: previewDocument.status },
           ]}
           onClose={() => setPreviewDocument(null)}

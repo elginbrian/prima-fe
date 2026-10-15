@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { TableSkeleton } from "@/components/ui";
+import { formatDateIndo } from "@/lib/utils";
 
 import { TrackerDeadlinesProps } from "./types";
 
@@ -81,8 +82,8 @@ export function TrackerDeadlines({ deadlines, requests, openRequestDetail, setEd
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">{deadline.pic?.name || "-"}</td>
                     <td className="px-4 py-3 text-xs text-slate-600">
-                      <div>{deadline.startDate ? String(deadline.startDate).trim().split(/[\sT]/)[0] : "Belum diatur"}</div>
-                      <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate ? String(deadline.targetDate).trim().split(/[\sT]/)[0] : "-"}</div>
+                      <div>{deadline.startDate ? formatDateIndo(deadline.startDate) : "Belum diatur"}</div>
+                      <div className="mt-0.5 font-medium text-slate-800">s.d. {deadline.targetDate ? formatDateIndo(deadline.targetDate) : "-"}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${deadline.status === "Overdue" ? "border-red-200 bg-red-50 text-red-700" : deadline.status === "At Risk" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-blue-200 bg-blue-50 text-[#0a4d8c]"}`}>

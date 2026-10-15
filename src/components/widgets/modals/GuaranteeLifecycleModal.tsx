@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
+import { formatRupiah } from "@/lib/utils";
 
 export interface GuaranteeLifecycleModalProps {
   guarantee: GuaranteeItem;
@@ -254,7 +255,7 @@ export function GuaranteeLifecycleModal({
                 </label>
                 <input
                   name="new_value"
-                  placeholder={`Default: Rp ${guarantee.value.toLocaleString("id-ID")}`}
+                  placeholder={`Default: ${formatRupiah(guarantee.value)}`}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>

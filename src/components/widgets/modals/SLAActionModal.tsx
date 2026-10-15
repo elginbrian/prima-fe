@@ -9,6 +9,7 @@ import { useUpdateDeadline, useProcurements, useEscalateDeadline, useSubmitRecov
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
+import { formatDateIndo } from "@/lib/utils";
 
 interface SLAActionModalProps {
   deadline: DeadlineItem;
@@ -172,7 +173,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               <Calendar size={14} className="text-slate-400 mt-0.5 shrink-0" />
               <div>
                 <div className="text-[11px] text-slate-400 uppercase tracking-wide font-semibold mb-0.5">Target Selesai</div>
-                <div className={`font-semibold ${deadline.status === "Overdue" ? "text-red-600" : "text-slate-700"}`}>{deadline.targetDate}</div>
+                <div className={`font-semibold ${deadline.status === "Overdue" ? "text-red-600" : "text-slate-700"}`}>{formatDateIndo(deadline.targetDate, "long")}</div>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -193,7 +194,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                   <div className="font-bold text-rose-900">Eskalasi Manajerial Aktif</div>
                   <div className="text-rose-700">
                     Dialihkan ke <span className="font-semibold">{deadline.escalatedTo || "Manager Pengadaan"}</span>
-                    {deadline.escalatedAt && ` pada ${deadline.escalatedAt.split("T")[0]}`}.
+                    {deadline.escalatedAt && ` pada ${formatDateIndo(deadline.escalatedAt)}`}.
                   </div>
                 </div>
               </div>

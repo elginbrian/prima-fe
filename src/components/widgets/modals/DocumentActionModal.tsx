@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
+import { formatDateIndo } from "@/lib/utils";
 
 interface DocumentActionModalProps {
   doc: DocumentItem;
@@ -103,7 +104,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
                 v{doc.versionNumber ?? 1}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-500">{doc.id} · {doc.type} · Diunggah: {doc.uploadDate}</p>
+            <p className="mt-1 text-xs text-slate-500">{doc.id} · {doc.type} · Diunggah: {formatDateIndo(doc.uploadDate)}</p>
           </div>
           <button
             type="button"

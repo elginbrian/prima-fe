@@ -1,5 +1,6 @@
 import { Eye, FileText, PauseCircle } from "lucide-react";
 import { useMemo, useState } from "react";
+import { formatRupiah } from "@/lib/utils";
 import { TablePagination } from "@/components/widgets/TablePagination";
 import { nextSortDirection, sortRecords, SortableTableHeader, SortDirection } from "@/components/widgets/SortableTableHeader";
 import { TrackerItem } from "./types";
@@ -71,7 +72,7 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-600">{item.pic?.name || "-"}</td>
                 <td className="px-4 py-3 text-xs text-slate-600">{item.currentStep}</td>
-                <td className="px-4 py-3 text-xs font-medium text-slate-700">{item.amount}</td>
+                <td className="px-4 py-3 text-xs font-medium text-slate-700">{formatRupiah(item.amount)}</td>
                 <td className="px-5 py-3 text-xs">
                   {(() => {
                     const docStats = documentsMap[item.id] || { total: 0, valid: 0 };

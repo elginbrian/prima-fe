@@ -2,6 +2,7 @@ import React from "react";
 import type { HistoryItem } from "@/types";
 import type { ProcurementActivityDto } from "@/lib/api/procurement.api";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { formatDateTimeIndo } from "@/lib/utils";
 
 interface ActivityLogProps {
   activities?: ProcurementActivityDto[];
@@ -92,12 +93,7 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
                     </span>
                   )}
                   <time className="text-[10px] text-slate-400">
-                    {act.created_at
-                      ? new Date(act.created_at).toLocaleString("id-ID", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })
-                      : "-"}
+                    {act.created_at ? formatDateTimeIndo(act.created_at) : "-"}
                   </time>
                 </div>
                 {act.notes && (
@@ -132,7 +128,7 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
               </div>
               <p className="mt-1 text-xs text-slate-600">{item.description}</p>
               <time className="mt-1 block text-[10px] text-slate-400">
-                {new Date(item.createdAt).toLocaleString("id-ID")}
+                {formatDateTimeIndo(item.createdAt)}
               </time>
             </div>
           ))}

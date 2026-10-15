@@ -14,6 +14,7 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { exportDocumentsToCsv } from "@/lib/exportUtils";
 import { useDocuments, useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { TableSkeleton } from "@/components/ui";
+import { formatDateIndo } from "@/lib/utils";
 
 
 export default function DocumentsPage() {
@@ -162,7 +163,7 @@ export default function DocumentsPage() {
               <div key={document.id}>
                 <button onClick={() => setExpandedReviewId(current => current === document.id ? null : document.id)} className="flex w-full items-center gap-3 rounded-lg border border-slate-200 p-3 text-left transition hover:border-[#0a4d8c]/40 hover:bg-blue-50/40">
                   <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${document.status === "Tindak Lanjut FPP" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}><FileCheck2 size={17} /></div>
-                  <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-medium text-slate-800">{document.name}</div><div className="mt-1 truncate text-[11px] text-slate-500">{document.type} · {document.fileUrl ? document.fileUrl.split('/').pop() : "File belum tersedia"} · {document.uploadDate}</div></div>
+                  <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-medium text-slate-800">{document.name}</div><div className="mt-1 truncate text-[11px] text-slate-500">{document.type} · {document.fileUrl ? document.fileUrl.split('/').pop() : "File belum tersedia"} · {formatDateIndo(document.uploadDate)}</div></div>
                   <span className={`hidden shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${document.status === "Tindak Lanjut FPP" ? "border-red-200 bg-red-50 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>{document.status}</span>
                   {expandedReviewId === document.id ? <ChevronDown className="shrink-0 text-slate-400" size={16} /> : <ChevronRight className="shrink-0 text-slate-400" size={16} />}
                 </button>

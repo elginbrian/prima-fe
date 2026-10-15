@@ -1,6 +1,6 @@
 import { GripVertical, AlertCircle, Clock, Eye, PauseCircle } from "lucide-react";
 import { TrackerItem, TrackerStage } from "./types";
-import { calculateDaysBetween } from "@/lib/utils";
+import { calculateDaysBetween, formatRupiah } from "@/lib/utils";
 import { TrackerStatsPanel } from "./TrackerStatsPanel";
 
 import { TrackerKanbanBoardProps } from "./types";
@@ -88,7 +88,7 @@ export function TrackerKanbanBoard({
                   </div>
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-500">Nilai</span>
-                      <span className="font-semibold text-[#0a4d8c]">{item.amount}</span>
+                      <span className="font-semibold text-[#0a4d8c]">{formatRupiah(item.amount)}</span>
                     </div>
                   </div>}
                   
@@ -107,12 +107,12 @@ export function TrackerKanbanBoard({
                     ) : item.isUrgent ? (
                       <div className="flex items-center gap-1.5 text-red-700 text-[11px] font-medium bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
                         <AlertCircle size={14} />
-                        <span>Urgent ({calculateDaysBetween(item.stageStartedAt)} hr)</span>
+                        <span>Urgent ({calculateDaysBetween(item.stageStartedAt)} hari)</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
                         <Clock size={14} />
-                        <span>{calculateDaysBetween(item.stageStartedAt)} hr di tahap ini</span>
+                        <span>{calculateDaysBetween(item.stageStartedAt)} hari di tahap ini</span>
                       </div>
                     )}
                     

@@ -3,6 +3,7 @@ import { CheckCircle2, CalendarClock, ChevronDown, ChevronRight, FileText } from
 import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
 import type { ProcurementMilestone, DeadlineItem } from "@/types";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
+import { formatDateIndo } from "@/lib/utils";
 
 interface ProcurementTimelineProps {
   stage?: string;
@@ -117,8 +118,8 @@ export function ProcurementTimeline({
                 {milestoneSlas.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {milestoneSlas.map((s) => {
-                      const targetStr = s.targetDate ? String(s.targetDate).trim().split(/[\sT]/)[0] : "-";
-                      const startStr = s.startDate ? String(s.startDate).trim().split(/[\sT]/)[0] : "-";
+                      const targetStr = s.targetDate ? formatDateIndo(s.targetDate) : "-";
+                      const startStr = s.startDate ? formatDateIndo(s.startDate) : "-";
                       const timing = s.daysRemaining !== undefined && s.status
                         ? { daysRemaining: s.daysRemaining, status: s.status }
                         : getDeadlineTiming(s);
@@ -160,10 +161,10 @@ export function ProcurementTimeline({
                                 {timing.status === "Selesai"
                                   ? "Selesai"
                                   : timing.daysRemaining < 0 || timing.status === "Overdue"
-                                  ? `${Math.abs(timing.daysRemaining)}h lewat`
+                                  ? `${Math.abs(timing.daysRemaining)} hari lewat`
                                   : timing.daysRemaining === 0
                                   ? "Hari ini"
-                                  : `${timing.daysRemaining}h sisa`}
+                                  : `${timing.daysRemaining} hari sisa`}
                               </span>
                               {expandedRelatedId === `sla-${s.id}` ? (
                                 <ChevronDown size={14} className="text-slate-400" />

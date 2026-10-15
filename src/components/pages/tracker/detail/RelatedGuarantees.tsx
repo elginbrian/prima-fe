@@ -1,6 +1,7 @@
 import React from "react";
 import { ShieldCheck, ChevronRight, ChevronDown } from "lucide-react";
 import type { GuaranteeItem } from "@/types";
+import { formatDateIndo } from "@/lib/utils";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 interface RelatedGuaranteesProps {
@@ -59,7 +60,7 @@ export function RelatedGuarantees({
                     {g.vendor.name}
                   </div>
                   <div className="mt-0.5 text-[11px] text-slate-500">
-                    {g.type} • Jatuh tempo: {g.expiryDate}
+                    {g.type} • Jatuh tempo: {formatDateIndo(g.expiryDate)}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

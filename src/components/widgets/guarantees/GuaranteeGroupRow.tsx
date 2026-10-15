@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import type { GuaranteeItem } from "@/types";
 import { useRouter } from "next/navigation";
-import { calculateDaysRemaining } from "@/lib/utils";
+import { calculateDaysRemaining, formatDateIndo, formatRupiah } from "@/lib/utils";
 import { GuaranteeGroupRowProps } from "./types";
 import { DocumentPreviewModal } from "../modals/DocumentPreviewModal";
 import { GuaranteeLifecycleModal } from "../modals/GuaranteeLifecycleModal";
@@ -79,7 +79,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
         <td className="px-4 py-4 text-sm text-slate-600">
           Rp {guarantees.reduce((total, guarantee) => total + guarantee.value, 0).toLocaleString("id-ID")}
         </td>
-        <td className="px-4 py-4 text-sm font-medium text-slate-700">{latestExpiry}</td>
+        <td className="px-4 py-4 text-sm font-medium text-slate-700">{formatDateIndo(latestExpiry)}</td>
         <td className="px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="flex flex-wrap gap-1.5">
@@ -161,7 +161,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                           {guarantee.referenceNo} · {guarantee.type}
                         </div>
                         <div className="mt-1 text-[11px] text-slate-500">
-                          {guarantee.vendor.name} · {guarantee.issuer} · Terbit {guarantee.issueDate} · Expiry {guarantee.expiryDate}
+                          {guarantee.vendor.name} · {guarantee.issuer} · Terbit {formatDateIndo(guarantee.issueDate)} · Expiry {formatDateIndo(guarantee.expiryDate)}
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
@@ -223,7 +223,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                             <div className="mt-1 font-medium">
                               {daysRemaining < 0
                                 ? `Terlewat ${Math.abs(daysRemaining)} hari`
-                                : `${daysRemaining} hari lagi (${guarantee.expiryDate})`}
+                                : `${daysRemaining} hari lagi (${formatDateIndo(guarantee.expiryDate)})`}
                             </div>
                           </div>
                           <div>
@@ -337,8 +337,8 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
             { label: "Jenis Jaminan", value: previewGuarantee.type },
             { label: "Vendor", value: previewGuarantee.vendor.name },
             { label: "Penerbit", value: `${previewGuarantee.issuerType || ""} ${previewGuarantee.issuer}` },
-            { label: "Nilai", value: `Rp ${previewGuarantee.value.toLocaleString("id-ID")}` },
-            { label: "Masa Berlaku", value: `${previewGuarantee.issueDate} s/d ${previewGuarantee.expiryDate}` },
+            { label: "Nilai", value: formatRupiah(previewGuarantee.value) },
+            { label: "Masa Berlaku", value: `${formatDateIndo(previewGuarantee.issueDate)} s/d ${formatDateIndo(previewGuarantee.expiryDate)}` },
             { label: "Status Jaminan", value: previewGuarantee.status },
           ]}
           onClose={() => setPreviewGuarantee(null)}

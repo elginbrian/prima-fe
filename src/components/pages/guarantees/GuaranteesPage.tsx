@@ -17,6 +17,7 @@ import { GuaranteeEditModal } from "@/components/widgets/modals/GuaranteeEditMod
 import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
 import { exportGuaranteesToCsv } from "@/lib/exportUtils";
 import { TableSkeleton } from "@/components/ui";
+import { formatDateIndo } from "@/lib/utils";
 
 export default function GuaranteesPage() {
   const { data: requests = [] } = useProcurements();
@@ -249,7 +250,7 @@ export default function GuaranteesPage() {
                         {displayName}
                       </div>
                       <div className="mt-1 text-xs text-slate-500">
-                        {request?.title ?? attachment.requestId} · {attachment.type} · {attachment.uploadedAt}
+                        {request?.title ?? attachment.requestId} · {attachment.type} · {attachment.uploadedAt ? formatDateIndo(attachment.uploadedAt) : "-"}
                       </div>
                     </div>
                   </div>
@@ -307,7 +308,7 @@ export default function GuaranteesPage() {
             { label: "ID Pengadaan", value: previewAttachment.requestId },
             { label: "Tipe", value: previewAttachment.type },
             { label: "Diupload Oleh", value: previewAttachment.uploadedBy?.name || "User" },
-            { label: "Tanggal Upload", value: previewAttachment.uploadedAt },
+            { label: "Tanggal Upload", value: previewAttachment.uploadedAt ? formatDateIndo(previewAttachment.uploadedAt) : "-" },
           ]}
           onClose={() => setPreviewAttachment(null)}
         />

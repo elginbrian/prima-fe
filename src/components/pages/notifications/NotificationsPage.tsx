@@ -5,6 +5,7 @@ import { Bell, CheckCircle2, AlertCircle, FileText, Clock, Settings, Search, Che
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/query/hooks/procurement/useNotifications";
 import type { NotificationType, NotificationItem } from "@/types";
 import { Skeleton } from "@/components/ui";
+import { formatRelativeTimeIndo } from "@/lib/utils";
 
 export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useNotifications();
@@ -159,7 +160,7 @@ export default function NotificationsPage() {
                             <h4 className={`truncate text-sm ${notif.isRead ? 'font-semibold text-slate-700' : 'font-bold text-slate-900'}`}>
                               {notif.title}
                             </h4>
-                            <span className="shrink-0 text-xs font-medium text-slate-400">{notif.time}</span>
+                            <span className="shrink-0 text-xs font-medium text-slate-400">{formatRelativeTimeIndo(notif.time)}</span>
                           </div>
                           <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-slate-500' : 'text-slate-600'}`}>
                             {notif.description}

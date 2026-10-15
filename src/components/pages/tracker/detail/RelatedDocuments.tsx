@@ -1,6 +1,7 @@
 import React from "react";
 import { FileText, ChevronRight, ChevronDown } from "lucide-react";
 import type { DocumentItem } from "@/types";
+import { formatDateIndo } from "@/lib/utils";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 interface RelatedDocumentsProps {
@@ -45,7 +46,7 @@ export function RelatedDocuments({
                 <div className="min-w-0">
                   <div className="truncate text-[12px] font-medium text-slate-800">{d.name}</div>
                   <div className="mt-0.5 text-[11px] text-slate-500">
-                    {d.type} • {d.uploadDate}
+                    {d.type} • Diunggah {formatDateIndo(d.uploadDate)}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

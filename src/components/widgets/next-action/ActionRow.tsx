@@ -9,6 +9,7 @@ import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useDeadlines, useDocuments, useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 
 import { ActionRowProps } from "./types";
+import { formatDateIndo } from "@/lib/utils";
 import { GuaranteeEditModal } from "@/components/widgets/modals/GuaranteeEditModal";
 import { DocumentActionModal } from "@/components/widgets/modals/DocumentActionModal";
 import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
@@ -92,7 +93,7 @@ export function ActionRow({ item }: ActionRowProps) {
           {linkedRequest && <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[160px]">{linkedRequest.title}</div>}
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
-          <div className="text-[13px] text-slate-600">{item.dueDate}</div>
+          <div className="text-[13px] text-slate-600">{formatDateIndo(item.dueDate)}</div>
           <div className="mt-1">{getPriorityBadge(item.priority)}</div>
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
