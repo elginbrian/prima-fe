@@ -19,7 +19,7 @@ export function NotificationTab({ formData, handleChange, users }: SettingsTabPr
         <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl bg-white hover:border-[#0a4d8c] transition-colors cursor-pointer" onClick={() => handleChange("whatsappNotifications", !formData.whatsappNotifications)}>
           <div>
             <div className="font-semibold text-slate-800 text-sm">Notifikasi WhatsApp</div>
-            <div className="text-xs text-slate-500 mt-1">Kirim peringatan instan saat SLA akan Overdue atau Jaminan Expired.</div>
+            <div className="text-xs text-slate-500 mt-1">Kirim peringatan instan saat SLA akan jatuh tempo/terlambat atau Jaminan mendekati kedaluwarsa.</div>
           </div>
           <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.whatsappNotifications ? 'bg-[#0a4d8c]' : 'bg-slate-300'}`}>
             <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${formData.whatsappNotifications ? 'left-7' : 'left-1'}`}></div>
@@ -29,7 +29,7 @@ export function NotificationTab({ formData, handleChange, users }: SettingsTabPr
         <div className="border border-slate-200 rounded-xl bg-white overflow-hidden transition-all focus-within:border-[#0a4d8c] focus-within:ring-1 focus-within:ring-[#0a4d8c]">
           <div className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleChange("autoEscalation", !formData.autoEscalation)}>
             <div>
-              <div className="font-semibold text-slate-800 text-sm">Auto-Eskalasi ke Atasan</div>
+              <div className="font-semibold text-slate-800 text-sm">Eskalasi Otomatis ke Atasan</div>
               <div className="text-xs text-slate-500 mt-1">Otomatiskan pemberitahuan eskalasi pekerjaan jika SLA terlewat.</div>
             </div>
             <div className={`w-12 h-6 rounded-full relative transition-colors shrink-0 ${formData.autoEscalation ? 'bg-[#0a4d8c]' : 'bg-slate-300'}`}>

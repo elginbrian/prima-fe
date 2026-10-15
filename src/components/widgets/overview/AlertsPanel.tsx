@@ -4,7 +4,7 @@ import { BellRing } from "lucide-react";
 
 export function AlertsPanel() {
   const alerts = [
-    { title: "Review vendor baru", detail: "3 vendor menunggu validasi dokumen", tone: "amber" },
+    { title: "Penelaahan vendor baru", detail: "3 vendor menunggu validasi dokumen", tone: "amber" },
     { title: "Dokumen kontrak", detail: "2 kontrak berakhir dalam 7 hari", tone: "rose" },
   ];
 

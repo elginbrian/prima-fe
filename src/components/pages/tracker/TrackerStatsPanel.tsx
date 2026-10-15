@@ -42,9 +42,9 @@ export function TrackerStatsPanel({
         {/* Breakdown */}
         <div className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
           {[
-            { label: "On Going", count: onGoingCount, color: "bg-emerald-500" },
-            { label: "On Hold", count: onHoldCount, color: "bg-amber-500" },
-            { label: "Batal", count: cancelledCount, color: "bg-red-500" },
+            { label: "Berjalan (On Going)", count: onGoingCount, color: "bg-emerald-500" },
+            { label: "Ditunda (On Hold)", count: onHoldCount, color: "bg-amber-500" },
+            { label: "Dibatalkan", count: cancelledCount, color: "bg-red-500" },
           ].map(({ label, count, color }) => (
             <div key={label} className="flex items-center justify-between text-[12px]">
               <div className="flex items-center gap-2">

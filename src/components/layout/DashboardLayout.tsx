@@ -48,12 +48,12 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     : "";
 
   const getHeaderInfo = (path: string) => {
-    if (path.includes("documents/upload")) return { title: "Upload & Ekstraksi Dokumen", subtitle: "Lakukan pemeriksaan kelengkapan dokumen secara cerdas dengan asisten PRIMA AI." };
+    if (path.includes("documents/upload")) return { title: "Unggah & Ekstraksi Dokumen", subtitle: "Lakukan pemeriksaan kelengkapan dokumen secara cerdas dengan asisten PRIMA AI." };
     if (path.includes("documents/result")) return { title: "Hasil Pemeriksaan Dokumen", subtitle: "Laporan otomatis hasil verifikasi dokumen pengadaan berdasarkan standar perusahaan." };
     if (path.includes("documents")) return { title: "Pemeriksaan Dokumen", subtitle: "Pantau kelengkapan DP3, temuan hasil review, dan status tindak lanjut FPP pengadaan." };
-    if (path.includes("overview")) return { title: "Overview Pengadaan", subtitle: "Pantau seluruh status, tahapan progress, dan pemenuhan SLA pekerjaan di satu tempat." };
+    if (path.includes("overview")) return { title: "Ringkasan Pengadaan (Overview)", subtitle: "Pantau seluruh status, tahapan progress, dan pemenuhan SLA pekerjaan di satu tempat." };
     if (path.includes("next-action")) return { title: "Tindakan & Persetujuan", subtitle: "Kelola daftar tindakan tertunda dan permohonan persetujuan yang membutuhkan perhatian Anda." };
-    if (path.includes("guarantees/upload")) return { title: "Upload Jaminan Bank/Asuransi", subtitle: "Digitalisasi dan ekstraksi data jaminan secara instan melalui sistem OCR cerdas." };
+    if (path.includes("guarantees/upload")) return { title: "Unggah Jaminan Bank & Asuransi", subtitle: "Digitalisasi dan ekstraksi data jaminan secara instan melalui sistem OCR cerdas." };
     if (path.includes("guarantees")) return { title: "Manajemen Jaminan", subtitle: "Pantau masa aktif, nilai nominal jaminan pelaksanaan/pemeliharaan, dan validitas dokumen." };
     if (path.includes("notifications")) return { title: "Pusat Notifikasi", subtitle: "Pemberitahuan real-time terkait pembaruan SLA, status pekerjaan, dan aktivitas sistem." };
     if (path.includes("settings")) return { title: "Pengaturan Sistem", subtitle: "Konfigurasi preferensi alur kerja, batas nilai persetujuan otomatis, dan parameter peringatan SLA." };

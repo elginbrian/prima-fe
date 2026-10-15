@@ -39,7 +39,7 @@ export default function NextActionPage() {
     try {
       const res = await evaluateSlaMutation.mutateAsync();
       const d = res.data;
-      toast.success(`Evaluasi SLA Selesai: ${d.total_evaluated} tugas dievaluasi (${d.on_track} On Track, ${d.at_risk} At Risk, ${d.overdue} Overdue, ${d.escalated} Dieskalasi).`);
+      toast.success(`Evaluasi SLA Selesai: ${d.total_evaluated} tugas dievaluasi (${d.on_track} Sesuai Jadwal, ${d.at_risk} Berisiko, ${d.overdue} Terlambat, ${d.escalated} Dieskalasi).`);
     } catch (err) {
       toast.error(getErrorMessage(err, "Gagal menjalankan sinkronisasi SLA"));
     }
@@ -98,7 +98,7 @@ export default function NextActionPage() {
                 Perhatian: Terdapat {escalatedCount} Tindak Lanjut dalam Status Eskalasi Manajerial
               </p>
               <p className="text-rose-700">
-                Batas toleransi SLA terlampaui. Tugas-tugas ini memerlukan persetujuan arahan dan pengisian Action Recovery Plan.
+                Batas toleransi SLA terlampaui. Tugas-tugas ini memerlukan persetujuan arahan dan pengisian Rencana Mitigasi & Percepatan SLA.
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export default function NextActionPage() {
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <SortableTableHeader label="Tindakan & Ref" direction={sort.key === "title" ? sort.direction : null} onClick={() => toggleSort("title")} />
                 <SortableTableHeader label="Sumber & Tipe" direction={sort.key === "source" ? sort.direction : null} onClick={() => toggleSort("source")} />
-                <SortableTableHeader label="Assignee" direction={sort.key === "assignee" ? sort.direction : null} onClick={() => toggleSort("assignee")} />
+                <SortableTableHeader label="Penanggung Jawab (PIC)" direction={sort.key === "assignee" ? sort.direction : null} onClick={() => toggleSort("assignee")} />
                 <SortableTableHeader label="Batas Waktu" direction={sort.key === "dueDate" ? sort.direction : null} onClick={() => toggleSort("dueDate")} />
                 <SortableTableHeader label="Status" direction={sort.key === "status" ? sort.direction : null} onClick={() => toggleSort("status")} />
               </tr>

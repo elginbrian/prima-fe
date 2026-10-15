@@ -23,7 +23,7 @@ export function ActionStats({ totalCount, highCount, mediumCount, lowCount, high
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-              High Priority
+              Prioritas Tinggi
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{highCount}</div>
           </div>
@@ -40,7 +40,7 @@ export function ActionStats({ totalCount, highCount, mediumCount, lowCount, high
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-[#0a4d8c]"></div>
-              Medium Priority
+              Prioritas Sedang
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{mediumCount}</div>
           </div>
@@ -57,7 +57,7 @@ export function ActionStats({ totalCount, highCount, mediumCount, lowCount, high
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
-              Low Priority
+              Prioritas Rendah
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{lowCount}</div>
           </div>

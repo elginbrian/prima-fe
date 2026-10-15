@@ -88,7 +88,17 @@ export function TrackerList({ filteredItems, timeStatusMap, documentsMap, openRe
                     );
                   })()}
                 </td>
-                <td className="px-4 py-3 text-xs font-medium text-slate-600">{timeStatusMap[item.id] ?? "-"}</td>
+                <td className="px-4 py-3 text-xs font-medium text-slate-600">
+                  {timeStatusMap[item.id]
+                    ? timeStatusMap[item.id] === "Overdue"
+                      ? "Terlambat"
+                      : timeStatusMap[item.id] === "At Risk"
+                      ? "Berisiko"
+                      : timeStatusMap[item.id] === "On Track"
+                      ? "Sesuai Jadwal"
+                      : timeStatusMap[item.id]
+                    : "-"}
+                </td>
                 <td className="px-5 py-3 text-right">
                   <button onClick={() => openRequestDetail(item.id)} className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-[#0a4d8c] hover:text-[#0a4d8c]">
                     <Eye size={13} /> Buka Detail

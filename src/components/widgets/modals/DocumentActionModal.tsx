@@ -174,7 +174,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
                 <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles size={14} className="text-[#0a4d8c]" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#0a4d8c]">Next Action</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#0a4d8c]">Tindak Lanjut</span>
                   </div>
                   <p className="text-[13px] text-slate-700 leading-relaxed">{doc.nextAction}</p>
                 </div>
@@ -182,7 +182,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
 
               {/* Status Update */}
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Update Status Dokumen</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Perbarui Status Dokumen</div>
                 <div className="flex flex-wrap gap-2">
                   {STATUS_LABELS.map(({ value, label, icon, color }) => (
                     <button

@@ -90,7 +90,7 @@ export function AnalyticsKpiCards({
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-            Overdue & Eskalasi
+            Terlambat & Eskalasi
           </span>
           <div className="p-1.5 bg-red-50 text-red-600 rounded-lg">
             <Flame size={16} />
@@ -101,7 +101,7 @@ export function AnalyticsKpiCards({
             <span className="text-3xl font-extrabold text-red-600">
               {summary.overdue_deadlines}
             </span>
-            <span className="text-[11px] text-red-500 font-semibold">Overdue</span>
+            <span className="text-[11px] text-red-500 font-semibold">Terlambat</span>
           </div>
           <div className="text-slate-300">|</div>
           <div className="flex items-baseline gap-1">
@@ -126,7 +126,7 @@ export function AnalyticsKpiCards({
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-            Kualitas Dokumen (D1)
+            Kepatuhan Dokumen (D2)
           </span>
           <div className="p-1.5 bg-blue-50 text-[#0a4d8c] rounded-lg">
             <FileCheck2 size={16} />

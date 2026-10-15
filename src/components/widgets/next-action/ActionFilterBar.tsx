@@ -38,7 +38,7 @@ export function ActionFilterBar({
               <option value="All">Semua Sumber</option>
               <option value="Dokumen">Dokumen</option>
               <option value="Jaminan">Jaminan</option>
-              <option value="Deadline">Deadline / SLA</option>
+              <option value="Deadline">Batas Waktu (SLA)</option>
               <option value="Proses Pengadaan">Pekerjaan</option>
             </select>
             <select 
@@ -47,9 +47,9 @@ export function ActionFilterBar({
               className="w-full sm:w-[130px] lg:w-[150px] border border-slate-200 rounded-lg text-[13px] px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white truncate"
             >
               <option value="All">Semua Prioritas</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
+              <option value="High">Tinggi (High)</option>
+              <option value="Medium">Sedang (Medium)</option>
+              <option value="Low">Rendah (Low)</option>
             </select>
           </div>
           {onSyncSla && (

@@ -42,11 +42,21 @@ export function ActionRow({ item }: ActionRowProps) {
     }
   };
 
+  const getStatusLabel = (status: ActionItem["status"]) => {
+    switch (status) {
+      case "Done": return "Selesai";
+      case "In Progress": return "Dalam Proses";
+      case "Cancelled": return "Dibatalkan";
+      case "Pending":
+      default: return "Menunggu";
+    }
+  };
+
   const getPriorityBadge = (priority: ActionItem["priority"]) => {
     switch (priority) {
-      case "High": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">HIGH</span>;
-      case "Medium": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-[#0a4d8c] border border-blue-200 uppercase tracking-wider">MEDIUM</span>;
-      case "Low": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">LOW</span>;
+      case "High": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">TINGGI</span>;
+      case "Medium": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-[#0a4d8c] border border-blue-200 uppercase tracking-wider">SEDANG</span>;
+      case "Low": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">RENDAH</span>;
     }
   };
 
@@ -89,7 +99,7 @@ export function ActionRow({ item }: ActionRowProps) {
           <div className="text-[11px] text-slate-500 mt-0.5">{item.actionType}</div>
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
-          <div className="text-[13px] text-slate-600">{item.assignee?.name || "Tidak ada assignee"}</div>
+          <div className="text-[13px] text-slate-600">{item.assignee?.name || "Belum ada PIC"}</div>
           {linkedRequest && <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[160px]">{linkedRequest.title}</div>}
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
@@ -99,7 +109,7 @@ export function ActionRow({ item }: ActionRowProps) {
         <td className="px-4 py-3 whitespace-nowrap">
           <div className="flex items-center justify-between gap-4">
             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(item.status)}`}>
-              {item.status}
+              {getStatusLabel(item.status)}
             </span>
             <div className="text-slate-400">
               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -144,7 +154,7 @@ export function ActionRow({ item }: ActionRowProps) {
                         className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
                       >
                         <FileText size={14} />
-                        Tinjau & Update Dokumen
+                        Tinjau & Perbarui Dokumen
                       </button>
                     ) : (
                       <button
@@ -184,7 +194,7 @@ export function ActionRow({ item }: ActionRowProps) {
                         className="w-full flex items-center justify-center gap-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors shadow-sm"
                       >
                         <ArrowRight size={14} />
-                        Lihat Detail & Update SLA
+                        Lihat Detail & Perbarui SLA
                       </button>
                     ) : (
                       <button

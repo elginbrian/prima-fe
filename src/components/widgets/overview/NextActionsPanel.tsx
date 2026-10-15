@@ -4,14 +4,14 @@ import { ArrowRight, FileText, PlusCircle } from "lucide-react";
 
 export function NextActionsPanel() {
   const items = [
-    { title: "Buat PR baru", detail: "Ajukan kebutuhan barang", icon: PlusCircle },
-    { title: "Review tender", detail: "Cek evaluasi terbaru", icon: FileText },
+    { title: "Paket Pengadaan Baru", detail: "Buat permintaan pengadaan barang/jasa", icon: PlusCircle },
+    { title: "Tinjau Dokumen", detail: "Pemeriksaan berkas & jaminan", icon: FileText },
   ];
 
   return (
     <div className="h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-800">Aksi Selanjutnya</p>
+        <p className="text-sm font-semibold text-slate-800">Tindak Lanjut Cepat</p>
       </div>
       <div className="space-y-3">
         {items.map((item) => (

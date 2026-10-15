@@ -40,17 +40,17 @@ export function TrackerHeader({
           <select
             value={operationalStatusFilter}
             onChange={(e) => setOperationalStatusFilter(e.target.value as ProcurementOperationalStatus | "All")}
-            className="w-full sm:w-[145px] px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:border-[#0a4d8c] appearance-none cursor-pointer hover:bg-slate-50 transition-colors"
+            className="w-full sm:w-[155px] px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:border-[#0a4d8c] appearance-none cursor-pointer hover:bg-slate-50 transition-colors"
           >
             <option value="All">Semua Status</option>
-            <option value="On Going">On Going</option>
-            <option value="On Hold">On Hold</option>
-            <option value="Batal">Batal</option>
+            <option value="On Going">Berjalan (On Going)</option>
+            <option value="On Hold">Ditunda (On Hold)</option>
+            <option value="Batal">Dibatalkan</option>
           </select>
         </div>
         <div className="flex shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
           <button type="button" onClick={() => setViewMode("kanban")} title="Tampilan Kanban" className={`p-2 transition-colors ${viewMode === "kanban" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutGrid size={18} /></button>
-          <button type="button" onClick={() => setViewMode("list")} title="Tampilan List" className={`border-l border-slate-200 p-2 transition-colors ${viewMode === "list" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutList size={18} /></button>
+          <button type="button" onClick={() => setViewMode("list")} title="Tampilan Tabel (List)" className={`border-l border-slate-200 p-2 transition-colors ${viewMode === "list" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><LayoutList size={18} /></button>
           <button type="button" onClick={() => setViewMode("analytics")} title="Eksekutif Analitik & SLA Bottleneck" className={`border-l border-slate-200 p-2 transition-colors ${viewMode === "analytics" ? "bg-blue-50 text-[#0a4d8c]" : "text-slate-400 hover:bg-slate-50"}`}><BarChart3 size={18} /></button>
         </div>
         {onExport && (

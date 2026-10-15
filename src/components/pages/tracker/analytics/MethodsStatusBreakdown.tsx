@@ -52,19 +52,19 @@ export function MethodsStatusBreakdown({
               <span className="text-lg font-bold text-[#0a4d8c] block">
                 {statusBreakdown["On Going"] ?? 0}
               </span>
-              <span className="text-[10px] text-[#0a4d8c] font-semibold">On Going</span>
+              <span className="text-[10px] text-[#0a4d8c] font-semibold">Berjalan (On Going)</span>
             </div>
             <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
               <span className="text-lg font-bold text-slate-700 block">
                 {statusBreakdown["On Hold"] ?? 0}
               </span>
-              <span className="text-[10px] text-slate-500 font-medium">On Hold</span>
+              <span className="text-[10px] text-slate-500 font-medium">Ditunda (On Hold)</span>
             </div>
             <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
               <span className="text-lg font-bold text-slate-700 block">
                 {statusBreakdown["Batal"] ?? 0}
               </span>
-              <span className="text-[10px] text-slate-500 font-medium">Batal</span>
+              <span className="text-[10px] text-slate-500 font-medium">Dibatalkan</span>
             </div>
           </div>
         </div>

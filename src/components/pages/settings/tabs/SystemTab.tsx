@@ -10,7 +10,7 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
         <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6">Otorisasi & Persetujuan</h2>
         
         <div className="mb-8">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Batas Nilai Persetujuan Otomatis (Threshold)</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Ambang Batas Nilai Persetujuan Otomatis</label>
           <p className="text-xs text-slate-500 mb-3">Pengadaan di atas nilai ini membutuhkan persetujuan berjenjang ekstra.</p>
           <div className="flex items-center max-w-sm">
             <span className="text-sm font-bold text-slate-500 bg-slate-50 border border-slate-200 border-r-0 px-3 py-2 rounded-l-lg">Rp</span>
@@ -29,7 +29,7 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
         </div>
 
         <div className="pt-8 border-t border-slate-100">
-          <h3 className="text-sm font-semibold text-slate-800 mb-5">Default Reviewer per Departemen</h3>
+          <h3 className="text-sm font-semibold text-slate-800 mb-5">Penelaah Utama (Reviewer) per Departemen</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { id: "DEPT-IT", name: "IT Infrastructure" },
@@ -67,7 +67,7 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
       <section>
         <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6">Toleransi & Peringatan SLA</h2>
         <div className="mb-8">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Ambang Batas Peringatan (At Risk)</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Ambang Batas Peringatan Risiko (At Risk)</label>
           <p className="text-xs text-slate-500 mb-3">Notifikasi peringatan akan muncul ketika batas waktu tersisa kurang dari (X) hari.</p>
           <div className="flex items-center gap-3">
             <input 
@@ -82,9 +82,9 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
           </div>
         </div>
         <div className="pt-8 border-t border-slate-100">
-          <h3 className="text-sm font-semibold text-slate-800 mb-5">Default Durasi Milestone (Referensi)</h3>
+          <h3 className="text-sm font-semibold text-slate-800 mb-5">Standar Durasi Tahapan (Milestone)</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {["Evaluasi Teknis", "Prakualifikasi", "Contracting", "Tender / Sourcing"].map((milestone) => {
+            {["Evaluasi Teknis", "Prakualifikasi", "Penyusunan Kontrak (Contracting)", "Tender / Sourcing"].map((milestone) => {
               const currentDuration = formData.milestoneDurations?.[milestone] || 0;
               return (
                 <div key={milestone} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100 focus-within:border-[#0a4d8c] focus-within:ring-1 focus-within:ring-[#0a4d8c] transition-all">
@@ -119,19 +119,23 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
           <p className="text-xs text-slate-500 mb-5">Menentukan seberapa ketat AI dalam membaca ketidaksesuaian data (misal: beda format, typo nama).</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {["Low", "Medium", "High"].map((level) => (
+            {[
+              { id: "Low", label: "Rendah (Low)", desc: "Sensitivitas rendah, hanya menandai ketidaksesuaian data yang fatal." },
+              { id: "Medium", label: "Standar (Medium) (Disarankan)", desc: "Keseimbangan optimal antara ketelitian dan fleksibilitas format." },
+              { id: "High", label: "Ketat (High)", desc: "Sensitivitas tinggi, memverifikasi kesesuaian karakter dokumen secara ketat." }
+            ].map((lvl) => (
               <div 
-                key={level}
-                onClick={() => handleChange("aiSensitivity", level)}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.aiSensitivity === level ? 'border-[#0a4d8c] bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                key={lvl.id}
+                onClick={() => handleChange("aiSensitivity", lvl.id)}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.aiSensitivity === lvl.id ? 'border-[#0a4d8c] bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${formData.aiSensitivity === level ? 'border-[#0a4d8c]' : 'border-slate-300'}`}>
-                    {formData.aiSensitivity === level && <div className="w-2 h-2 rounded-full bg-[#0a4d8c]"></div>}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${formData.aiSensitivity === lvl.id ? 'border-[#0a4d8c]' : 'border-slate-300'}`}>
+                    {formData.aiSensitivity === lvl.id && <div className="w-2 h-2 rounded-full bg-[#0a4d8c]"></div>}
                   </div>
                 </div>
-                <h4 className="font-bold text-slate-800 text-sm">{level} {level === "Medium" && "(Disarankan)"}</h4>
-                <p className="text-[11px] text-slate-500 mt-1">Pengaturan tingkat {level.toLowerCase()} untuk AI.</p>
+                <h4 className="font-bold text-slate-800 text-sm">{lvl.label}</h4>
+                <p className="text-[11px] text-slate-500 mt-1">{lvl.desc}</p>
               </div>
             ))}
           </div>
@@ -162,7 +166,9 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${formData.theme === themeMode ? 'border-[#0a4d8c]' : 'border-slate-300'}`}>
                   {formData.theme === themeMode && <div className="w-2 h-2 rounded-full bg-[#0a4d8c] animate-in zoom-in duration-200"></div>}
                 </div>
-                <span className="text-sm font-semibold text-slate-700">{themeMode} Mode</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  {themeMode === "Light" ? "Mode Terang" : themeMode === "Dark" ? "Mode Gelap" : "Otomatis (Sistem)"}
+                </span>
               </div>
             </div>
           ))}

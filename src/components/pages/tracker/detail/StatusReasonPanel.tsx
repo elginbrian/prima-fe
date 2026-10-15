@@ -37,7 +37,7 @@ export function StatusReasonPanel({ status, reasonDraft, setReasonDraft, onSave 
             <span className="font-bold">Perhitungan SLA Sedang Dijeda (Paused):</span>
             <p className="mt-0.5 text-[11px] leading-relaxed text-amber-800">
               Pengadaan berstatus <strong>On Hold</strong>. Jam kerja dan penalti batas waktu SLA dibekukan sementara.
-              Saat status kembali diaktifkan ke <strong>On Going</strong>, seluruh target tanggal deadline aktif akan diperpanjang secara otomatis sesuai durasi penundaan.
+              Saat status kembali diaktifkan ke <strong>On Going</strong>, seluruh target batas waktu (SLA) aktif akan diperpanjang secara otomatis sesuai durasi penundaan.
             </p>
           </div>
         </div>

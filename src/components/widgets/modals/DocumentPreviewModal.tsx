@@ -256,7 +256,7 @@ export function DocumentPreviewModal({
               <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
                 <Loader2 size={36} className="animate-spin text-[#0a4d8c]" />
                 <p className="text-sm font-semibold text-slate-700">Memuat pratinjau dokumen...</p>
-                <p className="text-xs text-slate-400">Menghubungkan ke secure presigned storage</p>
+                <p className="text-xs text-slate-400">Menghubungkan ke penyimpanan berkas terverifikasi</p>
               </div>
             ) : error ? (
               <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">

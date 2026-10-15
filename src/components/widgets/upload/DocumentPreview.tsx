@@ -27,7 +27,7 @@ export function DocumentPreview({ file }: DocumentPreviewProps) {
             <span className="text-xs text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
           </div>
           <div className="flex-1 relative bg-slate-50">
-            <iframe src={objectUrl} className="absolute inset-0 w-full h-full border-0" title="Document Preview" />
+            <iframe src={objectUrl} className="absolute inset-0 w-full h-full border-0" title="Pratinjau Dokumen" />
             
             <div className="absolute bottom-6 left-0 w-full flex justify-center pointer-events-none">
               <div className="bg-blue-50 text-[#0a4d8c] text-xs font-medium px-3 py-1.5 rounded-full border border-blue-200 flex items-center gap-1.5 shadow-sm">
@@ -40,7 +40,7 @@ export function DocumentPreview({ file }: DocumentPreviewProps) {
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-6 text-center bg-slate-50">
           <FileText size={48} className="mb-4 opacity-30" />
-          <p className="text-sm">Pilih file scan jaminan di panel sebelah kanan untuk melihat preview dokumen.</p>
+          <p className="text-sm">Pilih berkas pindaian di panel formulir untuk melihat pratinjau dokumen.</p>
         </div>
       )}
     </div>

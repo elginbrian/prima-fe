@@ -102,12 +102,12 @@ export function TrackerKanbanBoard({
                     ) : item.operationalStatus === "On Hold" ? (
                       <div className="flex items-center gap-1.5 text-amber-700 text-[11px] font-semibold">
                         <Clock size={14} />
-                        <span>Ditahan</span>
+                        <span>Ditunda (On Hold)</span>
                       </div>
                     ) : item.isUrgent ? (
                       <div className="flex items-center gap-1.5 text-red-700 text-[11px] font-medium bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
                         <AlertCircle size={14} />
-                        <span>Urgent ({calculateDaysBetween(item.stageStartedAt)} hari)</span>
+                        <span>Mendesak ({calculateDaysBetween(item.stageStartedAt)} hari)</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
@@ -125,7 +125,13 @@ export function TrackerKanbanBoard({
                           : 'bg-blue-50 text-[#0a4d8c] border-blue-200'
                       }`}>
                         <Clock size={10} />
-                        {timeStatusMap[item.id]}
+                        {timeStatusMap[item.id] === 'Overdue'
+                          ? 'Terlambat'
+                          : timeStatusMap[item.id] === 'At Risk'
+                          ? 'Berisiko'
+                          : timeStatusMap[item.id] === 'On Track'
+                          ? 'Sesuai Jadwal'
+                          : timeStatusMap[item.id]}
                       </div>
                     )}
                     </div>

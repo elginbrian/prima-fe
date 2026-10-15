@@ -91,13 +91,13 @@ export default function DocumentUploadPage() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col md:flex-row flex-1">
         
         <div className="w-full md:w-1/2 bg-slate-50 border-r border-slate-200 p-6 flex flex-col">
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Preview Dokumen</h2>
+          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pratinjau Dokumen</h2>
           <DocumentPreview file={file} />
         </div>
 
         <div className="w-full md:w-1/2 flex flex-col">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-800">Upload Dokumen Pra-Tender</h2>
+            <h2 className="text-lg font-bold text-slate-800">Unggah Dokumen Pra-Tender</h2>
             <p className="text-sm text-slate-500 mt-1">Sistem PRIMA membantu memverifikasi kelengkapan dan konsistensi dokumen.</p>
           </div>
           
@@ -303,7 +303,7 @@ export default function DocumentUploadPage() {
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
             >
-              <span>{isD1Doc ? "Simulasi Validasi D1 (AI)" : "Mulai Pemeriksaan AI"}</span>
+              <span>{isD1Doc ? "Simulasi Validasi Otomatis (AI)" : "Mulai Pemeriksaan AI"}</span>
               <ArrowRight size={16} />
             </button>
           </div>

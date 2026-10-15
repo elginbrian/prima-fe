@@ -17,7 +17,7 @@ export function DepartmentComplianceWidget({
             Peringkat Kepatuhan SLA Departemen
           </h3>
         </div>
-        <span className="text-[11px] font-semibold text-slate-500">Ranking Lintas Fungsi</span>
+        <span className="text-[11px] font-semibold text-slate-500">Peringkat Lintas Fungsi</span>
       </div>
 
       <div className="p-5 flex-1 flex flex-col justify-between">
@@ -43,7 +43,7 @@ export function DepartmentComplianceWidget({
                     <div className="flex items-center gap-2">
                       {dept.overdue > 0 && (
                         <span className="text-[10px] text-red-600 font-semibold bg-red-50 px-1.5 py-0.2 rounded">
-                          {dept.overdue} overdue
+                          {dept.overdue} terlambat
                         </span>
                       )}
                       <span className="font-bold text-slate-800">{rate}%</span>

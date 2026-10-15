@@ -27,7 +27,7 @@ export function ValidationSimulationModal({ isOpen, onClose, onComplete, documen
       // Initialize checks based on document kind
       const initialChecks = [
         { id: "read", text: "Membaca teks dari dokumen (OCR)", status: "pending" as const },
-        { id: "signature", text: "Memeriksa keberadaan tanda tangan & materai", status: "pending" as const },
+        { id: "signature", text: "Memeriksa keberadaan tanda tangan & meterai", status: "pending" as const },
         { id: "work", text: `Mencocokkan nama pekerjaan: "${workName || 'Tidak ada'}"`, status: "pending" as const },
         { id: "format", text: "Memverifikasi standar format perusahaan", status: "pending" as const },
       ];
@@ -126,7 +126,7 @@ export function ValidationSimulationModal({ isOpen, onClose, onComplete, documen
                 {hasFailed ? "Validasi Selesai dengan Temuan" : "Dokumen Lulus Verifikasi"}
               </h4>
               <p className={`mt-1 text-xs ${hasFailed ? "text-amber-700" : "text-slate-600"}`}>
-                {hasFailed ? "Sistem menemukan beberapa ketidaksesuaian yang perlu diperiksa manual." : "Semua syarat dokumen D1 terpenuhi. Anda dapat melanjutkan proses."}
+                {hasFailed ? "Sistem menemukan beberapa ketidaksesuaian yang perlu diperiksa manual." : "Semua syarat kelengkapan dokumen terpenuhi. Anda dapat melanjutkan proses."}
               </p>
             </div>
           )}

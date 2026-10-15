@@ -31,9 +31,9 @@ export function VendorRiskTable({ vendorRiskIndex }: VendorRiskTableProps) {
                 <th className="py-2.5 px-4">Nama Vendor</th>
                 <th className="py-2.5 px-3 text-center">Jaminan</th>
                 <th className="py-2.5 px-3">Total Nilai (IDR)</th>
-                <th className="py-2.5 px-3 text-center">Expiry Dekat</th>
+                <th className="py-2.5 px-3 text-center">Mendekati Jatuh Tempo</th>
                 <th className="py-2.5 px-3 text-center">Klaim</th>
-                <th className="py-2.5 px-4 text-center">Risk Level</th>
+                <th className="py-2.5 px-4 text-center">Tingkat Risiko</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -80,19 +80,19 @@ export function VendorRiskTable({ vendorRiskIndex }: VendorRiskTableProps) {
                         {isHigh && (
                           <>
                             <AlertTriangle size={11} className="text-red-600 shrink-0" />
-                            <span>High Risk</span>
+                            <span>Risiko Tinggi</span>
                           </>
                         )}
                         {isMed && (
                           <>
                             <AlertCircle size={11} className="text-amber-600 shrink-0" />
-                            <span>Medium Risk</span>
+                            <span>Risiko Sedang</span>
                           </>
                         )}
                         {!isHigh && !isMed && (
                           <>
                             <CheckCircle2 size={11} className="text-[#0a4d8c] shrink-0" />
-                            <span>Low Risk</span>
+                            <span>Risiko Rendah</span>
                           </>
                         )}
                       </span>

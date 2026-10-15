@@ -116,7 +116,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#093e6f] transition-all"
           >
             <Upload size={14} />
-            Upload Jaminan
+            Unggah Jaminan
           </button>
         </td>
         <td className="px-2 py-4">
@@ -140,7 +140,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
             <div className="space-y-2 px-5 py-4 sm:px-16">
               {guarantees.length === 0 && (
                 <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-5 text-center text-xs text-slate-500">
-                  Belum ada jaminan pada pengadaan ini. Gunakan tombol Upload Jaminan untuk menambahkan dokumen pertama.
+                  Belum ada jaminan pada pengadaan ini. Gunakan tombol Unggah Jaminan untuk menambahkan dokumen pertama.
                 </div>
               )}
               {guarantees.map((guarantee) => {
@@ -161,12 +161,12 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                           {guarantee.referenceNo} · {guarantee.type}
                         </div>
                         <div className="mt-1 text-[11px] text-slate-500">
-                          {guarantee.vendor.name} · {guarantee.issuer} · Terbit {formatDateIndo(guarantee.issueDate)} · Expiry {formatDateIndo(guarantee.expiryDate)}
+                          {guarantee.vendor.name} · {guarantee.issuer} · Terbit: {formatDateIndo(guarantee.issueDate)} · Jatuh Tempo: {formatDateIndo(guarantee.expiryDate)}
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
                         <div className="text-sm font-medium text-slate-700">
-                          Rp {guarantee.value.toLocaleString("id-ID")}
+                          {formatRupiah(guarantee.value)}
                         </div>
                         {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
                           <span className="mt-0.5 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-800 flex items-center gap-1 shadow-2xs">
@@ -180,7 +180,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                           guarantee.status
                         )}`}
                       >
-                        {guarantee.status}
+                        {guarantee.status === "Mendekati Expiry" ? "Mendekati Jatuh Tempo" : guarantee.status === "Expired" ? "Kedaluwarsa" : guarantee.status}
                       </span>
                       <button
                         type="button"
@@ -291,7 +291,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                             className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors"
                           >
                             <RotateCw size={13} className="text-slate-500" />
-                            Perpanjang (Amandemen)
+                            Perpanjang (Addendum)
                           </button>
 
                           {/* Lifecycle: Release */}

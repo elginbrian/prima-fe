@@ -21,7 +21,7 @@ export function TrackerAnalyticsView() {
     try {
       const res = await evaluateSlaMutation.mutateAsync(undefined);
       toast.success(
-        `Evaluasi SLA harian tuntas: ${res.data.total_evaluated} diperiksa (${res.data.overdue} overdue, ${res.data.escalated} eskalasi).`
+        `Evaluasi SLA harian tuntas: ${res.data.total_evaluated} diperiksa (${res.data.overdue} terlambat, ${res.data.escalated} eskalasi).`
       );
       refetch();
     } catch {
@@ -86,7 +86,7 @@ export function TrackerAnalyticsView() {
           <div className="flex items-center gap-2">
             <BarChart3 className="text-blue-200" size={20} />
             <h2 className="text-base font-bold tracking-wide">
-              Executive Procurement Analytics & SLA Intelligence
+              Analitik Eksekutif Pengadaan & SLA Intelligence
             </h2>
           </div>
           <p className="text-xs text-blue-100 mt-1 max-w-2xl">
