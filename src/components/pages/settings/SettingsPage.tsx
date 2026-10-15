@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Settings, Bell, Clock, Cpu, Palette, Save, User } from "lucide-react";
 import { useSettings, useUpdateSettings } from "@/lib/query/hooks/settings/useSettings";
+import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { ProfileTab } from "./tabs/ProfileTab";
 import { NotificationTab } from "./tabs/NotificationTab";
 import { SystemTab } from "./tabs/SystemTab";
@@ -14,6 +15,7 @@ import { getErrorMessage } from "@/lib/api/errors";
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
+  const { data: users = [] } = useUsers();
   const updateSettingsMutation = useUpdateSettings();
   const toast = useToast();
   
@@ -97,8 +99,8 @@ export default function SettingsPage() {
           <div className="bg-white p-6 sm:p-8 lg:p-10 flex flex-col min-w-0 w-full">
             <div className="flex-1 w-full">
               {activeTab === "umum" && <ProfileTab />}
-              {activeTab === "notifikasi" && <NotificationTab formData={formData} handleChange={handleChange} users={[]} />}
-              {activeTab === "sistem" && <SystemTab formData={formData} handleChange={handleChange} users={[]} />}
+              {activeTab === "notifikasi" && <NotificationTab formData={formData} handleChange={handleChange} users={users} />}
+              {activeTab === "sistem" && <SystemTab formData={formData} handleChange={handleChange} users={users} />}
             </div>
             
             <div className="mt-12 flex justify-end border-t border-slate-100 pt-6 sm:pt-8 w-full">

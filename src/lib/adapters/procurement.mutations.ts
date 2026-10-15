@@ -100,7 +100,7 @@ export function requestFormToCreatePayload(values: AddRequestFormValues): Create
 
 function cleanDateOrNull(val: string | null | undefined): string | null {
   if (!val) return null;
-  const clean = String(val).trim().split("T")[0];
+  const clean = String(val).trim().split(/[\sT]/)[0];
   return clean || null;
 }
 

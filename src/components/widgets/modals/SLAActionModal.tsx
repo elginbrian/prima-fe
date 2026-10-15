@@ -42,7 +42,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
   const [escalateTo, setEscalateTo] = useState("Manager Pengadaan Korporat");
 
   const [recoveryPlanText, setRecoveryPlanText] = useState(deadline.recoveryPlan || "");
-  const [recoveryTargetDate, setRecoveryTargetDate] = useState(deadline.recoveryDate ? deadline.recoveryDate.split("T")[0] : "");
+  const [recoveryTargetDate, setRecoveryTargetDate] = useState(deadline.recoveryDate ? String(deadline.recoveryDate).trim().split(/[\sT]/)[0] : "");
   const [isSubmittingRecovery, setIsSubmittingRecovery] = useState(false);
 
   const linkedRequest = procurements.find(r => r.id === deadline.requestId) || state.requests.find(r => r.id === deadline.requestId);

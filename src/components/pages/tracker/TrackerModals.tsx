@@ -41,8 +41,8 @@ export function DeadlineEditor({ deadline, onClose, onSave, isSaving = false, er
   
   if (typeof document === 'undefined') return null;
   
-  const initialStartDate = deadline.startDate ? String(deadline.startDate).split("T")[0] : "";
-  const initialTargetDate = deadline.targetDate ? String(deadline.targetDate).split("T")[0] : "";
+  const initialStartDate = deadline.startDate ? String(deadline.startDate).trim().split(/[\sT]/)[0] : "";
+  const initialTargetDate = deadline.targetDate ? String(deadline.targetDate).trim().split(/[\sT]/)[0] : "";
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex min-h-dvh items-center justify-center overflow-y-auto bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300" onClick={onClose}>

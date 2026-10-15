@@ -117,8 +117,8 @@ export function ProcurementTimeline({
                 {milestoneSlas.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {milestoneSlas.map((s) => {
-                      const targetStr = s.targetDate ? String(s.targetDate).split("T")[0] : "-";
-                      const startStr = s.startDate ? String(s.startDate).split("T")[0] : "-";
+                      const targetStr = s.targetDate ? String(s.targetDate).trim().split(/[\sT]/)[0] : "-";
+                      const startStr = s.startDate ? String(s.startDate).trim().split(/[\sT]/)[0] : "-";
                       const timing = s.daysRemaining !== undefined && s.status
                         ? { daysRemaining: s.daysRemaining, status: s.status }
                         : getDeadlineTiming(s);

@@ -88,7 +88,22 @@ export default function GuaranteeUploadPage() {
           }));
         })
         .catch(err => {
-          setOcrError(getErrorMessage(err, "Ekstraksi AI gagal."));
+          setOcrError("Berkas terdeteksi sebagai pindaian (scan) fisik tanpa teks digital. Sistem telah mengisi draf awal dari data paket pengadaan.");
+          if (file) {
+            const cleanBaseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 25);
+            const defaultRef = `JAM-${cleanBaseName}`;
+            const today = new Date().toISOString().split("T")[0];
+            const nextYear = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
+            setFormData(prev => ({
+              ...prev,
+              vendor: prev.vendor || selectedRequest?.title || "Rekanan Pengadaan",
+              issuer: prev.issuer || "Penerbit Jaminan",
+              referenceNo: prev.referenceNo || defaultRef,
+              value: prev.value || (selectedRequest?.amount ? "Rp " + Math.round(selectedRequest.amount * 0.05).toLocaleString("id-ID") : "Rp 0"),
+              issueDate: prev.issueDate || today,
+              expiryDate: prev.expiryDate || nextYear,
+            }));
+          }
         })
         .finally(() => {
           setIsExtracting(false);

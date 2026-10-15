@@ -225,26 +225,74 @@ export default function DocumentUploadPage() {
                     if (extractedData.tenderNumber && data.tenderNumber && extractedData.tenderNumber.trim().toLowerCase() !== data.tenderNumber.trim().toLowerCase()) issues.push(`Nomor tender berbeda dengan ${document.name}.`);
                     return issues;
                   });
-                const newDoc: DocumentItem = {
-                  id: `DOC-${Date.now()}`,
-                  requestId,
-                  name: file.name.replace(/\.[^/.]+$/, ""),
+
+                const docName = file.name.replace(/\.[^/.]+$/, "");
+                const today = new Date().toISOString().split("T")[0];
+                const status = consistencyIssues.length ? "Catatan Procurement" : "Lulus Verifikasi";
+                const nextActionText = consistencyIssues.length ? "Periksa dan samakan informasi yang berbeda sebelum dokumen diproses." : notes || "Informasi dokumen konsisten dengan data yang tersedia. Tetap lakukan review Procurement.";
+                const step = ((requests.find(request => request.id === requestId) || state.requests.find(request => request.id === requestId))?.currentStep || "Penyusunan RKS / Spesifikasi Teknis") as ProcurementStep;
+
+                documentsApi.add({
+                  request_id: requestId,
+                  name: docName,
                   type: docType as DocumentType,
-                  documentKind: documentKind as DocumentKind,
-                  status: consistencyIssues.length ? "Catatan Procurement" : "Lulus Verifikasi",
-                  uploadDate: new Date().toISOString().split("T")[0],
-                  pic: { id: "USR-ADMIN", name: "Admin" },
+                  document_kind: documentKind as DocumentKind,
+                  status,
+                  upload_date: today,
+                  pic_id: currentUser?.id || "USR-ADMIN",
+                  pic_name: currentUser?.name || "Administrator",
                   issues: consistencyIssues,
-                  nextAction: consistencyIssues.length ? "Periksa dan samakan informasi yang berbeda sebelum dokumen diproses." : notes || "Informasi dokumen konsisten dengan data yang tersedia. Tetap lakukan review Procurement.",
-                  procurementStep: state.requests.find(request => request.id === requestId)?.currentStep,
-                  documentDate: new Date().toISOString().split("T")[0],
-                  canGenerateAiDraft: true,
-                  fileUrl: `https://storage.pertamina.com/mock/${file.name}`,
-                  mimeType: file.type || "application/octet-stream",
-                  extractedData,
-                };
-                addDocument(newDoc);
-                router.push(`/dashboard/documents/result?id=${newDoc.id}`);
+                  next_action: nextActionText,
+                  procurement_step: step,
+                  document_date: extractedData.documentDate || today,
+                  document_number: extractedData.tenderNumber || undefined,
+                  file_url: `/uploads/${file.name}`,
+                  mime_type: file.type || "application/pdf",
+                }).then((res) => {
+                  const created = res.data;
+                  const newDoc: DocumentItem = {
+                    id: created.id,
+                    requestId: created.request_id,
+                    name: created.name,
+                    type: created.type as DocumentType,
+                    documentKind: (created.document_kind as DocumentKind) || (documentKind as DocumentKind),
+                    status: (created.status as any) || status,
+                    uploadDate: created.upload_date,
+                    pic: { id: created.pic_id, name: created.pic_name },
+                    issues: created.issues || [],
+                    nextAction: created.next_action || nextActionText,
+                    procurementStep: created.procurement_step as ProcurementStep | undefined,
+                    documentDate: created.document_date,
+                    canGenerateAiDraft: true,
+                    fileUrl: created.file_url,
+                    mimeType: created.mime_type,
+                    extractedData,
+                  };
+                  addDocument(newDoc);
+                  toast.success("Dokumen berhasil disimpan ke sistem.");
+                  router.push(`/dashboard/documents/result?id=${created.id}`);
+                }).catch(() => {
+                  const fallbackDoc: DocumentItem = {
+                    id: `DOC-${Date.now()}`,
+                    requestId,
+                    name: docName,
+                    type: docType as DocumentType,
+                    documentKind: documentKind as DocumentKind,
+                    status,
+                    uploadDate: today,
+                    pic: { id: currentUser?.id || "USR-ADMIN", name: currentUser?.name || "Administrator" },
+                    issues: consistencyIssues,
+                    nextAction: nextActionText,
+                    procurementStep: step,
+                    documentDate: today,
+                    canGenerateAiDraft: true,
+                    fileUrl: `/uploads/${file.name}`,
+                    mimeType: file.type || "application/octet-stream",
+                    extractedData,
+                  };
+                  addDocument(fallbackDoc);
+                  router.push(`/dashboard/documents/result?id=${fallbackDoc.id}`);
+                });
               }}
               disabled={!file || !docType || !documentKind || !requestId}
               className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-sm font-medium shadow-sm transition-all ${

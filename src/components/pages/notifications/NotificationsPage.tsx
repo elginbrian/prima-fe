@@ -11,6 +11,7 @@ export default function NotificationsPage() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const [activeTab, setActiveTab] = useState<"All" | "Unread">("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -45,7 +46,15 @@ export default function NotificationsPage() {
     }
   };
 
-  const filteredNotifications = notifications.filter(n => activeTab === "All" || !n.isRead);
+  const filteredNotifications = notifications.filter(n => {
+    const matchesTab = activeTab === "All" || !n.isRead;
+    const q = searchQuery.toLowerCase().trim();
+    const matchesQuery = !q ||
+      n.title.toLowerCase().includes(q) ||
+      n.description.toLowerCase().includes(q) ||
+      (n.requestId && n.requestId.toLowerCase().includes(q));
+    return matchesTab && matchesQuery;
+  });
 
   // Group notifications by category
   const groupedNotifications = filteredNotifications.reduce((acc, notif) => {
@@ -64,7 +73,9 @@ export default function NotificationsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
-            placeholder="Cari notifikasi..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari notifikasi berdasarkan judul, pesan, atau pengirim..." 
             className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c]"
           />
         </div>
@@ -120,7 +131,9 @@ export default function NotificationsPage() {
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Bell size={40} className="mb-4 text-slate-200" />
               <h3 className="text-sm font-bold text-slate-700">Tidak ada notifikasi</h3>
-              <p className="mt-1 text-xs text-slate-500">Anda sudah membaca semua pemberitahuan.</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {searchQuery ? `Tidak ada notifikasi yang cocok dengan "${searchQuery}".` : "Anda sudah membaca semua pemberitahuan."}
+              </p>
             </div>
           ) : (
             categories.map(category => {

@@ -8,7 +8,7 @@ export function getDeadlineTiming(
     return { daysRemaining: 0, status: (deadline?.status || "On Track") as DeadlineStatus };
   }
 
-  const cleanTargetDate = String(deadline.targetDate).split("T")[0];
+  const cleanTargetDate = String(deadline.targetDate).trim().split(/[\sT]/)[0];
   const parts = cleanTargetDate.split("-").map(Number);
   if (parts.length !== 3 || parts.some(isNaN)) {
     return { daysRemaining: 0, status: (deadline.status || "On Track") as DeadlineStatus };
