@@ -73,7 +73,7 @@ export function RelatedDocuments({
                   </div>
                   {d.nextAction && (
                     <div className="mt-2">
-                      <span className="font-semibold text-[#0a4d8c]">Next Action:</span> {d.nextAction}
+                      <span className="font-semibold text-[#0a4d8c]">Tindak Lanjut:</span> {d.nextAction}
                     </div>
                   )}
                   <button

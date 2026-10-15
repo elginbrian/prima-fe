@@ -222,7 +222,7 @@ export default function GuaranteeUploadPage() {
         {/* Right Side: Upload Form */}
         <div className="w-full md:w-1/2 flex flex-col">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-800">Upload Dokumen & Jaminan</h2>
+            <h2 className="text-lg font-bold text-slate-800">Unggah Dokumen & Jaminan</h2>
             <p className="text-sm text-slate-500 mt-1">Pilih jenis dokumen terlebih dahulu. OCR hanya digunakan untuk jaminan yang memerlukan ekstraksi.</p>
           </div>
           
@@ -468,7 +468,7 @@ export default function GuaranteeUploadPage() {
                           {numVal > 0 && numVal < minReq && (
                             <div className="text-amber-700 font-semibold flex items-center gap-1.5">
                               <AlertTriangle size={13} className="text-amber-600 shrink-0" />
-                              <span>Nilai terisi di bawah batas 5% pagu pengadaan</span>
+                              <span>Nilai jaminan kurang dari 5% pagu pengadaan (di bawah batas minimum regulasi)</span>
                             </div>
                           )}
                         </div>
@@ -476,7 +476,7 @@ export default function GuaranteeUploadPage() {
                     })()}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Berlaku Sampai (Jatuh Tempo)</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Tanggal Jatuh Tempo (Masa Berlaku)</label>
                     <input type="date" value={formData.expiryDate} onChange={(event) => setFormData(prev => ({ ...prev, expiryDate: event.target.value }))} className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]" />
                   </div>
                 </div>
@@ -487,7 +487,7 @@ export default function GuaranteeUploadPage() {
                     <input type="date" value={formData.issueDate} onChange={(event) => setFormData(prev => ({ ...prev, issueDate: event.target.value }))} className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Tanggal Penyerahan</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Tanggal Serah Terima Berkas</label>
                     <input type="date" value={formData.submissionDate} onChange={(event) => setFormData(prev => ({ ...prev, submissionDate: event.target.value }))} className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2 bg-slate-50 focus:outline-none focus:border-[#0a4d8c]" />
                   </div>
                 </div>

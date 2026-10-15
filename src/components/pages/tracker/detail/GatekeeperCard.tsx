@@ -20,8 +20,8 @@ export function GatekeeperCard({ data }: { data: GatekeeperCheckDto }) {
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm">
                 {ready
-                  ? "Quality Gate: Prasyarat Lengkap"
-                  : `Quality Gate: Prasyarat Tertahan (${data.blockers.length} Kendala)`}
+                  ? "Kelaikan Tahap: Prasyarat Lengkap"
+                  : `Kelaikan Tahap: Prasyarat Tertahan (${data.blockers.length} Kendala)`}
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 ready

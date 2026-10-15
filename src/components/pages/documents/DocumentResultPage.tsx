@@ -104,7 +104,7 @@ export default function DocumentResultPage() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col lg:flex-row flex-1">
         {/* Left Side: Document Preview */}
         <div className="w-full lg:w-[45%] bg-slate-50 border-r border-slate-200 p-6 flex flex-col">
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Preview Dokumen</h2>
+          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pratinjau Dokumen</h2>
           <div className="flex-1 border-2 border-slate-200 rounded-xl flex flex-col bg-white overflow-hidden shadow-sm">
             {/* Mock PDF Viewer Header */}
             <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
@@ -143,7 +143,7 @@ export default function DocumentResultPage() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-[#0a4d8c]">{selectedDocument?.status ?? "Menunggu Pemeriksaan"}</h2>
-              <p className="text-sm text-blue-700/80 mt-1">{selectedDocument?.issues.length ?? 0} temuan tercatat pada pemeriksaan mock dokumen ini.</p>
+              <p className="text-sm text-blue-700/80 mt-1">{selectedDocument?.issues.length ?? 0} temuan tercatat pada hasil pemeriksaan dokumen ini.</p>
             </div>
           </div>
 
@@ -156,7 +156,7 @@ export default function DocumentResultPage() {
                 </div>
                 <div>
                   <div className="font-semibold text-slate-800 text-sm">{(selectedDocument?.fileUrl ? selectedDocument.fileUrl.split('/').pop() : "Dokumen_Evaluasi_Terbaru.pdf")}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">Diupload hari ini • 2.4 MB</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">Diunggah hari ini • 2.4 MB</div>
                 </div>
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function DocumentResultPage() {
                     <CheckCircle2 className="mt-0.5 text-[#0a4d8c]" size={18} />
                     <div>
                       <h4 className="font-semibold text-slate-800 text-sm">Tidak Ada Temuan</h4>
-                      <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">Dokumen mock ini belum memiliki catatan pemeriksaan.</p>
+                      <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">Dokumen ini belum memiliki catatan pemeriksaan.</p>
                     </div>
                   </div>
                 </div>

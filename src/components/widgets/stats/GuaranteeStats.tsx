@@ -40,7 +40,7 @@ export function GuaranteeStats({ totalCount, aktifCount, mendekatiCount, expired
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-              Mendekati Expiry
+              Mendekati Jatuh Tempo
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{mendekatiCount}</div>
           </div>
@@ -57,7 +57,7 @@ export function GuaranteeStats({ totalCount, aktifCount, mendekatiCount, expired
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-              Expired
+              Kedaluwarsa
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{expiredCount}</div>
           </div>

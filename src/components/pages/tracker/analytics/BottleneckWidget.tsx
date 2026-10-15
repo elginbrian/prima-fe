@@ -51,7 +51,7 @@ export function BottleneckWidget({ bottlenecks }: BottleneckWidgetProps) {
                           : "bg-amber-100 text-amber-700 border border-amber-200"
                       }`}
                     >
-                      {item.severity} Severity ({item.overdue_count} Overdue)
+                      Tingkat {item.severity === "High" ? "Tinggi" : item.severity === "Medium" ? "Sedang" : "Rendah"} ({item.overdue_count} Terlambat)
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">

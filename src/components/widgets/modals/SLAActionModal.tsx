@@ -202,7 +202,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               {/* Action Recovery Plan Form */}
               <div className="mt-2 space-y-2 border-t border-rose-200/80 pt-3">
                 <span className="block text-[11px] font-bold uppercase tracking-wider text-rose-800">
-                  Rencana Pemulihan SLA (Recovery Action Plan)
+                  Rencana Mitigasi & Percepatan SLA
                 </span>
                 <textarea
                   value={recoveryPlanText}
@@ -232,7 +232,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                     ) : (
                       <>
                         <Send size={12} />
-                        <span>Simpan Plan</span>
+                        <span>Simpan Rencana Mitigasi</span>
                       </>
                     )}
                   </button>

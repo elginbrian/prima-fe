@@ -249,7 +249,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
                             <div>
                               <div className="font-bold">Ketentuan Nilai Minimum Jaminan:</div>
                               <div className="text-[11px] text-amber-800 mt-0.5">
-                                {guarantee.thresholdWarning || `Nilai jaminan ini di bawah batas ketentuan (minimal 5% pagu pengadaan: Rp ${guarantee.minRequiredValue?.toLocaleString("id-ID")}).`}
+                                {guarantee.thresholdWarning || `Nilai jaminan ini di bawah batas ketentuan regulasi (minimal 5% pagu pengadaan: ${formatRupiah(guarantee.minRequiredValue)}).`}
                               </div>
                             </div>
                           </div>
@@ -257,7 +257,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
 
                         {guarantee.nextAction && (
                           <div className="mt-3 text-xs text-slate-600">
-                            <span className="font-semibold text-[#0a4d8c]">Next Action:</span>{" "}
+                            <span className="font-semibold text-[#0a4d8c]">Tindak Lanjut:</span>{" "}
                             {guarantee.nextAction}
                           </div>
                         )}

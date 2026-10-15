@@ -88,7 +88,7 @@ export function RelatedGuarantees({
                   </div>
                   {g.nextAction && (
                     <div className="mt-2">
-                      <span className="font-semibold text-[#0a4d8c]">Next Action:</span>{" "}
+                      <span className="font-semibold text-[#0a4d8c]">Tindak Lanjut:</span>{" "}
                       {g.nextAction}
                     </div>
                   )}

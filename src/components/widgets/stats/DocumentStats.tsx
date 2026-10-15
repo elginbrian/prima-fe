@@ -23,7 +23,7 @@ export function DocumentStats({ totalCount, readyCount, attnCount, notReadyCount
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-[#0a4d8c]"></div>
-              Aman (Lulus)
+              Lulus Verifikasi
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{readyCount}</div>
           </div>
@@ -31,7 +31,7 @@ export function DocumentStats({ totalCount, readyCount, attnCount, notReadyCount
             {readyPct.toFixed(0)}%
           </div>
         </div>
-        <div className="text-[11px] text-slate-400 mt-1 font-medium">Lulus verifikasi DP3</div>
+        <div className="text-[11px] text-slate-400 mt-1 font-medium">Sesuai checklist DP3</div>
       </div>
 
       {/* Needs Attention */}
@@ -40,7 +40,7 @@ export function DocumentStats({ totalCount, readyCount, attnCount, notReadyCount
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-              Perhatian (P3)
+              Catatan Review
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{attnCount}</div>
           </div>
@@ -48,7 +48,7 @@ export function DocumentStats({ totalCount, readyCount, attnCount, notReadyCount
             {attnPct.toFixed(0)}%
           </div>
         </div>
-        <div className="text-[11px] text-slate-400 mt-1 font-medium">Catatan Procurement</div>
+        <div className="text-[11px] text-slate-400 mt-1 font-medium">Perlu perbaikan minor</div>
       </div>
 
       {/* Not Ready */}
@@ -57,7 +57,7 @@ export function DocumentStats({ totalCount, readyCount, attnCount, notReadyCount
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-              Pending (FPP)
+              Tindak Lanjut FPP
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{notReadyCount}</div>
           </div>
@@ -65,7 +65,7 @@ export function DocumentStats({ totalCount, readyCount, attnCount, notReadyCount
             {(100 - readyPct - attnPct).toFixed(0)}%
           </div>
         </div>
-        <div className="text-[11px] text-slate-400 mt-1 font-medium">Tindak lanjut kembali ke FPP</div>
+        <div className="text-[11px] text-slate-400 mt-1 font-medium">Dikembalikan ke fungsi peminta</div>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export function ManagerOverrideModal({
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-base font-bold text-slate-800">
-              Otorisasi Manager (Gatekeeper Override)
+              Otorisasi & Dispensasi Manajer
             </h4>
             <p className="mt-1 text-xs text-slate-600">
               Tahap pengadaan ini memiliki kendala prasyarat yang belum terselesaikan. Memindahkan tahap ke{" "}

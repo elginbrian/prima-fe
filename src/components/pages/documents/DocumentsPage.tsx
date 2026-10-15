@@ -170,7 +170,7 @@ export default function DocumentsPage() {
                 {expandedReviewId === document.id && (
                   <div className="border-x border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-12">
                     {document.issues.length > 0 ? <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-600">{document.issues.map((issue, index) => <li key={`${document.id}-review-issue-${index}`}>{issue}</li>)}</ul> : <div className="text-xs text-[#0a4d8c] font-medium">Tidak ada temuan pemeriksaan.</div>}
-                    {document.nextAction && <div className="mt-3 text-xs text-slate-600"><span className="font-semibold text-[#0a4d8c]">Next Action:</span> {document.nextAction}</div>}
+                    {document.nextAction && <div className="mt-3 text-xs text-slate-600"><span className="font-semibold text-[#0a4d8c]">Tindak Lanjut:</span> {document.nextAction}</div>}
                     <button onClick={() => router.push(`/dashboard/documents/result?id=${document.id}`)} className="mt-3 text-xs font-semibold text-[#0a4d8c] hover:underline">Buka hasil pemeriksaan</button>
                   </div>
                 )}

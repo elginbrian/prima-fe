@@ -182,12 +182,12 @@ export function ProcurementTimeline({
                               </div>
                               {timing.status === "Overdue" && s.overdueReason && (
                                 <div className="mt-1 text-red-600 font-medium">
-                                  Alasan telat: {s.overdueReason}
+                                  Alasan Keterlambatan: {s.overdueReason}
                                 </div>
                               )}
                             {s.nextAction && (
                               <div className="mt-1">
-                                <span className="font-semibold text-[#0a4d8c]">Next Action:</span>{" "}
+                                <span className="font-semibold text-[#0a4d8c]">Tindak Lanjut:</span>{" "}
                                 {s.nextAction}
                               </div>
                             )}
@@ -195,7 +195,7 @@ export function ProcurementTimeline({
                               onClick={() => onEditSla(s.id)}
                               className="mt-2 text-[#0a4d8c] font-semibold hover:underline"
                             >
-                              Edit SLA
+                              Perbarui SLA
                             </button>
                           </div>
                         )}

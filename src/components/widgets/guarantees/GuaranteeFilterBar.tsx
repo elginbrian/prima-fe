@@ -45,8 +45,8 @@ export function GuaranteeFilterBar({
             >
               <option value="All">Semua Status</option>
               <option value="Aktif">Aktif</option>
-              <option value="Mendekati Expiry">Mendekati</option>
-              <option value="Expired">Expired</option>
+              <option value="Mendekati Expiry">Mendekati Jatuh Tempo</option>
+              <option value="Expired">Kedaluwarsa</option>
               <option value="Klaim Diajukan">Klaim Diajukan</option>
               <option value="Dikembalikan">Dikembalikan</option>
             </select>

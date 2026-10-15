@@ -256,7 +256,7 @@ export default function GuaranteesPage() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                      Tanpa ekstraksi
+                      Dokumen Lampiran (Non-OCR)
                     </span>
                     <button
                       type="button"

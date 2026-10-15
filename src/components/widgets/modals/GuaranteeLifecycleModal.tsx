@@ -181,7 +181,7 @@ export function GuaranteeLifecycleModal({
             }`}
           >
             <RotateCw size={14} className={activeTab === "amend" ? "text-[#0a4d8c]" : ""} />
-            Perpanjangan (Amandemen)
+            Perpanjangan (Addendum)
           </button>
 
           <button
@@ -194,7 +194,7 @@ export function GuaranteeLifecycleModal({
             }`}
           >
             <CalendarCheck size={14} className={activeTab === "release" ? "text-[#0a4d8c]" : ""} />
-            Pengembalian (Release)
+            Pengembalian Jaminan
           </button>
 
           <button

@@ -132,7 +132,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
                       )}
                       {document.nextAction && (
                         <div className="mt-3 text-xs text-slate-600">
-                          <span className="font-semibold text-[#0a4d8c]">Next Action:</span>{" "}
+                          <span className="font-semibold text-[#0a4d8c]">Tindak Lanjut:</span>{" "}
                           {document.nextAction}
                         </div>
                       )}
