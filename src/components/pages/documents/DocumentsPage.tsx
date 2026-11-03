@@ -55,8 +55,7 @@ export default function DocumentsPage() {
   const { data: validationLogs = [] } = useValidationLogs();
 
   const documents = useMemo(() => {
-    const baseDocs =
-      serverDocs && serverDocs.length > 0 ? serverDocs : state.documents;
+    const baseDocs = serverDocs ?? [];
     const existingDocIds = new Set(baseDocs.map((d) => d.id));
     const existingLogIds = new Set(
       validationLogs.map((l) => l.document_id).filter(Boolean)
@@ -104,7 +103,7 @@ export default function DocumentsPage() {
 
     void existingLogIds;
     return [...standaloneDocs, ...baseDocs];
-  }, [serverDocs, state.documents, validationLogs]);
+  }, [serverDocs, validationLogs]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | "All">("All");

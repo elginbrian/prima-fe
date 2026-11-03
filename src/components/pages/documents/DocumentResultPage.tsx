@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -18,10 +18,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
-import {
-  useDocuments,
-  useProcurements,
-} from "@/lib/query/hooks/procurement/useProcurement";
+import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import {
   useValidationDetail,
   usePublishValidationToTracker,
@@ -50,112 +47,10 @@ export default function DocumentResultPage() {
   const { state } = useProcurement();
   const { data: serverRequests = [] } = useProcurements();
   const requests = serverRequests.length > 0 ? serverRequests : state.requests;
-  const { data: documents = [] } = useDocuments();
-  const legacyDoc =
-    documents.find((d) => d.id === docId) ??
-    state.documents.find((d) => d.id === docId);
 
-  // Synthesize full validation data if falling back to legacyDoc so the page is never empty
-  const validationData: DocumentValidationResponse | null = useMemo(() => {
-    if (serverValidationData) return serverValidationData;
-    if (!legacyDoc) return null;
-
-    const linkedReq = requests.find((r) => r.id === legacyDoc.requestId);
-    const isPassed = legacyDoc.status === "Lulus Verifikasi";
-    const issues = legacyDoc.issues || [];
-    const score = isPassed
-      ? 92
-      : legacyDoc.status === "Catatan Procurement"
-      ? 70
-      : 52;
-    const mappedStatus: ComplianceStatus =
-      legacyDoc.status === "Lulus Verifikasi"
-        ? "Lulus Verifikasi"
-        : legacyDoc.status === "Tindak Lanjut FPP"
-        ? "Perlu Perbaikan"
-        : "Catatan Procurement";
-
-    return {
-      id: legacyDoc.id,
-      document_name: legacyDoc.name,
-      document_file_url: legacyDoc.fileUrl || null,
-      mime_type: "application/pdf",
-      profile_id: "VPROF-KAK-TEKNIS",
-      profile_name: legacyDoc.documentKind || legacyDoc.type || "Standar Kelayakan Dokumen",
-      overall_score: score,
-      passing_score_threshold: 80,
-      compliance_status: mappedStatus,
-      summary: isPassed
-        ? `Dokumen '${legacyDoc.name}' telah memenuhi kriteria kelayakan dan diverifikasi tanpa catatan.`
-        : `Dokumen '${legacyDoc.name}' memiliki ${issues.length} catatan pemeriksaan yang memerlukan tindak lanjut.`,
-      checklist_evaluations: [
-        {
-          item: "Kelengkapan Identitas, Nomor & Tanggal Dokumen Pengadaan",
-          status: "Memenuhi",
-          evidence_quote: `Berkas: ${legacyDoc.name}`,
-          explanation: "Identitas dokumen dan metadata pengadaan tercatat lengkap.",
-          severity: "SUCCESS",
-          is_mandatory: true,
-        },
-        {
-          item: "Kesesuaian Ruang Lingkup & Spesifikasi Teknis Pekerjaan",
-          status: isPassed ? "Memenuhi" : "Perlu Perhatian",
-          evidence_quote: linkedReq ? `Pekerjaan: ${linkedReq.title}` : null,
-          explanation: isPassed
-            ? "Ruang lingkup teknis sesuai standar kelayakan pra-tender."
-            : issues[0] || "Perlu penyesuaian rincian teknis sesuai catatan pemeriksa.",
-          severity: isPassed ? "SUCCESS" : "WARNING",
-          is_mandatory: true,
-        },
-        {
-          item: "Kepatuhan Anggaran / HPS & Ketentuan Komersial",
-          status: issues.length === 0 ? "Memenuhi" : "Tidak Memenuhi",
-          evidence_quote: null,
-          explanation:
-            issues.length === 0
-              ? "Komponen anggaran dan perpajakan telah sesuai ketentuan."
-              : issues.join("; "),
-          severity: issues.length === 0 ? "SUCCESS" : "ERROR",
-          is_mandatory: true,
-        },
-      ],
-      recommendations: legacyDoc.nextAction
-        ? [legacyDoc.nextAction]
-        : isPassed
-        ? ["Dokumen telah terverifikasi dan siap dilanjutkan ke tahapan pengadaan berikutnya."]
-        : ["Revisi dokumen sesuai catatan pemeriksaan sebelum melanjutkan proses tender."],
-      extracted_project: {
-        title: linkedReq?.title || legacyDoc.name.replace(/\.[^/.]+$/, ""),
-        estimated_amount: linkedReq?.amount || 0,
-        suggested_method: linkedReq?.procurementMethod || "Tender Terbuka",
-        department_name:
-          linkedReq?.department?.name || "Procurement & General Support",
-        stages: [
-          {
-            step: "Penerimaan FPP",
-            status: "Done",
-            auto_cleared: true,
-            notes: "Dokumen diterima sistem",
-          },
-          {
-            step: "Pembuatan TOR",
-            status: isPassed ? "Done" : "In Progress",
-            auto_cleared: isPassed,
-            notes: isPassed ? "Terverifikasi dari pemeriksaan dokumen" : "Menunggu perbaikan dokumen",
-          },
-          {
-            step: "Rapat Pra-Tender",
-            status: isPassed ? "In Progress" : "Pending",
-            auto_cleared: false,
-            notes: null,
-          },
-        ],
-      },
-      created_at: legacyDoc.uploadDate,
-      request_id: legacyDoc.requestId || null,
-      document_id: legacyDoc.id,
-    };
-  }, [serverValidationData, legacyDoc, requests]);
+  // Strictly use real AI validation data from the backend (no client-side synthetic fallback)
+  const validationData: DocumentValidationResponse | null =
+    serverValidationData ?? null;
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
