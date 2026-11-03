@@ -53,3 +53,12 @@ export function getStoredUser(): UserDto | null {
     return null;
   }
 }
+
+export function setStoredUser(user: UserDto): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch {
+    // ignore storage quota errors
+  }
+}

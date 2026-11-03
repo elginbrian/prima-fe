@@ -2,6 +2,7 @@ import { ActionItem, ActionPriority, ActionSource } from "@/types";
 
 export interface ActionRowProps {
   item: ActionItem;
+  onOpenRequestDetail?: (requestId: string) => void;
 }
 
 export interface ActionFilterBarProps {

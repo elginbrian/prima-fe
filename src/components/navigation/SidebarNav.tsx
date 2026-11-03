@@ -1,8 +1,6 @@
 import {
   LayoutDashboard,
-  ListTodo,
   FileSearch,
-  ShieldAlert,
   Bell,
   LogOut,
   ChevronLeft,
@@ -22,8 +20,6 @@ import { useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
 const navItems: any[] = [
   { key: "documents", label: "Dokumen", icon: FileSearch },
   { key: "overview", label: "Pekerjaan", icon: LayoutDashboard },
-  { key: "next-action", label: "Tindakan", icon: ListTodo },
-  { key: "guarantees", label: "Jaminan", icon: ShieldAlert },
   { key: "notifications", label: "Notifikasi", icon: Bell },
   { key: "settings", label: "Pengaturan", icon: Settings },
 ];
@@ -43,7 +39,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
   const handleLogout = onLogout ?? defaultLogout;
   
   const unreadCount = notifications.filter(n => !n.isRead).length;
-  const pendingActionsCount = actions.filter(a => a.status === 'Pending').length;
+  const pendingActionsCount = actions.filter(a => a.status === "Pending").length;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -70,9 +66,9 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const navItemClasses = (active: boolean) =>
     cn(
-      "flex w-full items-center gap-3 rounded-[12px] border-none px-3 py-3 text-left text-sm font-medium transition-all duration-200",
+      "flex w-full items-center gap-3 rounded-[12px] border-none px-3 py-3 text-left text-sm font-medium transition-all duration-200 relative focus:outline-none",
       active
-        ? "bg-[#eaf3ff] text-[#0a4d8c] shadow-sm"
+        ? "bg-[#eaf3ff] text-[#0a4d8c] shadow-xs"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
       effectiveCollapsed ? "lg:justify-center lg:px-2" : "lg:justify-start lg:px-4"
     );
@@ -107,7 +103,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
         <button
           type="button"
-          className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 items-center justify-center rounded-full bg-[#0a4d8c] text-white hover:bg-[#093e6f] transition-colors z-10 shadow-md"
+          className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 items-center justify-center rounded-full bg-[#0a4d8c] text-white hover:bg-[#093e6f] transition-colors z-10 shadow-sm focus:outline-none"
           aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => toggleCollapsed()}
         >
@@ -118,7 +114,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
       <nav
         className={cn(
           "flex flex-1 flex-col gap-2 py-4 overflow-y-auto",
-          effectiveCollapsed ? 'px-2 hide-scrollbar' : 'px-3'
+          effectiveCollapsed ? "px-2 hide-scrollbar" : "px-3"
         )}
         aria-label="Sidebar navigation"
       >
@@ -136,18 +132,21 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
                 aria-current={isActive ? "page" : undefined}
                 title={effectiveCollapsed ? item.label : undefined}
               >
-                <Icon size={18} className="transition-colors" />
+                <Icon size={18} className="transition-colors shrink-0" />
                 {!effectiveCollapsed && (
-                  <span className={`ml-2 transition-all duration-200 flex-1 flex items-center justify-between`}>
+                  <span className="ml-2 transition-all duration-200 flex-1 flex items-center justify-between">
                     {item.label}
                     {item.key === "notifications" && unreadCount > 0 && (
                       <span className="bg-[#0a4d8c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                        {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
-                    {item.key === "next-action" && pendingActionsCount > 0 && (
-                      <span className="bg-[#0a4d8c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                        {pendingActionsCount > 99 ? '99+' : pendingActionsCount}
+                    {item.key === "overview" && pendingActionsCount > 0 && (
+                      <span
+                        title={`${pendingActionsCount} tindakan menunggu`}
+                        className="bg-[#0a4d8c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                      >
+                        {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
                       </span>
                     )}
                   </span>
@@ -155,7 +154,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
                 {effectiveCollapsed && item.key === "notifications" && unreadCount > 0 && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full"></span>
                 )}
-                {effectiveCollapsed && item.key === "next-action" && pendingActionsCount > 0 && (
+                {effectiveCollapsed && item.key === "overview" && pendingActionsCount > 0 && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full"></span>
                 )}
               </Link>
@@ -182,7 +181,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
             setLogoutOpen(true);
           }}
           className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-[12px] border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600",
+            "flex w-full items-center justify-center gap-2 rounded-[12px] border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none",
             !effectiveCollapsed && "justify-start"
           )}
         >

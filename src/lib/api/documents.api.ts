@@ -1,4 +1,13 @@
 import { apiFetch } from "./client";
+import type {
+  ValidationProfile,
+  CreateValidationProfilePayload,
+  UpdateValidationProfilePayload,
+  DocumentValidationResponse,
+  PublishValidationToTrackerPayload,
+  UpdateValidationDecisionPayload,
+  ValidationLogListItem,
+} from "@/types/validation";
 
 export interface DocumentDto {
   id: string;
@@ -36,4 +45,50 @@ export const documentsApi = {
     apiFetch<DocumentDto>(`/documents/${id}/revision`, { method: "POST", body: JSON.stringify(payload) }),
   getRevisions: (id: string) =>
     apiFetch<DocumentDto[]>(`/documents/${id}/revisions`),
+
+  // ─── MODUL D1: VALIDATION PROFILES & AI CHECKLIST ─────────────────────────
+  getProfiles: (documentKind?: string, scope?: string) => {
+    const params = new URLSearchParams();
+    if (documentKind) params.append("document_kind", documentKind);
+    if (scope) params.append("scope", scope);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return apiFetch<ValidationProfile[]>(`/documents/profiles${qs}`);
+  },
+  getProfileById: (id: string) =>
+    apiFetch<ValidationProfile>(`/documents/profiles/${id}`),
+  createProfile: (payload: CreateValidationProfilePayload) =>
+    apiFetch<ValidationProfile>("/documents/profiles", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateProfile: (id: string, payload: UpdateValidationProfilePayload) =>
+    apiFetch<ValidationProfile>(`/documents/profiles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteProfile: (id: string) =>
+    apiFetch<{ message: string }>(`/documents/profiles/${id}`, {
+      method: "DELETE",
+    }),
+  analyzeChecklist: (formData: FormData) =>
+    apiFetch<DocumentValidationResponse>("/documents/analyze-checklist", {
+      method: "POST",
+      body: formData,
+    }),
+  publishToTracker: (payload: PublishValidationToTrackerPayload) =>
+    apiFetch<{ success: boolean; message: string; request_id: string; auto_cleared_stages_count: number }>(
+      "/documents/publish-to-tracker",
+      { method: "POST", body: JSON.stringify(payload) }
+    ),
+  getValidationById: (id: string) =>
+    apiFetch<DocumentValidationResponse>(`/documents/validations/${id}`),
+  updateValidationDecision: (id: string, payload: UpdateValidationDecisionPayload) =>
+    apiFetch<DocumentValidationResponse>(`/documents/validations/${id}/decision`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  getValidationLogs: (requestId?: string) =>
+    apiFetch<ValidationLogListItem[]>(
+      requestId ? `/documents/validations?request_id=${encodeURIComponent(requestId)}` : "/documents/validations"
+    ),
 };

@@ -6,3 +6,5 @@ export { TableSkeleton } from "./TableSkeleton";
 export { KanbanSkeleton } from "./KanbanSkeleton";
 export { useToast, ToastProvider } from "./Toast";
 export { LogoutModal } from "./LogoutModal";
+export { UserAvatar, resolveAvatarUrl } from "./UserAvatar";
+export type { UserAvatarProps } from "./UserAvatar";

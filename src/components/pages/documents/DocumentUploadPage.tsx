@@ -1,58 +1,123 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowLeft, UploadCloud, FileText, ArrowRight, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  UploadCloud,
+  ArrowRight,
+  X,
+  Sparkles,
+  Building2,
+  Sliders,
+  BookOpen,
+  BookmarkPlus,
+  Check,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
 import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
-import { documentsApi } from "@/lib/api/documents.api";
-import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
+import {
+  useValidationProfiles,
+  useAnalyzeDocumentChecklist,
+  useCreateValidationProfile,
+} from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import type { DocumentItem, DocumentKind, DocumentType, ProcurementStep } from "@/types";
+import { Spinner } from "@/components/ui";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
-import { ValidationSimulationModal } from "@/components/widgets/upload/ValidationSimulationModal";
-
-const VALIDATION_RULES: Record<DocumentKind, string[]> = {
-  "Surat Penawaran": ["Nama pekerjaan", "Nomor tender", "Tanggal dokumen"],
-  "Surat Pernyataan": ["Nama pekerjaan", "Nomor tender", "Tanggal dokumen"],
-  "RKS": ["Nama pekerjaan", "Nomor tender", "Tanggal dokumen"],
-  "Pakta Integritas": ["Nama pekerjaan", "Tanggal dokumen"],
-  "TKDN": ["Nama pekerjaan", "Nomor tender", "Tanggal dokumen"],
-  "Lainnya": ["Nama pekerjaan", "Nomor tender", "Tanggal dokumen"],
-};
+import { ValidationProfileSelector } from "@/components/widgets/documents/ValidationProfileSelector";
+import { ChecklistEditor } from "@/components/widgets/documents/ChecklistEditor";
+import { formatRequestCode } from "@/lib/utils";
+import type { ChecklistRuleItem, ValidationProfile } from "@/types/validation";
 
 export default function DocumentUploadPage() {
   const router = useRouter();
-  const { state, addDocument } = useProcurement();
+  const toast = useToast();
+  const { state } = useProcurement();
   const { data: serverRequests = [] } = useProcurements();
   const requests = serverRequests.length > 0 ? serverRequests : state.requests;
-  const { data: currentUser } = useCurrentUser();
-  const toast = useToast();
+
+  const { data: profiles = [], isLoading: isLoadingProfiles } =
+    useValidationProfiles();
+  const analyzeMutation = useAnalyzeDocumentChecklist();
+  const createProfileMutation = useCreateValidationProfile();
+
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [docType, setDocType] = useState<DocumentType | "">("");
-  const [documentKind, setDocumentKind] = useState<DocumentKind | "">("");
-  const [extractedData, setExtractedData] = useState({ workName: "", tenderNumber: "", documentDate: "" });
-  const [notes, setNotes] = useState("");
-  const [requestId, setRequestId] = useState("");
-  const [isSimulating, setIsSimulating] = useState(false);
-  
-  const isD1Doc = ["Surat Penawaran", "Surat Pernyataan", "Pakta Integritas"].includes(documentKind);
-  const suggestedRequest = useMemo(() => {
-    const normalizedWorkName = extractedData.workName.trim().toLowerCase();
-    if (!normalizedWorkName) return null;
-    return requests
-      .map(request => {
-        const title = request.title.toLowerCase();
-        const exact = title === normalizedWorkName;
-        const contains = title.includes(normalizedWorkName) || normalizedWorkName.includes(title);
-        const matchingWords = normalizedWorkName.split(/\s+/).filter(word => word.length > 2 && title.includes(word)).length;
-        const score = exact ? 98 : contains ? 88 : Math.min(80, matchingWords * 18);
-        return { request, score };
-      })
-      .filter(candidate => candidate.score >= 36)
-      .sort((a, b) => b.score - a.score)[0] ?? null;
-  }, [extractedData.workName, state.requests]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [checklistRules, setChecklistRules] = useState<ChecklistRuleItem[]>([]);
+  const [passingScore, setPassingScore] = useState<number>(75);
+  const [customPrompt, setCustomPrompt] = useState<string>("");
+  const [selectedRequestId, setSelectedRequestId] = useState<string>("");
+
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateKind, setNewTemplateKind] = useState("Kerangka Acuan Kerja");
+  const [newTemplateDesc, setNewTemplateDesc] = useState("");
+  const [newTemplateStage, setNewTemplateStage] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const reqId = params.get("requestId");
+      if (reqId) {
+        setSelectedRequestId(reqId);
+      }
+      const profId = params.get("profileId");
+      if (profId && profiles.length > 0 && !selectedProfileId) {
+        const found = profiles.find((p) => p.id === profId);
+        if (found) {
+          handleSelectProfile(found);
+        }
+      }
+    }
+  }, [profiles]);
+
+  const handleSaveAsNewTemplate = async () => {
+    if (!newTemplateName.trim()) {
+      toast.warning("Nama template baru wajib diisi.");
+      return;
+    }
+    if (checklistRules.length === 0) {
+      toast.warning("Tambahkan minimal 1 butir kriteria kelayakan terlebih dahulu.");
+      return;
+    }
+    try {
+      const created = await createProfileMutation.mutateAsync({
+        name: newTemplateName.trim(),
+        document_kind: newTemplateKind,
+        description: newTemplateDesc.trim() || undefined,
+        scope: "GLOBAL",
+        passing_score_threshold: passingScore,
+        warning_score_threshold: Math.max(50, passingScore - 20),
+        strict_mandatory_enforcement: true,
+        target_stage_to_clear: newTemplateStage || undefined,
+        custom_system_prompt: customPrompt.trim() || undefined,
+        checklist_rules: checklistRules,
+        is_default: false,
+      });
+      setSelectedProfileId(created.id);
+      setIsSaveTemplateModalOpen(false);
+      setNewTemplateName("");
+      setNewTemplateDesc("");
+      toast.success(`Template '${created.name}' berhasil disimpan ke database!`);
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal menyimpan template baru.");
+    }
+  };
+
+  const handleSelectProfile = (profile: ValidationProfile | null) => {
+    if (profile) {
+      setSelectedProfileId(profile.id);
+      setChecklistRules(profile.checklist_rules || []);
+      setPassingScore(profile.passing_score_threshold || 75);
+      const prompt = profile.custom_system_prompt || profile.prompt_template;
+      if (prompt && !customPrompt) {
+        setCustomPrompt(prompt);
+      }
+    } else {
+      setSelectedProfileId("");
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -78,315 +143,403 @@ export default function DocumentUploadPage() {
     }
   };
 
+  const handleSubmit = async () => {
+    if (!file) {
+      toast.warning("Silakan pilih atau unggah berkas dokumen terlebih dahulu.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    if (selectedProfileId) {
+      formData.append("profile_id", selectedProfileId);
+    }
+    if (checklistRules.length > 0) {
+      formData.append("checklist_items", JSON.stringify(checklistRules));
+    }
+    formData.append("passing_score_threshold", String(passingScore));
+    if (customPrompt.trim()) {
+      formData.append("custom_prompt", customPrompt.trim());
+    }
+    if (selectedRequestId) {
+      formData.append("request_id", selectedRequestId);
+    }
+
+    try {
+      toast.info("Mengirim dokumen ke layanan validasi AI PRIMA...");
+      const result = await analyzeMutation.mutateAsync(formData);
+      toast.success("Dokumen berhasil dianalisis!");
+      router.push(`/dashboard/documents/result?id=${result.id}`);
+    } catch (err: any) {
+      toast.error(
+        err?.message || "Gagal melakukan analisis validasi dokumen."
+      );
+    }
+  };
+
   return (
-    <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
-      <button
-        type="button"
-        onClick={() => router.push("/dashboard/documents")}
-        className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-[#0a4d8c]"
-      >
-        <ArrowLeft size={16} />
-        Kembali ke Pemeriksaan Dokumen
-      </button>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col md:flex-row flex-1">
-        
-        <div className="w-full md:w-1/2 bg-slate-50 border-r border-slate-200 p-6 flex flex-col">
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pratinjau Dokumen</h2>
-          <DocumentPreview file={file} />
+    <div className="space-y-5 pt-2 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
+      {/* Top Breadcrumb Header */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() =>
+            selectedRequestId
+              ? router.push(
+                  `/dashboard/overview/${encodeURIComponent(
+                    selectedRequestId
+                  )}?tab=docs-guarantees`
+                )
+              : router.push("/dashboard/documents")
+          }
+          className="inline-flex w-fit items-center gap-2 text-xs font-medium text-slate-500 transition-colors hover:text-[#0a4d8c] focus:outline-none"
+        >
+          <ArrowLeft size={15} />
+          {selectedRequestId
+            ? "Kembali ke Detail Pekerjaan"
+            : "Kembali ke Pemeriksaan Dokumen"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/documents/templates")}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors shadow-2xs focus:outline-none"
+        >
+          <BookOpen size={13} className="text-[#0a4d8c]" />
+          <span>Kelola Pustaka Template</span>
+        </button>
+      </div>
+
+      {/* Main Form Layout */}
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex flex-col lg:flex-row flex-1">
+        {/* Left Column: Upload Dropzone & Document Preview */}
+        <div className="w-full lg:w-5/12 bg-slate-50/70 border-r border-slate-200 p-6 flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+              Berkas Dokumen
+            </h2>
+            {file && (
+              <button
+                type="button"
+                onClick={() => setFile(null)}
+                className="text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1 hover:underline focus:outline-none"
+              >
+                <X size={13} />
+                Ganti Berkas
+              </button>
+            )}
+          </div>
+
+          {!file ? (
+            <div
+              className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center flex-1 transition-all cursor-pointer ${
+                isDragging
+                  ? "border-[#0a4d8c] bg-[#e8f2fc]/60"
+                  : "border-slate-300 bg-white hover:border-[#0a4d8c]/60 hover:bg-slate-50"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="w-12 h-12 bg-[#e8f2fc] text-[#0a4d8c] rounded-xl flex items-center justify-center mb-3 border border-[#0a4d8c]/20">
+                <UploadCloud size={24} />
+              </div>
+              <h3 className="text-sm font-medium text-slate-800 mb-1">
+                Tarik & Lepas Berkas ke Sini
+              </h3>
+              <p className="text-xs font-normal text-slate-500 text-center max-w-xs mb-4 leading-relaxed">
+                Mendukung berkas PDF, DOCX, atau pindaian resmi (Maks. 25MB)
+              </p>
+
+              <label className="cursor-pointer bg-[#0a4d8c] hover:bg-[#083b6c] text-white px-4 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2">
+                <span>Telusuri Komputer</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col min-h-[460px]">
+              <DocumentPreview file={file} />
+            </div>
+          )}
+
+          {/* Quick Notice Info */}
+          <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-xs text-slate-600 space-y-1">
+            <div className="font-medium text-[#0a4d8c] flex items-center gap-1.5">
+              <Sparkles size={13} />
+              Verifikasi Dokumen & Ekstraksi Tahapan
+            </div>
+            <p className="text-[11px] font-normal leading-relaxed text-slate-500">
+              PRIMA AI membaca isi dokumen, memverifikasi kriteria kelayakan, menghitung skor kepatuhan, serta mengekstrak tahapan pekerjaan secara otomatis.
+            </p>
+          </div>
         </div>
 
-        <div className="w-full md:w-1/2 flex flex-col">
+        {/* Right Column: Settings, Profile & Checklist Editor */}
+        <div className="w-full lg:w-7/12 flex flex-col">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-800">Unggah Dokumen Pra-Tender</h2>
-            <p className="text-sm text-slate-500 mt-1">Sistem PRIMA membantu memverifikasi kelengkapan dan konsistensi dokumen.</p>
+            <h2 className="text-base font-semibold text-slate-800">
+              Konfigurasi Standar Kelayakan Dokumen
+            </h2>
+            <p className="text-xs font-normal text-slate-500 mt-0.5">
+              Pilih standar template Pertamina atau sesuaikan kriteria kelayakan sesuai kebutuhan pengadaan.
+            </p>
           </div>
-          
-          <div className="p-6 space-y-5 flex-1">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Terkait Pekerjaan <span className="text-red-500">*</span></label>
-              <select 
-                value={requestId}
-                onChange={(e) => setRequestId(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c] bg-white"
+
+          <div className="p-6 space-y-5 flex-1 overflow-y-auto max-h-[calc(100vh-260px)]">
+            {/* 1. Validation Profile Selector */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <ValidationProfileSelector
+                profiles={profiles}
+                selectedProfileId={selectedProfileId}
+                onSelectProfile={handleSelectProfile}
+                isLoading={isLoadingProfiles}
+              />
+            </div>
+
+            {/* 2. Bind to Existing Tracker Job (Optional) */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Building2 size={12} className="text-[#0a4d8c]" />
+                Tautkan ke Pekerjaan Pengadaan (Opsional)
+              </label>
+              <select
+                value={selectedRequestId}
+                onChange={(e) => setSelectedRequestId(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 transition-colors focus:border-[#0a4d8c] focus:outline-none"
               >
-                <option value="">Pilih pekerjaan atau gunakan hasil pencocokan...</option>
-                <option value="REQ-2026-101">REQ-2026-101 – Pengadaan Server Rack 42U</option>
-                <option value="REQ-2026-102">REQ-2026-102 – Lisensi Software Design Suite</option>
-                <option value="REQ-2026-103">REQ-2026-103 – Renovasi Ruang Meeting Lt. 4</option>
-                <option value="REQ-2026-104">REQ-2026-104 – Pengadaan Laptop (10 Unit)</option>
-                <option value="REQ-2026-108">REQ-2026-108 – Upgrade Bandwidth Internet HO</option>
+                <option value="">
+                  -- Buat Pekerjaan Baru Otomatis dari Ekstraksi Dokumen --
+                </option>
+                {requests.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {formatRequestCode(r.id)} &ndash; {r.title}
+                  </option>
+                ))}
               </select>
+              <p className="text-[11px] font-normal text-slate-400">
+                Jika dikosongkan, sistem dapat mengekstrak judul pekerjaan, nilai anggaran, dan vendor untuk diterbitkan sebagai pekerjaan baru.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Jenis Dokumen <span className="text-red-500">*</span></label>
-                <select 
-                  value={documentKind}
-                  onChange={(e) => setDocumentKind(e.target.value as DocumentKind)}
-                  className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c] bg-white"
-                >
-                  <option value="">Pilih spesifikasi...</option>
-                  <option value="Surat Penawaran">Surat Penawaran</option>
-                  <option value="Surat Pernyataan">Surat Pernyataan</option>
-                  <option value="Pakta Integritas">Pakta Integritas</option>
-                  <option value="RKS">Rencana Kerja & Syarat (RKS)</option>
-                  <option value="TKDN">Sertifikat TKDN</option>
-                  <option value="Lainnya">Lainnya</option>
-                </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Template Validasi <span className="text-red-500">*</span></label>
-              <select value={documentKind} onChange={(e) => setDocumentKind(e.target.value as DocumentKind)} className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c] bg-white">
-                <option value="" disabled>Pilih template dokumen...</option>
-                <option>Surat Penawaran</option><option>Surat Pengajuan</option><option>RKS</option><option>Pakta Integritas</option><option>TKDN</option><option>Lainnya</option>
-              </select>
-              <p className="mt-1.5 text-xs text-slate-500">Informasi berikut akan dibandingkan dengan dokumen lain pada pekerjaan yang sama.</p>
-            </div>
-
-            {documentKind && <div className="space-y-3 rounded-xl border border-blue-100 bg-blue-50/40 p-4">
-              <div><h3 className="text-xs font-bold uppercase tracking-wider text-[#0a4d8c]">Informasi untuk Validasi Konsistensi</h3><p className="mt-1 text-xs text-slate-500">Template {documentKind} akan memeriksa: {VALIDATION_RULES[documentKind].join(", ")}.</p></div>
-              <input value={extractedData.workName} onChange={(e) => setExtractedData(data => ({ ...data, workName: e.target.value }))} placeholder="Nama pekerjaan dalam dokumen" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#0a4d8c] focus:outline-none" />
-              <div className="grid grid-cols-2 gap-3"><input value={extractedData.tenderNumber} onChange={(e) => setExtractedData(data => ({ ...data, tenderNumber: e.target.value }))} placeholder="Nomor tender" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#0a4d8c] focus:outline-none" /><input type="date" value={extractedData.documentDate} onChange={(e) => setExtractedData(data => ({ ...data, documentDate: e.target.value }))} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#0a4d8c] focus:outline-none" /></div>
-              {suggestedRequest && <div className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><div className="text-xs font-semibold text-slate-800">Rekomendasi pencocokan pekerjaan</div><div className="mt-1 text-xs text-slate-600">{suggestedRequest.request.id} · {suggestedRequest.request.title} <span className="ml-1 font-semibold text-[#0a4d8c]">{suggestedRequest.score}% cocok</span></div></div><button type="button" onClick={() => setRequestId(suggestedRequest.request.id)} className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-[#0a4d8c] hover:bg-blue-100">Gunakan Pekerjaan Ini</button></div>}
-              {requestId && <p className="text-xs text-slate-500">Pekerjaan terpilih: <span className="font-semibold text-slate-700">{state.requests.find(request => request.id === requestId)?.title}</span>. Anda tetap dapat menggantinya secara manual.</p>}
-            </div>}
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Catatan Tambahan (Opsional)</label>
-              <textarea 
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c] bg-white resize-none"
-                placeholder="Tambahkan instruksi khusus untuk pemeriksa..."
-                rows={2}
-              ></textarea>
-            </div>
-
-            {/* Upload Area */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Pilih File <span className="text-red-500">*</span></label>
-              <div 
-                className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-[#0a4d8c] bg-blue-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                {file ? (
-                  <div className="flex flex-col items-center text-center w-full">
-                    <p className="text-sm font-medium text-[#0a4d8c] mb-3">1 File Terpilih</p>
-                    <button 
-                      onClick={() => setFile(null)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
-                    >
-                      <X size={14} /> Ganti File
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 bg-white text-slate-400 rounded-full flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                      <UploadCloud size={24} />
-                    </div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-1">Tarik & Lepas File</h3>
-                    <p className="text-xs text-slate-500 mb-4">PDF, DOCX, XLSX (Max. 20MB)</p>
-                    
-                    <label className="cursor-pointer bg-white border border-[#0a4d8c] text-[#0a4d8c] hover:bg-blue-50 px-4 py-2 rounded-lg text-xs font-medium transition-colors">
-                      <span>Telusuri Komputer</span>
-                      <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileChange} />
-                    </label>
-                  </div>
+            {/* 3. Interactive Checklist Rules Editor */}
+            <div className="rounded-xl border border-slate-200 p-4 bg-white space-y-4">
+              <div className="border-b border-slate-100 pb-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#0a4d8c] flex items-center gap-1.5">
+                    <Sliders size={13} />
+                    Daftar Kriteria Kelayakan (Checklist)
+                  </h3>
+                  <p className="text-[11px] font-normal text-slate-500 mt-0.5">
+                    Tentukan syarat kelayakan dan tandai kriteria yang bersifat wajib.
+                  </p>
+                </div>
+                {checklistRules.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsSaveTemplateModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-[#0a4d8c] hover:border-[#0a4d8c] hover:bg-[#e8f2fc]/60 transition-colors focus:outline-none"
+                  >
+                    <BookmarkPlus size={13} />
+                    <span>Simpan sebagai Template Baru</span>
+                  </button>
                 )}
               </div>
+
+              <ChecklistEditor
+                items={checklistRules}
+                onChange={setChecklistRules}
+                passingScore={passingScore}
+                onPassingScoreChange={setPassingScore}
+              />
+            </div>
+
+            {/* 4. Custom Prompt / AI Instructions */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Sparkles size={12} className="text-[#0a4d8c]" />
+                Instruksi Tambahan untuk AI (Opsional)
+              </label>
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                placeholder="Contoh: Pastikan nama penerima jaminan tertulis PT Pertamina Patra Niaga dan masa berlaku minimal 90 hari kalender."
+                rows={3}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none resize-none"
+              />
             </div>
           </div>
 
-          <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 mt-auto">
-            <button 
-              onClick={() => router.push('/dashboard/documents')}
-              className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
+          {/* Footer Actions */}
+          <div className="p-5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-3 mt-auto">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/documents")}
+              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium transition-colors"
             >
               Batal
             </button>
-            <button 
-              onClick={() => {
-                if (!file || !docType || !documentKind || !requestId) return;
-                
-                if (isD1Doc) {
-                  setIsSimulating(true);
-                  return;
-                }
 
-                const consistencyIssues = state.documents
-                  .filter(document => document.requestId === requestId && document.extractedData)
-                  .flatMap(document => {
-                    const data = document.extractedData!;
-                    const issues: string[] = [];
-                    if (extractedData.workName && data.workName && extractedData.workName.trim().toLowerCase() !== data.workName.trim().toLowerCase()) issues.push(`Nama pekerjaan berbeda dengan ${document.name}.`);
-                    if (extractedData.tenderNumber && data.tenderNumber && extractedData.tenderNumber.trim().toLowerCase() !== data.tenderNumber.trim().toLowerCase()) issues.push(`Nomor tender berbeda dengan ${document.name}.`);
-                    return issues;
-                  });
-
-                const docName = file.name.replace(/\.[^/.]+$/, "");
-                const today = new Date().toISOString().split("T")[0];
-                const status = consistencyIssues.length ? "Catatan Procurement" : "Lulus Verifikasi";
-                const nextActionText = consistencyIssues.length ? "Periksa dan samakan informasi yang berbeda sebelum dokumen diproses." : notes || "Informasi dokumen konsisten dengan data yang tersedia. Tetap lakukan review Procurement.";
-                const step = ((requests.find(request => request.id === requestId) || state.requests.find(request => request.id === requestId))?.currentStep || "Penyusunan RKS / Spesifikasi Teknis") as ProcurementStep;
-
-                documentsApi.add({
-                  request_id: requestId,
-                  name: docName,
-                  type: docType as DocumentType,
-                  document_kind: documentKind as DocumentKind,
-                  status,
-                  upload_date: today,
-                  pic_id: currentUser?.id || "USR-ADMIN",
-                  pic_name: currentUser?.name || "Administrator",
-                  issues: consistencyIssues,
-                  next_action: nextActionText,
-                  procurement_step: step,
-                  document_date: extractedData.documentDate || today,
-                  document_number: extractedData.tenderNumber || undefined,
-                  file_url: `/uploads/${file.name}`,
-                  mime_type: file.type || "application/pdf",
-                }).then((res) => {
-                  const created = res.data;
-                  const newDoc: DocumentItem = {
-                    id: created.id,
-                    requestId: created.request_id,
-                    name: created.name,
-                    type: created.type as DocumentType,
-                    documentKind: (created.document_kind as DocumentKind) || (documentKind as DocumentKind),
-                    status: (created.status as any) || status,
-                    uploadDate: created.upload_date,
-                    pic: { id: created.pic_id, name: created.pic_name },
-                    issues: created.issues || [],
-                    nextAction: created.next_action || nextActionText,
-                    procurementStep: created.procurement_step as ProcurementStep | undefined,
-                    documentDate: created.document_date,
-                    canGenerateAiDraft: true,
-                    fileUrl: created.file_url,
-                    mimeType: created.mime_type,
-                    extractedData,
-                  };
-                  addDocument(newDoc);
-                  toast.success("Dokumen berhasil disimpan ke sistem.");
-                  router.push(`/dashboard/documents/result?id=${created.id}`);
-                }).catch(() => {
-                  const fallbackDoc: DocumentItem = {
-                    id: `DOC-${Date.now()}`,
-                    requestId,
-                    name: docName,
-                    type: docType as DocumentType,
-                    documentKind: documentKind as DocumentKind,
-                    status,
-                    uploadDate: today,
-                    pic: { id: currentUser?.id || "USR-ADMIN", name: currentUser?.name || "Administrator" },
-                    issues: consistencyIssues,
-                    nextAction: nextActionText,
-                    procurementStep: step,
-                    documentDate: today,
-                    canGenerateAiDraft: true,
-                    fileUrl: `/uploads/${file.name}`,
-                    mimeType: file.type || "application/octet-stream",
-                    extractedData,
-                  };
-                  addDocument(fallbackDoc);
-                  router.push(`/dashboard/documents/result?id=${fallbackDoc.id}`);
-                });
-              }}
-              disabled={!file || !docType || !documentKind || !requestId}
-              className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-sm font-medium shadow-sm transition-all ${
-                (file && docType && documentKind && requestId) 
-                  ? isD1Doc 
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white' 
-                    : 'bg-[#0a4d8c] hover:bg-[#093e6f] text-white' 
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!file || analyzeMutation.isPending}
+              className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-xs font-medium transition-all ${
+                file && !analyzeMutation.isPending
+                  ? "bg-[#0a4d8c] hover:bg-[#083b6c] text-white cursor-pointer"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
               }`}
             >
-              <span>{isD1Doc ? "Simulasi Validasi Otomatis (AI)" : "Mulai Pemeriksaan AI"}</span>
-              <ArrowRight size={16} />
+              {analyzeMutation.isPending ? (
+                <>
+                  <Spinner
+                    size="xs"
+                    className="border-white border-t-transparent"
+                  />
+                  <span>Menganalisis Dokumen...</span>
+                </>
+              ) : (
+                <>
+                  <span>Mulai Pemeriksaan AI</span>
+                  <ArrowRight size={14} />
+                </>
+              )}
             </button>
           </div>
         </div>
       </div>
-      
-      <ValidationSimulationModal 
-        isOpen={isSimulating}
-        onClose={() => setIsSimulating(false)}
-        documentKind={documentKind}
-        file={file}
-        workName={extractedData.workName}
-        onComplete={(findings, isValid) => {
-          setIsSimulating(false);
-          const docName = file!.name.replace(/\.[^/.]+$/, "");
-          const status = isValid ? "Lulus Verifikasi" : "Catatan Procurement";
-          const nextAction = isValid ? "Informasi dokumen lengkap dan valid." : "Harap lengkapi atau perbaiki bagian yang menjadi temuan.";
-          const procurementStep = ((requests.find(request => request.id === requestId) || state.requests.find(request => request.id === requestId))?.currentStep || "Penyusunan RKS / Spesifikasi Teknis") as ProcurementStep;
-          const today = new Date().toISOString().split("T")[0];
 
-          documentsApi.add({
-            request_id: requestId,
-            name: docName,
-            type: docType as DocumentType,
-            document_kind: documentKind as DocumentKind,
-            status,
-            upload_date: today,
-            pic_id: currentUser?.id || "USR-ADMIN",
-            pic_name: currentUser?.name || "Administrator",
-            issues: findings,
-            next_action: nextAction,
-            procurement_step: procurementStep,
-            document_date: extractedData.documentDate || today,
-            document_number: extractedData.tenderNumber || undefined,
-            file_url: `/uploads/${file!.name}`,
-            mime_type: file!.type || "application/pdf",
-          }).then((res) => {
-            const created = res.data;
-            const newDoc: DocumentItem = {
-              id: created.id,
-              requestId: created.request_id,
-              name: created.name,
-              type: created.type as DocumentType,
-              documentKind: (created.document_kind as DocumentKind) || (documentKind as DocumentKind),
-              status: (created.status as any) || status,
-              uploadDate: created.upload_date,
-              pic: { id: created.pic_id, name: created.pic_name },
-              issues: created.issues || [],
-              nextAction: created.next_action || nextAction,
-              procurementStep: created.procurement_step as ProcurementStep | undefined,
-              documentDate: created.document_date,
-              canGenerateAiDraft: true,
-              fileUrl: created.file_url,
-              mimeType: created.mime_type,
-              extractedData,
-            };
-            addDocument(newDoc);
-            toast.success("Dokumen pra-tender berhasil disimpan ke database sistem.");
-            router.push(`/dashboard/documents/result?id=${created.id}`);
-          }).catch(() => {
-            const fallbackDoc: DocumentItem = {
-              id: `DOC-${Date.now()}`,
-              requestId,
-              name: docName,
-              type: docType as DocumentType,
-              documentKind: documentKind as DocumentKind,
-              status,
-              uploadDate: today,
-              pic: { id: currentUser?.id || "USR-ADMIN", name: currentUser?.name || "Administrator" },
-              issues: findings,
-              nextAction,
-              procurementStep,
-              documentDate: today,
-              canGenerateAiDraft: true,
-              fileUrl: `/uploads/${file!.name}`,
-              mimeType: file!.type || "application/octet-stream",
-              extractedData,
-            };
-            addDocument(fallbackDoc);
-            router.push(`/dashboard/documents/result?id=${fallbackDoc.id}`);
-          });
-        }}
-      />
+      {/* Modal: Save Criteria as Reusable Template */}
+      {isSaveTemplateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">
+                  Simpan ke Pustaka Template Standar
+                </h3>
+                <p className="text-xs font-normal text-slate-500 mt-0.5">
+                  Simpan {checklistRules.length} butir kriteria & ambang batas {passingScore}% ke database
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSaveTemplateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 focus:outline-none"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3.5">
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                  Nama Template Standar
+                </label>
+                <input
+                  type="text"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  placeholder="Contoh: Standar KAK Pompa & Peralatan Kilang"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                    Jenis Dokumen
+                  </label>
+                  <select
+                    value={newTemplateKind}
+                    onChange={(e) => setNewTemplateKind(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
+                  >
+                    <option value="Kerangka Acuan Kerja">Kerangka Acuan Kerja</option>
+                    <option value="Rencana Anggaran Biaya">Rencana Anggaran Biaya</option>
+                    <option value="Jaminan Pelaksanaan">Jaminan Pelaksanaan</option>
+                    <option value="Dokumen Penawaran">Dokumen Penawaran</option>
+                    <option value="Kontrak & Perjanjian">Kontrak & Perjanjian</option>
+                    <option value="Umum">Umum</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                    Auto-Clear Tahap (Opsional)
+                  </label>
+                  <select
+                    value={newTemplateStage}
+                    onChange={(e) => setNewTemplateStage(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
+                  >
+                    <option value="">-- Tidak Ada --</option>
+                    <option value="Pembuatan TOR">Pembuatan TOR</option>
+                    <option value="Penyusunan RKS & Spesifikasi Teknis">
+                      Penyusunan RKS & Spesifikasi Teknis
+                    </option>
+                    <option value="Rapat Pra-Tender">Rapat Pra-Tender</option>
+                    <option value="Pemasukan Dokumen Penawaran">
+                      Pemasukan Dokumen Penawaran
+                    </option>
+                    <option value="Evaluasi Dokumen Penawaran">
+                      Evaluasi Dokumen Penawaran
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                  Deskripsi Singkat (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={newTemplateDesc}
+                  onChange={(e) => setNewTemplateDesc(e.target.value)}
+                  placeholder="Catatan penggunaan template ini..."
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSaveTemplateModalOpen(false)}
+                className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAsNewTemplate}
+                disabled={createProfileMutation.isPending}
+                className="px-4 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {createProfileMutation.isPending ? (
+                  <>
+                    <Spinner
+                      size="xs"
+                      className="border-white border-t-transparent"
+                    />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    <span>Simpan Template</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

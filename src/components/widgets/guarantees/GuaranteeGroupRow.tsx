@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import type { GuaranteeItem } from "@/types";
 import { useRouter } from "next/navigation";
-import { calculateDaysRemaining, formatDateIndo, formatRupiah } from "@/lib/utils";
+import { calculateDaysRemaining, formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
 import { GuaranteeGroupRowProps } from "./types";
 import { DocumentPreviewModal } from "../modals/DocumentPreviewModal";
 import { GuaranteeLifecycleModal } from "../modals/GuaranteeLifecycleModal";
@@ -28,7 +28,7 @@ function statusClass(status: GuaranteeItem["status"]) {
   return "bg-blue-50 text-[#0a4d8c] border-blue-200";
 }
 
-export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGroupRowProps) {
+export function GuaranteeGroupRow({ request, guarantees, onEdit, onOpenRequestDetail }: GuaranteeGroupRowProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [expandedGuaranteeId, setExpandedGuaranteeId] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
             <div className="min-w-0">
               <div className="text-[13px] font-medium text-slate-800">{request.title}</div>
               <div className="mt-1 text-[11px] text-slate-500">
-                {request.id} · {request.department.name} · {request.pic.name}
+                <span className="font-mono font-semibold text-[#0a4d8c]">{formatRequestCode(request.id)}</span> · {request.department.name} · {request.pic.name}
               </div>
             </div>
           </div>
@@ -107,17 +107,32 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit }: GuaranteeGrou
           </div>
         </td>
         <td className="px-4 py-4 text-right">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              router.push(`/dashboard/guarantees/upload?requestId=${request.id}`);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#093e6f] transition-all"
-          >
-            <Upload size={14} />
-            Unggah Jaminan
-          </button>
+          <div className="inline-flex items-center justify-end gap-2">
+            {onOpenRequestDetail && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenRequestDetail(request.id);
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-all"
+              >
+                <Eye size={13} />
+                Detail Pekerjaan
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                router.push(`/dashboard/overview/guarantees/upload?requestId=${request.id}`);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#093e6f] transition-all"
+            >
+              <Upload size={14} />
+              Unggah Jaminan
+            </button>
+          </div>
         </td>
         <td className="px-2 py-4">
           <button

@@ -1,41 +1,273 @@
 "use client";
 
-import { CheckCircle2, AlertTriangle, FileText, ArrowLeft, Download, Printer } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ArrowLeft,
+  Printer,
+  Sparkles,
+  ArrowUpRight,
+  Check,
+  Eye,
+  Sliders,
+  RefreshCw,
+  Building2,
+  Plus,
+  X,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
-import { useDocuments, useUpdateDocumentStatus } from "@/lib/query/hooks/procurement/useProcurement";
+import {
+  useDocuments,
+  useProcurements,
+} from "@/lib/query/hooks/procurement/useProcurement";
+import {
+  useValidationDetail,
+  usePublishValidationToTracker,
+  useUpdateValidationDecision,
+} from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner, Skeleton } from "@/components/ui";
-import { formatDateIndo } from "@/lib/utils";
+import { formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
+import { ValidationScoreCard } from "@/components/widgets/documents/ValidationScoreCard";
+import { ChecklistEvaluationList } from "@/components/widgets/documents/ChecklistEvaluationList";
+import { ExtractedStagesTimeline } from "@/components/widgets/documents/ExtractedStagesTimeline";
+import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
+import type { DocumentValidationResponse, ComplianceStatus } from "@/types/validation";
 
 export default function DocumentResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
-  const { state, updateDocumentStatus } = useProcurement();
-  const { data: documents = [], isLoading } = useDocuments();
-  const updateDocMutation = useUpdateDocumentStatus();
+  const docId = searchParams.get("id") || "";
 
-  const docId = searchParams.get("id");
-  const selectedDocument = documents.find(doc => doc.id === docId) ?? state.documents.find(doc => doc.id === docId) ?? documents[0] ?? state.documents[0];
+  const { data: serverValidationData, isLoading: isLoadingVal } =
+    useValidationDetail(docId);
+  const publishMutation = usePublishValidationToTracker();
+  const decisionMutation = useUpdateValidationDecision();
 
-  const handleFollowUp = async () => {
-    if (selectedDocument) {
-      try {
-        await updateDocMutation.mutateAsync({ id: selectedDocument.id, status: "Tindak Lanjut FPP" });
-        updateDocumentStatus(selectedDocument.id, "Tindak Lanjut FPP");
-        toast.success("Dokumen berhasil diteruskan ke FPP untuk tindak lanjut.");
-      } catch {
-        updateDocumentStatus(selectedDocument.id, "Tindak Lanjut FPP");
-        toast.info("Status dokumen berhasil diperbarui.");
-      }
-    }
-    router.push('/dashboard/documents');
+  const { state } = useProcurement();
+  const { data: serverRequests = [] } = useProcurements();
+  const requests = serverRequests.length > 0 ? serverRequests : state.requests;
+  const { data: documents = [] } = useDocuments();
+  const legacyDoc =
+    documents.find((d) => d.id === docId) ??
+    state.documents.find((d) => d.id === docId);
+
+  // Synthesize full validation data if falling back to legacyDoc so the page is never empty
+  const validationData: DocumentValidationResponse | null = useMemo(() => {
+    if (serverValidationData) return serverValidationData;
+    if (!legacyDoc) return null;
+
+    const linkedReq = requests.find((r) => r.id === legacyDoc.requestId);
+    const isPassed = legacyDoc.status === "Lulus Verifikasi";
+    const issues = legacyDoc.issues || [];
+    const score = isPassed
+      ? 92
+      : legacyDoc.status === "Catatan Procurement"
+      ? 70
+      : 52;
+    const mappedStatus: ComplianceStatus =
+      legacyDoc.status === "Lulus Verifikasi"
+        ? "Lulus Verifikasi"
+        : legacyDoc.status === "Tindak Lanjut FPP"
+        ? "Perlu Perbaikan"
+        : "Catatan Procurement";
+
+    return {
+      id: legacyDoc.id,
+      document_name: legacyDoc.name,
+      document_file_url: legacyDoc.fileUrl || null,
+      mime_type: "application/pdf",
+      profile_id: "VPROF-KAK-TEKNIS",
+      profile_name: legacyDoc.documentKind || legacyDoc.type || "Standar Kelayakan Dokumen",
+      overall_score: score,
+      passing_score_threshold: 80,
+      compliance_status: mappedStatus,
+      summary: isPassed
+        ? `Dokumen '${legacyDoc.name}' telah memenuhi kriteria kelayakan dan diverifikasi tanpa catatan.`
+        : `Dokumen '${legacyDoc.name}' memiliki ${issues.length} catatan pemeriksaan yang memerlukan tindak lanjut.`,
+      checklist_evaluations: [
+        {
+          item: "Kelengkapan Identitas, Nomor & Tanggal Dokumen Pengadaan",
+          status: "Memenuhi",
+          evidence_quote: `Berkas: ${legacyDoc.name}`,
+          explanation: "Identitas dokumen dan metadata pengadaan tercatat lengkap.",
+          severity: "SUCCESS",
+          is_mandatory: true,
+        },
+        {
+          item: "Kesesuaian Ruang Lingkup & Spesifikasi Teknis Pekerjaan",
+          status: isPassed ? "Memenuhi" : "Perlu Perhatian",
+          evidence_quote: linkedReq ? `Pekerjaan: ${linkedReq.title}` : null,
+          explanation: isPassed
+            ? "Ruang lingkup teknis sesuai standar kelayakan pra-tender."
+            : issues[0] || "Perlu penyesuaian rincian teknis sesuai catatan pemeriksa.",
+          severity: isPassed ? "SUCCESS" : "WARNING",
+          is_mandatory: true,
+        },
+        {
+          item: "Kepatuhan Anggaran / HPS & Ketentuan Komersial",
+          status: issues.length === 0 ? "Memenuhi" : "Tidak Memenuhi",
+          evidence_quote: null,
+          explanation:
+            issues.length === 0
+              ? "Komponen anggaran dan perpajakan telah sesuai ketentuan."
+              : issues.join("; "),
+          severity: issues.length === 0 ? "SUCCESS" : "ERROR",
+          is_mandatory: true,
+        },
+      ],
+      recommendations: legacyDoc.nextAction
+        ? [legacyDoc.nextAction]
+        : isPassed
+        ? ["Dokumen telah terverifikasi dan siap dilanjutkan ke tahapan pengadaan berikutnya."]
+        : ["Revisi dokumen sesuai catatan pemeriksaan sebelum melanjutkan proses tender."],
+      extracted_project: {
+        title: linkedReq?.title || legacyDoc.name.replace(/\.[^/.]+$/, ""),
+        estimated_amount: linkedReq?.amount || 0,
+        suggested_method: linkedReq?.procurementMethod || "Tender Terbuka",
+        department_name:
+          linkedReq?.department?.name || "Procurement & General Support",
+        stages: [
+          {
+            step: "Penerimaan FPP",
+            status: "Done",
+            auto_cleared: true,
+            notes: "Dokumen diterima sistem",
+          },
+          {
+            step: "Pembuatan TOR",
+            status: isPassed ? "Done" : "In Progress",
+            auto_cleared: isPassed,
+            notes: isPassed ? "Terverifikasi dari pemeriksaan dokumen" : "Menunggu perbaikan dokumen",
+          },
+          {
+            step: "Rapat Pra-Tender",
+            status: isPassed ? "In Progress" : "Pending",
+            auto_cleared: false,
+            notes: null,
+          },
+        ],
+      },
+      created_at: legacyDoc.uploadDate,
+      request_id: legacyDoc.requestId || null,
+      document_id: legacyDoc.id,
+    };
+  }, [serverValidationData, legacyDoc, requests]);
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
+  const [decisionStatus, setDecisionStatus] =
+    useState<ComplianceStatus>("Lulus Verifikasi");
+  const [decisionScore, setDecisionScore] = useState<number>(85);
+  const [decisionNotes, setDecisionNotes] = useState<string>("");
+  const [decisionNextAction, setDecisionNextAction] = useState<string>("");
+
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [publishMode, setPublishMode] = useState<"existing" | "new">("new");
+  const [targetRequestId, setTargetRequestId] = useState<string>("");
+  const [publishForm, setPublishForm] = useState({
+    title: "",
+    amount: 0,
+    method: "Tender Terbuka",
+    vendorName: "",
+    departmentName: "",
+  });
+
+  const handleOpenDecisionModal = () => {
+    if (!validationData) return;
+    setDecisionStatus(validationData.compliance_status);
+    setDecisionScore(Math.round(validationData.overall_score));
+    setDecisionNotes(validationData.summary || "");
+    setDecisionNextAction(validationData.recommendations?.[0] || "");
+    setIsDecisionModalOpen(true);
   };
 
-  if (isLoading) {
+  const handleSaveDecision = async () => {
+    if (!validationData) return;
+    try {
+      await decisionMutation.mutateAsync({
+        id: validationData.id,
+        payload: {
+          compliance_status: decisionStatus,
+          overall_score: decisionScore,
+          reviewer_notes: decisionNotes.trim() || undefined,
+          next_action: decisionNextAction.trim() || undefined,
+        },
+      });
+      toast.success("Keputusan verifikasi dan catatan berhasil disimpan ke database.");
+      setIsDecisionModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal memperbarui keputusan verifikasi.");
+    }
+  };
+
+  const handleOpenPublishModal = () => {
+    if (!validationData) return;
+    const proj = validationData.extracted_project;
+    if (validationData.request_id) {
+      setPublishMode("existing");
+      setTargetRequestId(validationData.request_id);
+    } else if (requests.length > 0) {
+      setPublishMode("new");
+      setTargetRequestId(requests[0].id);
+    }
+    setPublishForm({
+      title:
+        proj.title ||
+        `Pengadaan: ${validationData.document_name.replace(/\.[^/.]+$/, "")}`,
+      amount: proj.estimated_amount || 0,
+      method: proj.suggested_method || "Tender Terbuka",
+      vendorName: proj.vendor_name || "",
+      departmentName:
+        proj.department_name ||
+        proj.department ||
+        "Procurement & General Support",
+    });
+    setIsPublishModalOpen(true);
+  };
+
+  const handleConfirmPublish = async () => {
+    if (!validationData) return;
+    try {
+      const res = await publishMutation.mutateAsync({
+        validation_log_id: validationData.id,
+        target_request_id:
+          publishMode === "existing" ? targetRequestId : undefined,
+        title: publishForm.title,
+        amount: publishForm.amount,
+        procurement_method: publishForm.method,
+        department_name: publishForm.departmentName,
+        vendor_name: publishForm.vendorName,
+        stages: validationData.extracted_project.stages?.map((s) => ({
+          step: s.step,
+          status: s.status,
+          auto_cleared: s.auto_cleared,
+          notes: s.notes,
+        })),
+      });
+
+      toast.success(
+        publishMode === "existing"
+          ? "Dokumen berhasil ditautkan dan tahapan pekerjaan diperbarui!"
+          : "Pekerjaan baru berhasil diterbitkan ke Pusat Kendali Pekerjaan!"
+      );
+      setIsPublishModalOpen(false);
+      if (res?.request_id) {
+        router.push(`/dashboard/overview/${encodeURIComponent(res.request_id)}`);
+      } else {
+        router.push("/dashboard/overview");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal menerbitkan atau menautkan pekerjaan.");
+    }
+  };
+
+  if (isLoadingVal) {
     return (
-      <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
+      <div className="space-y-6 pt-2 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
         <div className="flex items-center justify-between gap-4">
           <Skeleton className="h-8 w-52 rounded-lg" />
           <div className="flex gap-3">
@@ -43,168 +275,626 @@ export default function DocumentResultPage() {
             <Skeleton className="h-9 w-44 rounded-lg" />
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col lg:flex-row flex-1 min-h-[500px]">
-          <div className="w-full lg:w-[45%] bg-slate-50 border-r border-slate-200 p-6 space-y-4">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="h-[380px] w-full rounded-xl" />
-          </div>
-          <div className="w-full lg:w-[55%] p-6 space-y-6">
-            <Skeleton className="h-20 w-full rounded-xl" />
-            <div className="grid grid-cols-2 gap-4">
-              <Skeleton className="h-16 w-full rounded-lg" />
-              <Skeleton className="h-16 w-full rounded-lg" />
-            </div>
-            <div className="space-y-3">
-              <Skeleton className="h-24 w-full rounded-xl" />
-              <Skeleton className="h-24 w-full rounded-xl" />
-            </div>
-          </div>
+        <Skeleton className="h-36 w-full rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[400px] w-full rounded-xl" />
+          <Skeleton className="h-[400px] w-full rounded-xl" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
-      {/* Header Result */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <button 
-          onClick={() => router.push('/dashboard/documents')}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors text-sm font-medium w-fit"
-        >
-          <ArrowLeft size={16} /> Kembali ke Daftar Dokumen
-        </button>
-        <div className="flex gap-3 print:hidden">
-          <button 
+  if (validationData) {
+    const autoClearedCount = (
+      validationData.extracted_project.stages || []
+    ).filter((s) => s.auto_cleared).length;
+
+    const linkedRequest = validationData.request_id
+      ? requests.find((r) => r.id === validationData.request_id)
+      : undefined;
+
+    return (
+      <div className="space-y-5 pt-2 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
+        {/* Top Action Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+          <button
             type="button"
-            onClick={() => window.print()}
-            title="Cetak atau Simpan sebagai PDF"
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm"
+            onClick={() => router.push("/dashboard/documents")}
+            className="inline-flex w-fit items-center gap-2 text-xs font-medium text-slate-500 transition-colors hover:text-[#0a4d8c] focus:outline-none"
           >
-            <Printer size={16} /> Cetak / Simpan PDF
+            <ArrowLeft size={15} />
+            Kembali ke Pemeriksaan Dokumen
           </button>
-          <button 
-            type="button"
-            onClick={handleFollowUp}
-            disabled={updateDocMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0a4d8c] hover:bg-[#093e6f] text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
-          >
-            {updateDocMutation.isPending ? (
-              <>
-                <Spinner size="xs" className="border-white border-t-transparent" />
-                <span>Memproses...</span>
-              </>
-            ) : (
-              "Tindak Lanjut (Kirim ke FPP)"
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+            >
+              <Eye size={14} className="text-[#0a4d8c]" />
+              <span>Pratinjau Dokumen</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenDecisionModal}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+            >
+              <Sliders size={14} className="text-[#0a4d8c]" />
+              <span>Keputusan Reviewer</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const qs = new URLSearchParams();
+                if (validationData.request_id)
+                  qs.set("requestId", validationData.request_id);
+                if (validationData.profile_id)
+                  qs.set("profileId", validationData.profile_id);
+                router.push(
+                  `/dashboard/documents/upload${
+                    qs.toString() ? `?${qs.toString()}` : ""
+                  }`
+                );
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+              title="Unggah revisi atau jalankan analisis ulang"
+            >
+              <RefreshCw size={13} />
+              <span>Analisis Ulang</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              title="Cetak atau Simpan sebagai PDF"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+            >
+              <Printer size={14} />
+              <span className="hidden md:inline">Cetak PDF</span>
+            </button>
+
+            {validationData.request_id && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/dashboard/overview/${encodeURIComponent(
+                      validationData.request_id!
+                    )}`
+                  )
+                }
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#e8f2fc] border border-[#0a4d8c]/20 hover:bg-blue-100 text-[#0a4d8c] rounded-lg text-xs font-medium transition-colors focus:outline-none"
+              >
+                <Building2 size={14} />
+                <span>
+                  Pekerjaan: {formatRequestCode(validationData.request_id)}
+                </span>
+              </button>
             )}
-          </button>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col lg:flex-row flex-1">
-        {/* Left Side: Document Preview */}
-        <div className="w-full lg:w-[45%] bg-slate-50 border-r border-slate-200 p-6 flex flex-col">
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pratinjau Dokumen</h2>
-          <div className="flex-1 border-2 border-slate-200 rounded-xl flex flex-col bg-white overflow-hidden shadow-sm">
-            {/* Mock PDF Viewer Header */}
-            <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
-              <span className="text-xs font-semibold text-slate-600 truncate mr-4">{(selectedDocument?.fileUrl ? selectedDocument.fileUrl.split('/').pop() : "Dokumen_Evaluasi_Terbaru.pdf")}</span>
-              <span className="text-xs text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">1 / 15</span>
-            </div>
-            {/* Mock PDF Content */}
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 relative overflow-hidden">
-              <div className="absolute inset-x-8 inset-y-8 bg-white border border-slate-200 shadow-sm p-8 flex flex-col opacity-60">
-                <div className="h-4 bg-slate-200 w-3/4 mb-6"></div>
-                <div className="h-2 bg-slate-200 w-full mb-3"></div>
-                <div className="h-2 bg-slate-200 w-5/6 mb-3"></div>
-                <div className="h-2 bg-slate-200 w-full mb-3"></div>
-                <div className="h-2 bg-slate-200 w-4/5 mb-8"></div>
-                
-                {/* Highlighted area for anomaly */}
-                <div className="border-2 border-red-400 bg-red-50/50 p-2 mb-8 relative">
-                  <div className="h-2 bg-red-200 w-full mb-2"></div>
-                  <div className="h-2 bg-red-200 w-3/4"></div>
-                  <span className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">!</span>
-                </div>
-                
-                <div className="h-2 bg-slate-200 w-full mb-3"></div>
-                <div className="h-2 bg-slate-200 w-5/6 mb-3"></div>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={handleOpenPublishModal}
+              disabled={publishMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all shadow-xs disabled:opacity-50 focus:outline-none"
+            >
+              {publishMutation.isPending ? (
+                <>
+                  <Spinner
+                    size="xs"
+                    className="border-white border-t-transparent"
+                  />
+                  <span>Memproses...</span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    {validationData.request_id
+                      ? "Perbarui / Terbitkan Pekerjaan"
+                      : "Terbitkan ke Pekerjaan"}
+                  </span>
+                  <ArrowUpRight size={14} />
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Right Side: Results */}
-        <div className="w-full lg:w-[55%] flex flex-col">
-          {/* Status Banner */}
-          <div className="bg-blue-50 border-b border-blue-100 p-6 flex items-start sm:items-center gap-4 shrink-0">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm border border-blue-100 text-[#0a4d8c]">
-              <AlertTriangle size={24} />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-[#0a4d8c]">{selectedDocument?.status ?? "Menunggu Pemeriksaan"}</h2>
-              <p className="text-sm text-blue-700/80 mt-1">{selectedDocument?.issues.length ?? 0} temuan tercatat pada hasil pemeriksaan dokumen ini.</p>
-            </div>
-          </div>
+        {/* 1. Unified Score, Compliance & Document Metadata Card */}
+        <ValidationScoreCard
+          score={validationData.overall_score}
+          threshold={validationData.passing_score_threshold}
+          status={validationData.compliance_status}
+          summary={validationData.summary}
+          documentName={validationData.document_name}
+          profileName={validationData.profile_name}
+          validationId={validationData.id}
+          createdAt={validationData.created_at}
+          fileUrl={validationData.document_file_url || validationData.file_url}
+        />
 
-          <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-6 shrink-0">
-            <div className="flex-1">
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Informasi File</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center">
-                  <FileText size={20} />
-                </div>
-                <div>
-                  <div className="font-semibold text-slate-800 text-sm">{(selectedDocument?.fileUrl ? selectedDocument.fileUrl.split('/').pop() : "Dokumen_Evaluasi_Terbaru.pdf")}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">Diunggah hari ini • 2.4 MB</div>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Tingkat Kepercayaan AI</h3>
-              <div className="flex items-end gap-2">
-                <span className="text-3xl font-black text-[#0a4d8c] leading-none">94%</span>
-                <span className="text-xs text-slate-500 mb-1">Akurasi Verifikasi</span>
-              </div>
-            </div>
-          </div>
-
-          {selectedDocument?.extractedData && <div className="border-b border-slate-100 bg-blue-50/40 p-6">
-            <div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-bold text-slate-800">Validasi Konsistensi Antar Dokumen</h3><p className="mt-1 text-xs text-slate-500">Data dari template {selectedDocument.documentKind ?? "dokumen"} dibandingkan dengan dokumen lain pada pekerjaan ini.</p></div><span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${selectedDocument.issues.length ? "border-amber-200 bg-amber-50 text-amber-700" : "border-blue-200 bg-blue-50 text-[#0a4d8c]"}`}>{selectedDocument.issues.length ? "Perlu review" : "Konsisten"}</span></div>
-            <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3"><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Nama pekerjaan</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.workName || "Belum ditemukan"}</div></div><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Nomor tender</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.tenderNumber || "Belum ditemukan"}</div></div><div className="rounded-lg border border-blue-100 bg-white p-3"><div className="font-bold uppercase tracking-wider text-[10px] text-slate-400">Tanggal dokumen</div><div className="mt-1 font-medium text-slate-700">{selectedDocument.extractedData.documentDate ? formatDateIndo(selectedDocument.extractedData.documentDate) : "Belum ditemukan"}</div></div></div>
-          </div>}
-
-          {/* Findings */}
-          <div className="p-6 bg-slate-50 flex-1">
-            <h3 className="font-bold text-slate-800 mb-4">Rincian Temuan Pemeriksaan</h3>
-            
-            <div className="space-y-4">
-              {selectedDocument?.issues.length ? selectedDocument.issues.map((issue, index) => (
-                <div key={`${selectedDocument.id}-issue-${index}`} className="bg-white border border-blue-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-[#0a4d8c]"></div>
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 text-[#0a4d8c]"><AlertTriangle size={18} /></div>
-                    <div>
-                      <h4 className="font-semibold text-slate-800 text-sm">Temuan Pemeriksaan {index + 1}</h4>
-                      <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{issue}</p>
+        {/* 2. Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Left Column (5/12): Recommendations & Extracted Stages */}
+          <div className="lg:col-span-5 space-y-5">
+            {validationData.recommendations &&
+              validationData.recommendations.length > 0 && (
+                <div className="rounded-xl border border-[#0a4d8c]/20 bg-[#f4f8fd] p-5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 text-[#0a4d8c]">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={15} />
+                      <h3 className="text-[11px] font-medium uppercase tracking-wider">
+                        Rekomendasi Tindak Lanjut Procurement
+                      </h3>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleOpenDecisionModal}
+                      className="text-[11px] font-medium text-[#0a4d8c] hover:underline"
+                    >
+                      Ubah Catatan
+                    </button>
                   </div>
-                </div>
-              )) : (
-                <div className="bg-white border border-blue-100 rounded-xl p-5 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 text-[#0a4d8c]" size={18} />
-                    <div>
-                      <h4 className="font-semibold text-slate-800 text-sm">Tidak Ada Temuan</h4>
-                      <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">Dokumen ini belum memiliki catatan pemeriksaan.</p>
-                    </div>
-                  </div>
+                  <ul className="space-y-1.5 text-xs font-normal text-slate-700">
+                    {validationData.recommendations.map((rec, idx) => (
+                      <li
+                        key={`rec-${idx}`}
+                        className="flex items-start gap-2 leading-relaxed"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0a4d8c] mt-1.5 shrink-0" />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
-            </div>
+
+            <ExtractedStagesTimeline project={validationData.extracted_project} />
+          </div>
+
+          {/* Right Column (7/12): Checklist Evaluations */}
+          <div className="lg:col-span-7 space-y-5">
+            <ChecklistEvaluationList
+              evaluations={validationData.checklist_evaluations}
+            />
           </div>
         </div>
+
+        {/* Document Preview Modal */}
+        {isPreviewOpen && (
+          <DocumentPreviewModal
+            title={validationData.document_name}
+            fileId={validationData.document_id || validationData.id}
+            fileType="document"
+            directUrl={
+              validationData.document_file_url ||
+              validationData.file_url ||
+              undefined
+            }
+            fileName={validationData.document_name}
+            metadata={[
+              { label: "ID Validasi", value: validationData.id },
+              {
+                label: "Standar Acuan",
+                value: validationData.profile_name || "Standar Kelayakan PRIMA",
+              },
+              {
+                label: "Skor Kepatuhan",
+                value: `${Math.round(validationData.overall_score)} / 100`,
+              },
+              {
+                label: "Status Verifikasi",
+                value: validationData.compliance_status,
+              },
+              {
+                label: "Pekerjaan Terikat",
+                value: linkedRequest
+                  ? `${formatRequestCode(linkedRequest.id)} - ${linkedRequest.title}`
+                  : "Belum Ditautkan",
+              },
+              {
+                label: "Waktu Pemeriksaan",
+                value: formatDateIndo(validationData.created_at),
+              },
+            ]}
+            onClose={() => setIsPreviewOpen(false)}
+          />
+        )}
+
+        {/* Modal: Reviewer Decision Override */}
+        {isDecisionModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+            <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Keputusan & Catatan Verifikasi Reviewer
+                  </h3>
+                  <p className="text-xs font-normal text-slate-500 mt-0.5">
+                    Tetapkan status kelayakan akhir dan instruksi tindak lanjut di database
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDecisionModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 focus:outline-none"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                      Status Kelayakan Dokumen
+                    </label>
+                    <select
+                      value={decisionStatus}
+                      onChange={(e) =>
+                        setDecisionStatus(e.target.value as ComplianceStatus)
+                      }
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
+                    >
+                      <option value="Lulus Verifikasi">Lulus Verifikasi</option>
+                      <option value="Catatan Procurement">
+                        Catatan Procurement
+                      </option>
+                      <option value="Perlu Perbaikan">
+                        Perlu Perbaikan (Tindak Lanjut FPP)
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                      Skor Kepatuhan (0 - 100)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={decisionScore}
+                      onChange={(e) =>
+                        setDecisionScore(
+                          Math.min(100, Math.max(0, Number(e.target.value)))
+                        )
+                      }
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                    Ringkasan Evaluasi / Catatan Reviewer
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={decisionNotes}
+                    onChange={(e) => setDecisionNotes(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                    Rekomendasi / Tindak Lanjut Utama
+                  </label>
+                  <input
+                    type="text"
+                    value={decisionNextAction}
+                    onChange={(e) => setDecisionNextAction(e.target.value)}
+                    placeholder="Contoh: Lanjutkan ke Rapat Pra-Tender atau minta revisi RAB ke FPP..."
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDecisionModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveDecision}
+                  disabled={decisionMutation.isPending}
+                  className="px-5 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {decisionMutation.isPending ? (
+                    <>
+                      <Spinner
+                        size="xs"
+                        className="border-white border-t-transparent"
+                      />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>Simpan Keputusan</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Publish / Link to Tracker Confirmation */}
+        {isPublishModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+            <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Terbitkan atau Tautkan ke Pusat Kendali Pekerjaan
+                  </h3>
+                  <p className="text-xs font-normal text-slate-500 mt-0.5">
+                    Pilih untuk membuat pekerjaan baru atau menautkan ke pekerjaan yang sudah berjalan
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPublishModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 focus:outline-none"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Mode Selector Tabs */}
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode("new")}
+                    className={`flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-all ${
+                      publishMode === "new"
+                        ? "bg-white text-[#0a4d8c] shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Plus size={13} />
+                    <span>Buat Pekerjaan Baru</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPublishMode("existing");
+                      if (!targetRequestId && requests.length > 0) {
+                        setTargetRequestId(requests[0].id);
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-all ${
+                      publishMode === "existing"
+                        ? "bg-white text-[#0a4d8c] shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Building2 size={13} />
+                    <span>Tautkan ke Pekerjaan Ada</span>
+                  </button>
+                </div>
+
+                {autoClearedCount > 0 && (
+                  <div className="rounded-lg bg-[#e8f2fc] border border-[#0a4d8c]/20 p-3 text-xs font-normal text-[#0a4d8c] flex items-center gap-2">
+                    <CheckCircle2 size={15} className="shrink-0" />
+                    <span>
+                      <span className="font-medium">
+                        {autoClearedCount} Tahapan
+                      </span>{" "}
+                      akan ditandai selesai otomatis pada alur kerja pekerjaan.
+                    </span>
+                  </div>
+                )}
+
+                {publishMode === "existing" ? (
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
+                        Pilih Pekerjaan Pengadaan
+                      </label>
+                      <select
+                        value={targetRequestId}
+                        onChange={(e) => setTargetRequestId(e.target.value)}
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
+                      >
+                        <option value="">-- Pilih Pekerjaan --</option>
+                        {requests.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {formatRequestCode(r.id)} &ndash; {r.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="text-xs font-normal text-slate-500 leading-relaxed">
+                      Dokumen{" "}
+                      <span className="font-medium text-slate-700">
+                        {validationData.document_name}
+                      </span>{" "}
+                      beserta hasil pemeriksaan AI akan ditautkan ke pekerjaan terpilih dan memperbarui status tahapan terkait.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
+                        Judul Pekerjaan Pengadaan Baru
+                      </label>
+                      <input
+                        type="text"
+                        value={publishForm.title}
+                        onChange={(e) =>
+                          setPublishForm({
+                            ...publishForm,
+                            title: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
+                          Estimasi HPS / Anggaran
+                        </label>
+                        <input
+                          type="number"
+                          value={publishForm.amount}
+                          onChange={(e) =>
+                            setPublishForm({
+                              ...publishForm,
+                              amount: Number(e.target.value),
+                            })
+                          }
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                        />
+                        <span className="text-[11px] text-[#0a4d8c] font-medium block mt-1">
+                          {formatRupiah(publishForm.amount)}
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
+                          Metode Pengadaan
+                        </label>
+                        <select
+                          value={publishForm.method}
+                          onChange={(e) =>
+                            setPublishForm({
+                              ...publishForm,
+                              method: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none bg-white"
+                        >
+                          <option value="Tender Terbuka">Tender Terbuka</option>
+                          <option value="Tender Terbatas">
+                            Tender Terbatas
+                          </option>
+                          <option value="Penunjukan Langsung">
+                            Penunjukan Langsung
+                          </option>
+                          <option value="Pengadaan Langsung">
+                            Pengadaan Langsung
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
+                          Vendor Rekanan (Bila ada)
+                        </label>
+                        <input
+                          type="text"
+                          value={publishForm.vendorName}
+                          onChange={(e) =>
+                            setPublishForm({
+                              ...publishForm,
+                              vendorName: e.target.value,
+                            })
+                          }
+                          placeholder="PT Vendor Rekanan..."
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
+                          Fungsi Pemohon (FPP)
+                        </label>
+                        <input
+                          type="text"
+                          value={publishForm.departmentName}
+                          onChange={(e) =>
+                            setPublishForm({
+                              ...publishForm,
+                              departmentName: e.target.value,
+                            })
+                          }
+                          placeholder="Fungsi Pemohon..."
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsPublishModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmPublish}
+                  disabled={
+                    publishMutation.isPending ||
+                    (publishMode === "new" && !publishForm.title.trim()) ||
+                    (publishMode === "existing" && !targetRequestId)
+                  }
+                  className="px-5 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {publishMutation.isPending ? (
+                    <>
+                      <Spinner
+                        size="xs"
+                        className="border-white border-t-transparent"
+                      />
+                      <span>Memproses...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>
+                        {publishMode === "existing"
+                          ? "Tautkan & Perbarui Pekerjaan"
+                          : "Konfirmasi & Terbitkan Baru"}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 pt-8 pb-12 text-center max-w-md mx-auto">
+      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+        <AlertTriangle size={22} />
+      </div>
+      <h3 className="text-sm font-semibold text-slate-800">
+        Data Hasil Analisis Tidak Ditemukan
+      </h3>
+      <p className="text-xs font-normal text-slate-500">
+        ID dokumen atau log validasi tidak ditemukan dalam sistem.
+      </p>
+      <button
+        type="button"
+        onClick={() => router.push("/dashboard/documents")}
+        className="mt-2 px-4 py-2 bg-[#0a4d8c] text-white text-xs font-medium rounded-lg hover:bg-[#083b6c] transition-colors"
+      >
+        Kembali ke Pemeriksaan Dokumen
+      </button>
     </div>
   );
 }

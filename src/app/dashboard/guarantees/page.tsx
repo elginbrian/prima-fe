@@ -1,5 +1,5 @@
-import GuaranteesPage from "@/components/pages/guarantees/GuaranteesPage";
+import { redirect } from "next/navigation";
 
-export default function GuaranteesIndexPage() {
-  return <GuaranteesPage />;
+export default function GuaranteesRedirectPage() {
+  redirect("/dashboard/overview?lens=guarantees");
 }

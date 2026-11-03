@@ -1,20 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, CheckCircle2, AlertCircle, FileText, Clock, Settings, Search, CheckSquare } from "lucide-react";
-import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/query/hooks/procurement/useNotifications";
-import type { NotificationType, NotificationItem } from "@/types";
+import {
+  Bell,
+  CheckCircle2,
+  AlertCircle,
+  FileText,
+  Clock,
+  Settings,
+  Search,
+  CheckSquare,
+  ArrowRight,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "@/lib/query/hooks/procurement/useNotifications";
+import type { NotificationType } from "@/types";
 import { Skeleton } from "@/components/ui";
-import { formatRelativeTimeIndo } from "@/lib/utils";
+import { formatRelativeTimeIndo, formatRequestCode } from "@/lib/utils";
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const { data: notifications = [], isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const [activeTab, setActiveTab] = useState<"All" | "Unread">("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleMarkAllAsRead = () => {
     markAllRead.mutate();
@@ -26,83 +42,98 @@ export default function NotificationsPage() {
 
   const getIcon = (type: NotificationType) => {
     switch (type) {
-      case "success": return <CheckCircle2 size={18} className="text-[#0a4d8c]" />;
-      case "alert": return <AlertCircle size={18} className="text-amber-600" />;
-      case "deadline": return <Clock size={18} className="text-rose-600" />;
-      case "document": return <FileText size={18} className="text-[#0a4d8c]" />;
-      case "system": return <Settings size={18} className="text-slate-500" />;
-    }
-  };
-
-  const getBgStyle = (type: NotificationType, isRead: boolean) => {
-    if (isRead) return "bg-slate-50/70 border-slate-200 text-slate-500";
-    
-    switch (type) {
-      case "deadline": return "bg-white border-rose-200 shadow-2xs";
-      case "alert": return "bg-white border-amber-200 shadow-2xs";
-      case "document":
       case "success":
+        return <CheckCircle2 size={16} />;
+      case "alert":
+        return <AlertCircle size={16} />;
+      case "deadline":
+        return <Clock size={16} />;
+      case "document":
+        return <FileText size={16} />;
       case "system":
-      default: return "bg-white border-blue-200 shadow-2xs";
+      default:
+        return <Settings size={16} />;
     }
   };
 
-  const filteredNotifications = notifications.filter(n => {
+  const getTypeLabel = (type: NotificationType) => {
+    switch (type) {
+      case "deadline":
+        return "SLA";
+      case "alert":
+        return "Jaminan";
+      case "document":
+        return "Dokumen";
+      case "success":
+        return "Progres";
+      case "system":
+      default:
+        return "Sistem";
+    }
+  };
+
+  const filteredNotifications = notifications.filter((n) => {
     const matchesTab = activeTab === "All" || !n.isRead;
     const q = searchQuery.toLowerCase().trim();
-    const matchesQuery = !q ||
+    const matchesQuery =
+      !q ||
       n.title.toLowerCase().includes(q) ||
       n.description.toLowerCase().includes(q) ||
       (n.requestId && n.requestId.toLowerCase().includes(q));
     return matchesTab && matchesQuery;
   });
 
-  // Group notifications by category
-  const groupedNotifications = filteredNotifications.reduce((acc, notif) => {
-    if (!acc[notif.category]) acc[notif.category] = [];
-    acc[notif.category].push(notif);
-    return acc;
-  }, {} as Record<string, NotificationItem[]>);
-
-  const categories = ["Hari Ini", "Kemarin", "Lebih Lama"];
-
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-5 pb-12">
       {/* Filter & Toolbar */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm shrink-0">
+      <div className="flex flex-col xl:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm shrink-0">
         <div className="relative w-full flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={17}
+          />
+          <input
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari notifikasi berdasarkan judul, pesan, atau pengirim..." 
-            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c]"
+            placeholder="Cari notifikasi berdasarkan judul, pesan, atau kode pekerjaan..."
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c]"
           />
         </div>
-        
-        <div className="flex items-center w-full sm:w-auto gap-3">
-          <div className="flex rounded-lg bg-slate-50 p-1 border border-slate-100 w-full sm:w-auto">
-            <button 
+
+        <div className="flex flex-wrap items-center w-full xl:w-auto gap-2.5">
+          <div className="flex shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+            <button
+              type="button"
               onClick={() => setActiveTab("All")}
-              className={`flex-1 sm:flex-none px-4 py-2 text-[11px] font-bold uppercase tracking-wider rounded-md transition-all ${activeTab === "All" ? 'bg-white text-[#0a4d8c] shadow-sm ring-1 ring-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none ${
+                activeTab === "All"
+                  ? "bg-white text-[#0a4d8c] shadow-2xs"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
             >
-              Semua
+              Semua ({notifications.length})
             </button>
-            <button 
+            <button
+              type="button"
               onClick={() => setActiveTab("Unread")}
-              className={`flex-1 sm:flex-none px-4 py-2 text-[11px] font-bold uppercase tracking-wider rounded-md transition-all ${activeTab === "Unread" ? 'bg-white text-[#0a4d8c] shadow-sm ring-1 ring-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none ${
+                activeTab === "Unread"
+                  ? "bg-white text-[#0a4d8c] shadow-2xs"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
             >
-              Belum Dibaca
+              Belum Dibaca ({unreadCount})
             </button>
           </div>
-          
+
           {unreadCount > 0 && (
-            <button 
+            <button
+              type="button"
               onClick={handleMarkAllAsRead}
-              className="flex items-center justify-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-[#0a4d8c] shadow-sm transition-all hover:bg-slate-50 whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors whitespace-nowrap shrink-0 focus:outline-none"
             >
-              <CheckSquare size={16} />
+              <CheckSquare size={14} className="text-[#0a4d8c]" />
               <span className="hidden sm:inline">Tandai semua dibaca</span>
               <span className="sm:hidden">Baca Semua</span>
             </button>
@@ -111,12 +142,15 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notifications List */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
         <div className="divide-y divide-slate-100 bg-white">
           {isLoading ? (
             <div className="divide-y divide-slate-100">
               {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="flex gap-4 px-6 py-4 sm:px-8 animate-in fade-in duration-200">
+                <div
+                  key={idx}
+                  className="flex gap-3.5 px-6 py-4 animate-in fade-in duration-200"
+                >
                   <Skeleton className="h-9 w-9 rounded-full shrink-0" />
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between">
@@ -130,51 +164,92 @@ export default function NotificationsPage() {
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
-              <Bell size={40} className="mb-4 text-slate-200" />
-              <h3 className="text-sm font-bold text-slate-700">Tidak ada notifikasi</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                {searchQuery ? `Tidak ada notifikasi yang cocok dengan "${searchQuery}".` : "Anda sudah membaca semua pemberitahuan."}
+              <Bell size={36} className="mb-3 text-slate-300" />
+              <h3 className="text-sm font-medium text-slate-700">
+                Tidak ada notifikasi
+              </h3>
+              <p className="mt-1 text-xs font-normal text-slate-500">
+                {searchQuery
+                  ? `Tidak ada notifikasi yang cocok dengan "${searchQuery}".`
+                  : "Seluruh pemberitahuan sudah terbaca."}
               </p>
             </div>
           ) : (
-            categories.map(category => {
-              if (!groupedNotifications[category] || groupedNotifications[category].length === 0) return null;
-              
-              return (
-                <div key={category}>
-                  <div className="bg-slate-50/80 px-6 py-3 sm:px-8 border-y border-slate-100 first:border-t-0">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{category}</h3>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {groupedNotifications[category].map((notif) => (
-                      <div 
-                        key={notif.id}
-                        onClick={() => markAsRead(notif.id)}
-                        className={`flex cursor-pointer gap-4 px-6 py-4 transition-colors hover:bg-slate-50/70 sm:px-8 ${notif.isRead ? 'opacity-60' : 'bg-white'}`}
-                      >
-                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${getBgStyle(notif.type, notif.isRead)}`}>
-                          {getIcon(notif.type)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1 flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-4">
-                            <h4 className={`truncate text-sm ${notif.isRead ? 'font-semibold text-slate-700' : 'font-bold text-slate-900'}`}>
-                              {notif.title}
-                            </h4>
-                            <span className="shrink-0 text-xs font-medium text-slate-400">{formatRelativeTimeIndo(notif.time)}</span>
-                          </div>
-                          <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-slate-500' : 'text-slate-600'}`}>
-                            {notif.description}
-                          </p>
-                        </div>
-                        {!notif.isRead && (
-                          <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#0a4d8c]"></div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+            filteredNotifications.map((notif) => (
+              <div
+                key={notif.id}
+                onClick={() => {
+                  if (!notif.isRead) markAsRead(notif.id);
+                }}
+                className={`flex items-start gap-3.5 px-5 py-4 transition-colors sm:px-6 ${
+                  notif.isRead
+                    ? "bg-white hover:bg-slate-50/70"
+                    : "bg-[#f4f8fd]/70 hover:bg-[#f4f8fd]"
+                }`}
+              >
+                <div
+                  className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
+                    notif.isRead
+                      ? "border-slate-200 bg-slate-100 text-slate-500"
+                      : "border-[#0a4d8c]/20 bg-[#e8f2fc] text-[#0a4d8c]"
+                  }`}
+                >
+                  {getIcon(notif.type)}
                 </div>
-              );
-            })
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
+                      {!notif.isRead && (
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-[#0a4d8c]" />
+                      )}
+                      <h4
+                        className={`text-[13px] ${
+                          notif.isRead
+                            ? "font-normal text-slate-800"
+                            : "font-medium text-slate-900"
+                        }`}
+                      >
+                        {notif.title}
+                      </h4>
+                      <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-normal text-slate-500">
+                        {getTypeLabel(notif.type)}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-[11px] font-normal text-slate-400">
+                      {formatRelativeTimeIndo(notif.time)}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-xs font-normal leading-relaxed text-slate-600">
+                    {notif.description}
+                  </p>
+
+                  {notif.requestId && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!notif.isRead) markAsRead(notif.id);
+                          router.push(
+                            `/dashboard/overview/${encodeURIComponent(
+                              notif.requestId!
+                            )}`
+                          );
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#0a4d8c] hover:underline focus:outline-none"
+                      >
+                        <span>
+                          Buka Pekerjaan ({formatRequestCode(notif.requestId)})
+                        </span>
+                        <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>

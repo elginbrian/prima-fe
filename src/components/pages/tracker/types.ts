@@ -26,12 +26,14 @@ export interface TrackerHeaderProps {
   viewMode: "kanban" | "list" | "analytics";
   setViewMode: (val: "kanban" | "list" | "analytics") => void;
   onExport?: () => void;
+  onAddRequest?: () => void;
 }
 
 export interface TrackerListProps {
   filteredItems: TrackerItem[];
   timeStatusMap: Record<string, string>;
   documentsMap: Record<string, { total: number; valid: number }>;
+  guaranteesMap?: Record<string, { total: number; active: number; warning: number }>;
   openRequestDetail: (id: string) => void;
 }
 
@@ -42,6 +44,8 @@ export interface TrackerKanbanBoardProps {
   cancelledCount: number;
   itemsByStage: Record<TrackerStage, TrackerItem[]>;
   timeStatusMap: Record<string, string>;
+  documentsMap?: Record<string, { total: number; valid: number }>;
+  guaranteesMap?: Record<string, { total: number; active: number; warning: number }>;
   expandedCardId: string | null;
   setExpandedCardId: (id: string | null) => void;
   handleDragStart: (e: React.DragEvent, id: string) => void;

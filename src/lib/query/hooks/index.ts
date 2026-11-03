@@ -27,3 +27,13 @@ export {
   useProcurementAnalytics,
 } from "./procurement/useProcurement";
 
+// Validation & D1 hooks
+export {
+  useValidationProfiles,
+  useValidationProfile,
+  useValidationDetail,
+  useAnalyzeDocumentChecklist,
+  usePublishValidationToTracker,
+  validationQueryKeys,
+} from "./procurement/useValidation";
+

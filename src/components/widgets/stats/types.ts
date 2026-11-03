@@ -1,3 +1,5 @@
+import type { DocumentStatus } from "@/types";
+
 export interface GuaranteeStatsProps {
   totalCount: number;
   aktifCount: number;
@@ -14,6 +16,8 @@ export interface DocumentStatsProps {
   notReadyCount: number;
   readyPct: number;
   attnPct: number;
+  activeFilter?: DocumentStatus | "All";
+  onSelectFilter?: (filter: DocumentStatus | "All") => void;
 }
 
 export interface ActionStatsProps {

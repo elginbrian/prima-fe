@@ -15,4 +15,5 @@ export interface DocumentFilterBarProps {
   workStatusFilter: ProcurementOperationalStatus | "All";
   setWorkStatusFilter: (val: ProcurementOperationalStatus | "All") => void;
   onExport?: () => void;
+  onUpload?: () => void;
 }

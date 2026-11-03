@@ -3,6 +3,7 @@ export * from "./user";
 export * from "./procurement";
 export * from "./guarantee";
 export * from "./action";
+export * from "./validation";
 
 import {
   ProcurementRequest,

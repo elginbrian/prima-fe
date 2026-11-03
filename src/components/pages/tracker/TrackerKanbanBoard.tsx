@@ -1,161 +1,213 @@
-import { GripVertical, AlertCircle, Clock, Eye, PauseCircle } from "lucide-react";
-import { TrackerItem, TrackerStage } from "./types";
-import { calculateDaysBetween, formatRupiah } from "@/lib/utils";
-import { TrackerStatsPanel } from "./TrackerStatsPanel";
+import {
+  GripVertical,
+  Clock,
+  ArrowRight,
+  PauseCircle,
+  ShieldCheck,
+  FileText,
+} from "lucide-react";
+import { TrackerStage, TrackerKanbanBoardProps } from "./types";
+import { formatRupiah, formatRequestCode } from "@/lib/utils";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
-import { TrackerKanbanBoardProps } from "./types";
-const COLUMNS: { id: TrackerStage; title: string; color: string; bg: string; border: string; headerBg: string }[] = [
-  { id: "On Going", title: "On Going", color: "text-white", bg: "bg-white", border: "border-slate-200", headerBg: "bg-[#0a4d8c]" },
-  { id: "On Hold", title: "On Hold", color: "text-white", bg: "bg-white", border: "border-slate-200", headerBg: "bg-[#0a4d8c]" },
-  { id: "Batal", title: "Batal", color: "text-white", bg: "bg-white", border: "border-slate-200", headerBg: "bg-[#0a4d8c]" },
+const COLUMNS: {
+  id: TrackerStage;
+  title: string;
+  color: string;
+  bg: string;
+  border: string;
+  headerBg: string;
+}[] = [
+  {
+    id: "On Going",
+    title: "Berjalan (On Going)",
+    color: "text-white",
+    bg: "bg-white",
+    border: "border-slate-200",
+    headerBg: "bg-[#0a4d8c]",
+  },
+  {
+    id: "On Hold",
+    title: "Ditunda (On Hold)",
+    color: "text-white",
+    bg: "bg-white",
+    border: "border-slate-200",
+    headerBg: "bg-[#0a4d8c]",
+  },
+  {
+    id: "Batal",
+    title: "Dibatalkan",
+    color: "text-white",
+    bg: "bg-white",
+    border: "border-slate-200",
+    headerBg: "bg-[#0a4d8c]",
+  },
 ];
 
 export function TrackerKanbanBoard({
-  totalItemsCount, onGoingCount, onHoldCount, cancelledCount, itemsByStage, timeStatusMap,
-  expandedCardId, setExpandedCardId, handleDragStart, handleDragOver, handleDrop, openRequestDetail, onAddRequest
+  itemsByStage,
+  timeStatusMap,
+  documentsMap = {},
+  guaranteesMap = {},
+  handleDragStart,
+  handleDragOver,
+  handleDrop,
+  openRequestDetail,
 }: TrackerKanbanBoardProps) {
-  return (
-    <div className="h-[calc(100vh-240px)] min-h-[600px] overflow-x-auto overflow-y-hidden pb-1 hide-scrollbar">
-      <div className="flex h-full min-w-[1080px] gap-5 pb-1">
-        {/* Statistics Panel (reusable) */}
-        <div className="flex w-[280px] shrink-0 flex-col">
-          <TrackerStatsPanel
-            totalItemsCount={totalItemsCount}
-            onGoingCount={onGoingCount}
-            onHoldCount={onHoldCount}
-            cancelledCount={cancelledCount}
-            onAddRequest={onAddRequest}
-          />
-        </div>
+  const nonEmptyColumnsCount = COLUMNS.filter((c) => itemsByStage[c.id].length > 0).length;
 
-        {COLUMNS.map(col => (
-          <div 
-            key={col.id} 
-            className={`flex min-w-0 flex-1 flex-col rounded-xl border ${col.border} ${col.bg} overflow-hidden`}
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, col.id)}
-          >
-            {/* Column Header */}
-            <div className={`flex items-center justify-between px-4 py-2.5 border-b border-[#093e6f] shrink-0 ${col.headerBg}`}>
-              <div className="flex items-center gap-2">
-                <h3 className={`font-bold text-[13px] uppercase tracking-wider ${col.color}`}>{col.title}</h3>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-white shadow-sm text-[#0a4d8c]">
-                  {itemsByStage[col.id].length}
-                </span>
+  return (
+    <div className="min-h-[480px] overflow-x-auto pb-2 hide-scrollbar">
+      <div className="flex min-w-[860px] items-start gap-4">
+        {COLUMNS.map((col) => {
+          const colItems = itemsByStage[col.id];
+          const isEmpty = colItems.length === 0;
+          const useTwoColCards = !isEmpty && nonEmptyColumnsCount === 1 && colItems.length > 1;
+
+          return (
+            <div
+              key={col.id}
+              className={`flex flex-col rounded-xl border ${col.border} ${col.bg} overflow-hidden shadow-2xs transition-all ${
+                isEmpty ? "w-[220px] shrink-0" : "min-w-0 flex-1"
+              }`}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, col.id)}
+            >
+              {/* Column Header */}
+              <div
+                className={`flex items-center justify-between px-4 py-2.5 border-b border-[#093e6f] shrink-0 ${col.headerBg}`}
+              >
+                <div className="flex items-center gap-2">
+                  <h3 className={`font-medium text-xs uppercase tracking-wider ${col.color}`}>
+                    {col.title}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white shadow-2xs text-[#0a4d8c]">
+                    {colItems.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Column Body */}
+              <div
+                className={`p-3.5 ${
+                  useTwoColCards
+                    ? "grid grid-cols-1 md:grid-cols-2 gap-3.5"
+                    : "space-y-3"
+                }`}
+              >
+                {colItems.map((item) => {
+                  const docInfo = documentsMap[item.id] || { total: 0, valid: 0 };
+                  const guarInfo = guaranteesMap[item.id] || { total: 0, active: 0, warning: 0 };
+
+                  return (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, item.id)}
+                      onClick={() => openRequestDetail(item.id)}
+                      className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:shadow-md transition-all cursor-pointer group hover:border-[#0a4d8c]/40 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              title={item.id}
+                              className="text-[11px] font-mono font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
+                            >
+                              {formatRequestCode(item.id)}
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                              {item.department?.name}
+                            </span>
+                            {item.operationalStatus === "On Hold" && (
+                              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-normal text-slate-600 border border-slate-200">
+                                <PauseCircle size={10} className="text-slate-400" />
+                                <span>SLA Dijeda</span>
+                              </span>
+                            )}
+                          </div>
+                          <GripVertical
+                            size={14}
+                            className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          />
+                        </div>
+
+                        <h4 className="font-medium text-slate-800 text-sm leading-snug line-clamp-2 mb-2.5 group-hover:text-[#0a4d8c] transition-colors">
+                          {item.title}
+                        </h4>
+
+                        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                          {docInfo.total > 0 && (
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-normal ${
+                                docInfo.valid === docInfo.total
+                                  ? "border-blue-200 bg-blue-50 text-[#0a4d8c]"
+                                  : "border-slate-200 bg-slate-50 text-slate-600"
+                              }`}
+                            >
+                              <FileText size={10} />
+                              <span>
+                                {docInfo.valid}/{docInfo.total} Dok
+                              </span>
+                            </span>
+                          )}
+
+                          {guarInfo.total > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-normal text-slate-600">
+                              <ShieldCheck size={10} className="text-[#0a4d8c]" />
+                              <span>{guarInfo.total} Jaminan</span>
+                            </span>
+                          )}
+
+                          {timeStatusMap[item.id] && item.operationalStatus !== "Batal" && (
+                            <span
+                              className={`inline-flex items-center gap-1 text-[10px] font-normal px-2 py-0.5 rounded-full border ${
+                                timeStatusMap[item.id] === "Overdue"
+                                  ? "bg-blue-50 text-[#0a4d8c] border-blue-200"
+                                  : "bg-slate-50 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              <Clock size={10} />
+                              {timeStatusMap[item.id] === "Overdue"
+                                ? "SLA Terlambat"
+                                : timeStatusMap[item.id] === "At Risk"
+                                ? "SLA Mendekati"
+                                : "Sesuai Jadwal"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 text-[11px] font-normal text-slate-600 mb-1">
+                            <UserAvatar name={item.pic?.name} userId={item.pic?.id} size="xs" />
+                            <span className="truncate">{item.pic?.name || "-"}</span>
+                          </div>
+                          <div className="text-[11px] font-normal text-slate-500 truncate">
+                            {item.currentStep} · <span className="text-slate-700">{formatRupiah(item.amount)}</span>
+                          </div>
+                        </div>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-normal text-slate-600 group-hover:border-[#0a4d8c] group-hover:text-[#0a4d8c] transition-colors">
+                          <span>Detail</span>
+                          <ArrowRight size={12} />
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isEmpty && (
+                  <div className="h-32 flex items-center justify-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <span className="text-xs text-slate-400 font-medium">Tidak ada pekerjaan</span>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Column Body (Scrollable) */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-12 hide-scrollbar">
-              {itemsByStage[col.id].map(item => (
-                <div 
-                  key={item.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, item.id)}
-                  onClick={() => setExpandedCardId(expandedCardId === item.id ? null : item.id)}
-                  className={`bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group hover:border-[#0a4d8c]/30 ${expandedCardId === item.id ? "p-4 ring-2 ring-blue-100" : "px-3 py-2.5"}`}
-                >
-                  <div className={`flex items-start justify-between ${expandedCardId === item.id ? "mb-2" : "mb-1"}`}>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] font-medium text-slate-400 tracking-wider">{item.id}</span>
-                      {item.operationalStatus === "On Hold" && (
-                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 border border-amber-200">
-                          <PauseCircle size={10} className="text-amber-600" />
-                          <span>On Hold (SLA Paused)</span>
-                        </span>
-                      )}
-                      {item.operationalStatus === "Batal" && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 border border-red-200">
-                          Batal
-                        </span>
-                      )}
-                    </div>
-                    <GripVertical size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  
-                  <h4 className={`font-semibold text-slate-800 text-[13px] leading-snug line-clamp-2 ${expandedCardId === item.id ? "mb-3" : ""}`}>
-                    {item.title}
-                  </h4>
-                  {expandedCardId === item.id && <div className="flex flex-col gap-2 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">PIC</span>
-                      <span className="font-medium text-slate-700 truncate max-w-[120px] text-right">{item.pic?.name || "-"}</span>
-                    </div>
-
-                  <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50/60 px-2.5 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#0a4d8c]">Tahap Berita Acara</div>
-                    <div className="mt-0.5 text-[11px] font-medium leading-snug text-slate-700">{item.currentStep}</div>
-                  </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">Nilai</span>
-                      <span className="font-semibold text-[#0a4d8c]">{formatRupiah(item.amount)}</span>
-                    </div>
-                  </div>}
-                  
-                  {expandedCardId === item.id && <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                    {item.operationalStatus === "Batal" ? (
-                      <div className="flex items-center gap-1.5 text-red-600 text-[11px] font-semibold">
-                        <AlertCircle size={14} />
-                        <span>Dibatalkan</span>
-                      </div>
-                    ) : item.operationalStatus === "On Hold" ? (
-                      <div className="flex items-center gap-1.5 text-amber-700 text-[11px] font-semibold">
-                        <Clock size={14} />
-                        <span>Ditunda (On Hold)</span>
-                      </div>
-                    ) : item.isUrgent ? (
-                      <div className="flex items-center gap-1.5 text-red-700 text-[11px] font-medium bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
-                        <AlertCircle size={14} />
-                        <span>Mendesak ({calculateDaysBetween(item.stageStartedAt)} hari)</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
-                        <Clock size={14} />
-                        <span>{calculateDaysBetween(item.stageStartedAt)} hari di tahap ini</span>
-                      </div>
-                    )}
-                    
-                    {timeStatusMap[item.id] && item.operationalStatus !== "Batal" && (
-                      <div className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        timeStatusMap[item.id] === 'Overdue'
-                          ? 'bg-red-50 text-red-600 border-red-200'
-                          : timeStatusMap[item.id] === 'At Risk'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-blue-50 text-[#0a4d8c] border-blue-200'
-                      }`}>
-                        <Clock size={10} />
-                        {timeStatusMap[item.id] === 'Overdue'
-                          ? 'Terlambat'
-                          : timeStatusMap[item.id] === 'At Risk'
-                          ? 'Berisiko'
-                          : timeStatusMap[item.id] === 'On Track'
-                          ? 'Sesuai Jadwal'
-                          : timeStatusMap[item.id]}
-                      </div>
-                    )}
-                    </div>
-                    <button 
-                      onClick={(event) => { event.stopPropagation(); openRequestDetail(item.id); }}
-                      title="Buka detail pekerjaan"
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-[#0a4d8c] hover:bg-blue-50 hover:text-[#0a4d8c]"
-                    >
-                      <Eye size={13} />
-                      <span>Buka Detail</span>
-                    </button>
-                  </div>}
-                </div>
-              ))}
-              
-              {itemsByStage[col.id].length === 0 && (
-                <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-300/50 rounded-xl bg-white/30">
-                  <span className="text-xs text-slate-400 font-medium">Kosong</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
+

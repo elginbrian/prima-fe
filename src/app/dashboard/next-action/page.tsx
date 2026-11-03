@@ -1,5 +1,5 @@
-import NextActionPage from "@/components/pages/next-action/NextActionPage";
+import { redirect } from "next/navigation";
 
-export default function NextActionRoute() {
-  return <NextActionPage />;
+export default function NextActionRedirectPage() {
+  redirect("/dashboard/overview?lens=sla-actions");
 }

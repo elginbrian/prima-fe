@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, DragEvent } from "react";
-import { UploadCloud, FileText, X, ArrowRight, AlertTriangle } from "lucide-react";
+import { UploadCloud, FileText, X, ArrowRight, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProcurements } from "@/lib/query/hooks/procurement/useProcurement";
 import { useProcurement } from "@/context/ProcurementContext";
@@ -13,7 +13,7 @@ import { getErrorMessage } from "@/lib/api/errors";
 import { useUploadGuaranteeWithFile, useExtractGuarantee } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
-import { formatRupiah } from "@/lib/utils";
+import { formatRupiah, formatRequestCode } from "@/lib/utils";
 
 export default function GuaranteeUploadPage() {
   const router = useRouter();
@@ -201,8 +201,12 @@ export default function GuaranteeUploadPage() {
       }
     }, {
       onSuccess: () => {
-        toast.success("Dokumen jaminan berhasil disimpan ke sistem dan cloud storage.");
-        router.push('/dashboard/guarantees');
+        toast.success("Dokumen jaminan berhasil disimpan dan dikaitkan ke paket pekerjaan.");
+        if (requestId) {
+          router.push(`/dashboard/overview/${encodeURIComponent(requestId)}?tab=docs-guarantees`);
+        } else {
+          router.push("/dashboard/overview?lens=guarantees");
+        }
       },
       onError: (err) => {
         toast.error(getErrorMessage(err, "Gagal mengunggah dan menyimpan jaminan."));
@@ -212,49 +216,64 @@ export default function GuaranteeUploadPage() {
 
   return (
     <div className="space-y-6 pt-4 pb-12 min-h-[calc(100vh-140px)] flex flex-col">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() =>
+            initialRequestId
+              ? router.push(`/dashboard/overview/${encodeURIComponent(initialRequestId)}?tab=docs-guarantees`)
+              : router.push("/dashboard/overview?lens=guarantees")
+          }
+          className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-[#0a4d8c]"
+        >
+          <ArrowLeft size={16} />
+          {initialRequestId ? "Kembali ke Detail Pekerjaan" : "Kembali ke Halaman Pekerjaan & Jaminan"}
+        </button>
+      </div>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col md:flex-row flex-1">
         
         {/* Left Side: Document Preview */}
         <div className="w-full md:w-1/2 bg-slate-50 border-r border-slate-200 p-6 flex flex-col">
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Preview Dokumen</h2>
-          <DocumentPreview file={file} />        </div>
+          <h2 className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-4">Preview Dokumen</h2>
+          <DocumentPreview file={file} />
+        </div>
 
         {/* Right Side: Upload Form */}
         <div className="w-full md:w-1/2 flex flex-col">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-800">Unggah Dokumen & Jaminan</h2>
-            <p className="text-sm text-slate-500 mt-1">Pilih jenis dokumen terlebih dahulu. OCR hanya digunakan untuk jaminan yang memerlukan ekstraksi.</p>
+            <h2 className="text-base font-semibold text-slate-800">Unggah Warkat Jaminan</h2>
+            <p className="text-xs font-normal text-slate-500 mt-0.5">Pilih jenis dokumen terlebih dahulu. OCR digunakan untuk jaminan yang memerlukan ekstraksi.</p>
           </div>
           
           <div className="p-6 space-y-5 flex-1 overflow-y-auto">
             {/* Upload Area */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Pilih File <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">Pilih Berkas <span className="text-[#0a4d8c]">*</span></label>
               <div 
-                className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-[#0a4d8c] bg-blue-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
+                className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-[#0a4d8c] bg-[#e8f2fc]/60' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
                 {file ? (
                   <div className="flex flex-col items-center text-center w-full">
-                    <p className="text-sm font-medium text-[#0a4d8c] mb-3">1 File Terpilih</p>
+                    <p className="text-xs font-medium text-[#0a4d8c] mb-3">1 Berkas Terpilih ({file.name})</p>
                     <button 
                       onClick={() => setFile(null)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                      className="text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
                     >
-                      <X size={14} /> Ganti File
+                      <X size={14} /> Ganti Berkas
                     </button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 bg-white text-slate-400 rounded-full flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                      <UploadCloud size={24} />
+                    <div className="w-12 h-12 bg-white text-slate-400 rounded-full flex items-center justify-center mb-3 shadow-xs border border-slate-100">
+                      <UploadCloud size={22} />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-1">Tarik & Lepas File</h3>
-                    <p className="text-xs text-slate-500 mb-4">PDF, JPG, PNG (Max. 10MB)</p>
+                    <h3 className="text-xs font-medium text-slate-700 mb-1">Tarik & Lepas Berkas</h3>
+                    <p className="text-xs font-normal text-slate-500 mb-4">PDF, JPG, PNG (Maks. 10MB)</p>
                     
-                    <label className="cursor-pointer bg-white border border-[#0a4d8c] text-[#0a4d8c] hover:bg-blue-50 px-4 py-2 rounded-lg text-xs font-medium transition-colors">
+                    <label className="cursor-pointer bg-white border border-[#0a4d8c] text-[#0a4d8c] hover:bg-[#e8f2fc]/50 px-4 py-2 rounded-lg text-xs font-medium transition-colors">
                       <span>Telusuri Komputer</span>
                       <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
                     </label>
@@ -264,42 +283,42 @@ export default function GuaranteeUploadPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Terkait Pengadaan <span className="text-red-500">*</span>
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                Terkait Pengadaan <span className="text-[#0a4d8c]">*</span>
               </label>
               {initialRequestId && selectedRequest ? (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-3">
-                  <div className="text-xs font-semibold text-[#0a4d8c]">{selectedRequest.id}</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-800">{selectedRequest.title}</div>
-                  <div className="mt-1 text-xs text-slate-500">PIC: {selectedRequest.pic.name}</div>
+                <div className="rounded-lg border border-[#0a4d8c]/20 bg-[#f4f8fd] px-3.5 py-3">
+                  <div className="text-xs font-medium text-[#0a4d8c]">{formatRequestCode(selectedRequest.id)}</div>
+                  <div className="mt-0.5 text-xs font-medium text-slate-800">{selectedRequest.title}</div>
+                  <div className="mt-0.5 text-[11px] font-normal text-slate-500">PIC: {selectedRequest.pic.name}</div>
                 </div>
               ) : (
                 <div>
                   <select
                     value={requestId}
                     onChange={(event) => setRequestId(event.target.value)}
-                    className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 bg-white focus:outline-none focus:border-[#0a4d8c]"
+                    className="w-full border border-slate-200 rounded-lg text-xs font-normal px-3 py-2.5 bg-white focus:outline-none focus:border-[#0a4d8c]"
                   >
                     <option value="">-- Pilih Paket Pengadaan --</option>
                     {requests.map((req) => (
                       <option key={req.id} value={req.id}>
-                        {req.id} - {req.title}
+                        {formatRequestCode(req.id)} - {req.title}
                       </option>
                     ))}
                   </select>
                   {selectedRequest ? (
-                    <p className="mt-1.5 text-xs text-slate-500">
+                    <p className="mt-1.5 text-xs font-normal text-slate-500">
                       PIC: {selectedRequest.pic.name} · Nilai: Rp {selectedRequest.amount?.toLocaleString('id-ID') || "-"}
                     </p>
                   ) : (
-                    <p className="mt-1.5 text-xs text-amber-600">Pilih paket pengadaan untuk mengaitkan jaminan ini.</p>
+                    <p className="mt-1.5 text-xs font-normal text-slate-500">Pilih paket pengadaan untuk mengaitkan jaminan ini.</p>
                   )}
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Jenis Dokumen <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">Jenis Dokumen <span className="text-[#0a4d8c]">*</span></label>
               <select
                 value={documentType}
                 onChange={(event) => {
@@ -309,29 +328,29 @@ export default function GuaranteeUploadPage() {
                     setFormData(prev => ({ ...prev, type: nextType === "Jaminan Pemeliharaan" ? "Jaminan Masa Pemeliharaan" : "Jaminan Pelaksanaan" }));
                   }
                 }}
-                className="w-full border border-slate-200 rounded-lg text-sm px-3 py-2.5 bg-white focus:outline-none focus:border-[#0a4d8c]"
+                className="w-full border border-slate-200 rounded-lg text-xs font-normal px-3 py-2.5 bg-white focus:outline-none focus:border-[#0a4d8c]"
               >
                 <option value="Jaminan Pelaksanaan">Jaminan Pelaksanaan (Ekstraksi OCR Otomatis)</option>
                 <option value="Jaminan Pemeliharaan">Jaminan Pemeliharaan (Ekstraksi OCR Otomatis)</option>
                 <option value="Dokumen Pendukung Lain">Dokumen Jaminan / Pendukung Lain (Tanpa OCR)</option>
               </select>
-              <p className="mt-1.5 text-xs text-slate-500">{requiresExtraction ? "Data jaminan akan diekstrak otomatis dan ditampilkan untuk verifikasi." : "Dokumen langsung disimpan dan dikaitkan ke pengadaan ini tanpa ekstraksi OCR."}</p>
+              <p className="mt-1.5 text-xs font-normal text-slate-500">{requiresExtraction ? "Data jaminan akan diekstrak otomatis dan ditampilkan untuk verifikasi." : "Dokumen langsung disimpan dan dikaitkan ke pengadaan ini tanpa ekstraksi OCR."}</p>
             </div>
 
             {file && requiresExtraction && !isExtracting && ocrError && (
-              <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-900 shadow-2xs">
-                <div className="font-bold flex items-center gap-2 text-amber-900">
-                  <AlertTriangle size={16} className="text-amber-600 shrink-0" />
-                  <span>Dokumen merupakan scan fisik tanpa teks digital</span>
+              <div role="alert" className="rounded-xl border border-[#0a4d8c]/20 bg-[#f4f8fd] p-4 text-xs text-slate-700">
+                <div className="font-medium flex items-center gap-2 text-[#0a4d8c]">
+                  <AlertTriangle size={15} className="text-[#0a4d8c] shrink-0" />
+                  <span>Dokumen merupakan pindaian fisik tanpa teks digital</span>
                 </div>
-                <p className="mt-1 text-xs text-amber-800/90 leading-relaxed">
-                  OCR tidak mendeteksi teks digital otomatis pada berkas ini (misalnya scan kertas fisik). Dokumen tetap akan disimpan dan diunggah ke storage cloud serta masuk ke tabel jaminan per pengadaan.
+                <p className="mt-1 text-xs font-normal text-slate-600 leading-relaxed">
+                  OCR tidak mendeteksi teks digital otomatis pada berkas ini. Sistem telah menyiapkan draf awal dari data paket pengadaan.
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleUseProcurementDefaults}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 shadow-2xs hover:bg-amber-100 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#0a4d8c]/30 bg-white px-3 py-1.5 text-xs font-medium text-[#0a4d8c] hover:bg-[#e8f2fc] transition-colors"
                   >
                     Gunakan Data Pengadaan & Lanjutkan
                   </button>
@@ -341,7 +360,7 @@ export default function GuaranteeUploadPage() {
                       setDocumentType("Dokumen Pendukung Lain");
                       setOcrError(null);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                   >
                     Simpan Tanpa Ekstraksi OCR
                   </button>
@@ -464,11 +483,11 @@ export default function GuaranteeUploadPage() {
                       const numVal = parseFloat(formData.value.replace(/[^0-9]/g, '')) || 0;
                       return (
                         <div className="mt-1.5 text-[11px] text-slate-500 space-y-0.5">
-                          <div>Regulasi: Min. 5% Pagu = <strong className="text-slate-700">{formatRupiah(minReq)}</strong></div>
+                          <div>Regulasi: Min. 5% Pagu = <span className="font-medium text-slate-700">{formatRupiah(minReq)}</span></div>
                           {numVal > 0 && numVal < minReq && (
-                            <div className="text-amber-700 font-semibold flex items-center gap-1.5">
-                              <AlertTriangle size={13} className="text-amber-600 shrink-0" />
-                              <span>Nilai jaminan kurang dari 5% pagu pengadaan (di bawah batas minimum regulasi)</span>
+                            <div className="text-[#0a4d8c] font-medium flex items-center gap-1.5">
+                              <AlertTriangle size={13} className="text-[#0a4d8c] shrink-0" />
+                              <span>Nilai jaminan kurang dari 5% pagu pengadaan</span>
                             </div>
                           )}
                         </div>
@@ -500,8 +519,8 @@ export default function GuaranteeUploadPage() {
           <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 mt-auto shrink-0">
             <div className="text-xs text-slate-500 w-full sm:w-auto">
               {!isFormValid && missingFields.length > 0 && (
-                <span className="text-amber-700 flex items-center gap-1.5">
-                  <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+                <span className="text-slate-600 flex items-center gap-1.5">
+                  <AlertTriangle size={14} className="shrink-0 text-[#0a4d8c]" />
                   <span>Harap lengkapi: {missingFields.slice(0, 3).join(", ")}{missingFields.length > 3 ? ` (+${missingFields.length - 3} lainnya)` : ""}</span>
                 </span>
               )}
@@ -510,7 +529,7 @@ export default function GuaranteeUploadPage() {
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
               <button 
                 type="button"
-                onClick={() => router.push('/dashboard/guarantees')}
+                onClick={() => router.push("/dashboard/overview?lens=guarantees")}
                 disabled={uploadGuaranteeMutation.isPending}
                 className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
               >

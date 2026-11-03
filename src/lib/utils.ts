@@ -107,3 +107,13 @@ export function formatRelativeTimeIndo(dateTimeStr?: string | null): string {
   }
 }
 
+export function formatRequestCode(id?: string | null): string {
+  if (!id) return "-";
+  const trimmed = String(id).trim();
+  if (trimmed.length <= 18 || trimmed.toUpperCase().startsWith("REQ-")) {
+    return trimmed.toUpperCase();
+  }
+  return `REQ-${trimmed.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+}
+
+

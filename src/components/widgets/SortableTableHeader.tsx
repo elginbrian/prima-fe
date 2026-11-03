@@ -23,10 +23,15 @@ export function SortableTableHeader({ label, direction, onClick, className = "" 
   const sortLabel = direction === "asc" ? "menaik" : direction === "desc" ? "menurun" : "default";
 
   return (
-    <th className={`px-4 py-3 ${className}`} aria-sort={direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none"}>
-      <button type="button" onClick={onClick} className="inline-flex items-center gap-1.5 rounded text-left hover:text-[#0a4d8c]" title={`Urutkan ${label}: ${sortLabel}`}>
+    <th className={`px-4 py-3 whitespace-nowrap ${className}`} aria-sort={direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none"}>
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center gap-1.5 rounded text-left text-[11px] font-medium uppercase tracking-wider text-slate-500 whitespace-nowrap hover:text-[#0a4d8c] focus:outline-none"
+        title={`Urutkan ${label}: ${sortLabel}`}
+      >
         <span>{label}</span>
-        <Icon size={14} className={direction ? "text-[#0a4d8c]" : "text-slate-400"} />
+        <Icon size={13} className={direction ? "text-[#0a4d8c]" : "text-slate-400"} />
       </button>
     </th>
   );

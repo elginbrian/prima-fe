@@ -9,17 +9,24 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/api";
+import type { UpdateProfilePayload } from "@/lib/api/auth.api";
 import { queryKeys } from "@/lib/query/keys";
-import { getStoredUser, getAccessToken, clearSession } from "@/lib/api/auth.utils";
+import { getStoredUser, setStoredUser, getAccessToken, clearSession } from "@/lib/api/auth.utils";
 
 export function useCurrentUser() {
   const token = getAccessToken();
 
   const query = useQuery({
     queryKey: queryKeys.auth.me(),
-    queryFn: () => authApi.me().then((r) => r.data),
+    queryFn: async () => {
+      const res = await authApi.me();
+      if (res.data) {
+        setStoredUser(res.data);
+      }
+      return res.data;
+    },
     placeholderData: getStoredUser() ?? undefined,
     enabled: !!token,
     staleTime: 1000 * 60 * 5,
@@ -36,6 +43,36 @@ export function useCurrentUser() {
   }, [query.isError]);
 
   return query;
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UpdateProfilePayload) =>
+      authApi.updateProfile(payload).then((res) => res.data),
+    onSuccess: (updatedUser) => {
+      setStoredUser(updatedUser);
+      queryClient.setQueryData(queryKeys.auth.me(), updatedUser);
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.users() });
+      queryClient.invalidateQueries({ queryKey: ["procurements"] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["guarantees"] });
+    },
+  });
+}
+
+export function useUploadAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => authApi.uploadAvatar(file).then((res) => res.data),
+    onSuccess: (updatedUser) => {
+      setStoredUser(updatedUser);
+      queryClient.setQueryData(queryKeys.auth.me(), updatedUser);
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.users() });
+    },
+  });
 }
 
 /**

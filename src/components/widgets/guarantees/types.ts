@@ -4,6 +4,7 @@ export interface GuaranteeGroupRowProps {
   request: ProcurementRequest;
   guarantees: GuaranteeItem[];
   onEdit: (guarantee: GuaranteeItem) => void;
+  onOpenRequestDetail?: (requestId: string) => void;
 }
 
 export interface GuaranteeFilterBarProps {

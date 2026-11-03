@@ -48,16 +48,52 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     : "";
 
   const getHeaderInfo = (path: string) => {
-    if (path.includes("documents/upload")) return { title: "Unggah & Ekstraksi Dokumen", subtitle: "Lakukan pemeriksaan kelengkapan dokumen secara cerdas dengan asisten PRIMA AI." };
-    if (path.includes("documents/result")) return { title: "Hasil Pemeriksaan Dokumen", subtitle: "Laporan otomatis hasil verifikasi dokumen pengadaan berdasarkan standar perusahaan." };
-    if (path.includes("documents")) return { title: "Pemeriksaan Dokumen", subtitle: "Pantau kelengkapan DP3, temuan hasil review, dan status tindak lanjut FPP pengadaan." };
-    if (path.includes("overview")) return { title: "Ringkasan Pengadaan (Overview)", subtitle: "Pantau seluruh status, tahapan progress, dan pemenuhan SLA pekerjaan di satu tempat." };
-    if (path.includes("next-action")) return { title: "Tindakan & Persetujuan", subtitle: "Kelola daftar tindakan tertunda dan permohonan persetujuan yang membutuhkan perhatian Anda." };
-    if (path.includes("guarantees/upload")) return { title: "Unggah Jaminan Bank & Asuransi", subtitle: "Digitalisasi dan ekstraksi data jaminan secara instan melalui sistem OCR cerdas." };
-    if (path.includes("guarantees")) return { title: "Manajemen Jaminan", subtitle: "Pantau masa aktif, nilai nominal jaminan pelaksanaan/pemeliharaan, dan validitas dokumen." };
-    if (path.includes("notifications")) return { title: "Pusat Notifikasi", subtitle: "Pemberitahuan real-time terkait pembaruan SLA, status pekerjaan, dan aktivitas sistem." };
-    if (path.includes("settings")) return { title: "Pengaturan Sistem", subtitle: "Konfigurasi preferensi alur kerja, batas nilai persetujuan otomatis, dan parameter peringatan SLA." };
-    
+    if (path.includes("documents/templates"))
+      return {
+        title: "Pustaka Template Standar Kelayakan",
+        subtitle: "Kelola profil standar checklist, ambang batas skor, dan instruksi validasi AI per jenis dokumen.",
+      };
+    if (path.includes("documents/upload"))
+      return {
+        title: "Unggah & Validasi Dokumen",
+        subtitle: "Pemeriksaan kelayakan dokumen berdasarkan standar checklist dan ekstraksi tahapan AI.",
+      };
+    if (path.includes("documents/result"))
+      return {
+        title: "Hasil Pemeriksaan & Ekstraksi Dokumen",
+        subtitle: "Laporan hasil verifikasi dokumen pengadaan beserta ekstraksi tahapan untuk diterbitkan ke Pekerjaan.",
+      };
+    if (path.includes("documents"))
+      return {
+        title: "Pemeriksaan Dokumen",
+        subtitle: "Pantau kelengkapan dokumen pra-tender, temuan hasil review AI, dan penerbitan ke pekerjaan.",
+      };
+    if (path.includes("overview/guarantees/upload"))
+      return {
+        title: "Unggah Warkat Jaminan Pekerjaan",
+        subtitle: "Digitalisasi dan ekstraksi OCR warkat jaminan bank/asuransi yang terikat langsung ke paket pekerjaan.",
+      };
+    if (/^\/dashboard\/overview\/[^/]+$/.test(path))
+      return {
+        title: "Detail Pekerjaan Pengadaan",
+        subtitle: "Kelola progres tahapan, kelengkapan dokumen, warkat jaminan bank, dan jadwal SLA pekerjaan.",
+      };
+    if (path.includes("overview"))
+      return {
+        title: "Pusat Kendali Pekerjaan",
+        subtitle: "Pantau daftar pekerjaan pengadaan, warkat jaminan, kepatuhan SLA, dan tindak lanjut prioritas.",
+      };
+    if (path.includes("notifications"))
+      return {
+        title: "Pusat Notifikasi",
+        subtitle: "Pemberitahuan real-time terkait pembaruan SLA, status pekerjaan, dan aktivitas sistem.",
+      };
+    if (path.includes("settings"))
+      return {
+        title: "Pengaturan Sistem",
+        subtitle: "Konfigurasi profil validasi dokumen, batas nilai persetujuan, dan parameter peringatan SLA.",
+      };
+
     return { title: "Dashboard", subtitle: "Overview" };
   };
 
@@ -84,6 +120,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
             userLabel={userLabel}
             userName={currentUser?.name ?? "—"}
             userRole={currentUser?.role ?? "—"}
+            userAvatarUrl={currentUser?.avatar_url}
             onOpenSidebar={() => setMobileOpen(true)}
             onCloseSidebar={() => setMobileOpen(false)}
             onLogout={logout}

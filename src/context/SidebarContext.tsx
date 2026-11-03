@@ -22,14 +22,15 @@ export const useSidebar = () => {
 };
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
-  const STORAGE_KEY = "sidebar:collapsed";
+  const STORAGE_KEY = "sidebar:collapsed:v2";
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
-      if (typeof window === "undefined") return false;
-      return localStorage.getItem(STORAGE_KEY) === "1";
-    } catch (err) {
-      return false;
+      if (typeof window === "undefined") return true;
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved !== null ? saved === "1" : true;
+    } catch {
+      return true;
     }
   });
 
@@ -42,7 +43,7 @@ export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
-    } catch (err) {
+    } catch {
       // ignore
     }
   }, [collapsed]);

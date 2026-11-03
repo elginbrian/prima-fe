@@ -45,6 +45,16 @@ export interface RegisterPayload {
   password: string;
 }
 
+export interface UpdateProfilePayload {
+  name?: string;
+  email?: string;
+  phone?: string;
+  department_id?: string;
+  department_name?: string;
+  role?: string;
+  avatar_url?: string;
+}
+
 // ─── Endpoint functions ────────────────────────────────────────────────────
 
 export const authApi = {
@@ -74,6 +84,29 @@ export const authApi = {
    * Returns current user from Bearer token
    */
   me: () => apiFetch<UserDto>("/auth/me"),
+
+  /**
+   * PUT /auth/me
+   * Updates current user's profile
+   */
+  updateProfile: (payload: UpdateProfilePayload) =>
+    apiFetch<UserDto>("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  /**
+   * POST /auth/me/avatar
+   * Uploads profile picture for current user
+   */
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiFetch<UserDto>("/auth/me/avatar", {
+      method: "POST",
+      body: formData,
+    });
+  },
 
   /**
    * POST /auth/refresh  (called internally by client.ts on 401)
