@@ -265,6 +265,29 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
     setSessions(getAllChatSessions());
   };
 
+  const handleTakeoverReplied = (
+    messageId: string,
+    replyPayload: NonNullable<AiChatMessage["aiData"]>
+  ) => {
+    if (!currentSession) return;
+    const nextSession: AiChatSession = {
+      ...currentSession,
+      messages: currentSession.messages.map((m) =>
+        m.id === messageId
+          ? {
+              ...m,
+              content: replyPayload.answer,
+              status: "done",
+              aiData: replyPayload,
+            }
+          : m
+      ),
+    };
+    setCurrentSession(nextSession);
+    upsertChatSession(nextSession);
+    setSessions(getAllChatSessions());
+  };
+
   const handleNewChat = () => {
     const created = createChatSession();
     setSessions(getAllChatSessions());
@@ -365,6 +388,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
                     if (found) setSelectedSlaModal(found);
                   }}
                   onMarkCommandExecuted={handleMarkCommandExecuted}
+                  onTakeoverReplied={handleTakeoverReplied}
                 />
               ))
             ) : (

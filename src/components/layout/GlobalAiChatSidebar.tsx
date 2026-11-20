@@ -453,6 +453,28 @@ export function GlobalAiChatSidebar({
     upsertChatSession(nextSession);
   };
 
+  const handleTakeoverReplied = (
+    messageId: string,
+    replyPayload: NonNullable<AiChatMessage["aiData"]>
+  ) => {
+    if (!currentSession) return;
+    const nextSession: AiChatSession = {
+      ...currentSession,
+      messages: currentSession.messages.map((m) =>
+        m.id === messageId
+          ? {
+              ...m,
+              content: replyPayload.answer,
+              status: "done",
+              aiData: replyPayload,
+            }
+          : m
+      ),
+    };
+    setCurrentSession(nextSession);
+    upsertChatSession(nextSession);
+  };
+
   const handleNewChat = () => {
     const fresh = createChatSession();
     setCurrentSession(fresh);
@@ -603,6 +625,7 @@ export function GlobalAiChatSidebar({
                   if (found) setSelectedSlaModal(found);
                 }}
                 onMarkCommandExecuted={handleMarkCommandExecuted}
+                onTakeoverReplied={handleTakeoverReplied}
               />
             ))
           ) : (

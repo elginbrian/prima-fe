@@ -41,6 +41,8 @@ export interface OmniAssistantResponseDto {
   ai_tier_used: string;
   ai_model_used?: string | null;
   ai_fallback_notice?: string | null;
+  takeover_ticket_id?: string | null;
+  takeover_pending?: boolean;
 }
 
 export interface OmniChatHistoryTurnDto {

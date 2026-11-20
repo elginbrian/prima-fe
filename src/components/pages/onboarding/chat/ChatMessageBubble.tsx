@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -13,8 +13,14 @@ import {
   Paperclip,
   FileSearch,
   ShieldCheck,
+  Radio,
 } from "lucide-react";
-import type { OmniCommandDto, OmniReferencedItemDto } from "@/lib/api";
+import {
+  integrationsApi,
+  type OmniAssistantResponseDto,
+  type OmniCommandDto,
+  type OmniReferencedItemDto,
+} from "@/lib/api";
 import {
   type AiChatMessage,
   getLastChatUploadedFile,
@@ -46,6 +52,10 @@ interface ChatMessageBubbleProps {
   onSelectFollowup: (prompt: string) => void;
   onOpenSlaModal: (deadlineId: string) => void;
   onMarkCommandExecuted: (messageId: string) => void;
+  onTakeoverReplied?: (
+    messageId: string,
+    replyPayload: OmniAssistantResponseDto
+  ) => void;
 }
 
 export function ChatMessageBubble({
@@ -55,6 +65,7 @@ export function ChatMessageBubble({
   onSelectFollowup,
   onOpenSlaModal,
   onMarkCommandExecuted,
+  onTakeoverReplied,
 }: ChatMessageBubbleProps) {
   const router = useRouter();
   const toast = useToast();
@@ -73,6 +84,34 @@ export function ChatMessageBubble({
   const isUser = message.role === "user";
   const aiData = message.aiData;
   const commandExecuted = Boolean(message.commandExecuted);
+  const isWaitingTakeover = Boolean(
+    aiData?.takeover_pending && aiData?.takeover_ticket_id
+  );
+
+  // Poll takeover ticket automatically every 2.5s when waiting for External MCP Agent reply
+  useEffect(() => {
+    if (!isWaitingTakeover || !aiData?.takeover_ticket_id || !onTakeoverReplied)
+      return;
+    const ticketId = aiData.takeover_ticket_id;
+
+    const timer = setInterval(async () => {
+      try {
+        const res = await integrationsApi.getTakeoverTicket(ticketId);
+        if (res.data?.status === "REPLIED" && res.data?.response_payload) {
+          onTakeoverReplied(message.id, res.data.response_payload);
+        }
+      } catch {
+        // ignore transient polling error
+      }
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [
+    isWaitingTakeover,
+    aiData?.takeover_ticket_id,
+    message.id,
+    onTakeoverReplied,
+  ]);
 
   const handleExecuteCommand = async (cmd: OmniCommandDto) => {
     if (isExecutingCmd || commandExecuted) return;
@@ -315,11 +354,28 @@ export function ChatMessageBubble({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-900">
-              PRIMA AI
+              {aiData?.ai_tier_used === "mcp_takeover"
+                ? aiData.ai_model_used || "External MCP Agent"
+                : aiData?.ai_tier_used === "external"
+                ? `External AI (${aiData.ai_model_used || "Custom"})`
+                : "PRIMA AI"}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
-              <Zap size={9} />
-              Mode Cekatan
+              {aiData?.ai_tier_used === "mcp_takeover" ? (
+                <>
+                  <Radio size={9} />
+                  <span>Agent Takeover</span>
+                </>
+              ) : (
+                <>
+                  <Zap size={9} />
+                  <span>
+                    {aiData?.ai_tier_used === "external"
+                      ? "External Brain"
+                      : "Mode Cekatan"}
+                  </span>
+                </>
+              )}
             </span>
           </div>
         </div>
@@ -347,6 +403,19 @@ export function ChatMessageBubble({
             {aiData?.ai_fallback_notice && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
                 {aiData.ai_fallback_notice}
+              </div>
+            )}
+
+            {isWaitingTakeover && (
+              <div className="flex items-center gap-2.5 rounded-xl border border-[#0a4d8c]/25 bg-[#f4f8fd] px-3.5 py-2.5 text-xs text-[#0a4d8c]">
+                <Spinner size="xs" />
+                <span className="font-medium">
+                  Menunggu balasan real-time dari External Agent (Tiket{" "}
+                  <code className="font-mono font-bold">
+                    {aiData?.takeover_ticket_id}
+                  </code>
+                  )...
+                </span>
               </div>
             )}
 

@@ -33,6 +33,15 @@ export type { DeadlineDto, EvaluateSlaResponseDto } from "./deadlines.api";
 
 export { usersApi } from "./users.api";
 export { aiAssistantApi } from "./ai.api";
+export { integrationsApi } from "./integrations.api";
+export type {
+  AiIntegrationConfigDto,
+  ExternalProviderMode,
+  GeneratedAgentTokenDto,
+  IntegrationOverviewResponseDto,
+  McpToolSchemaDto,
+  TakeoverTicketDto,
+} from "./integrations.api";
 export type {
   OmniAssistantResponseDto,
   OmniChatHistoryTurnDto,

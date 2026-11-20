@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Bell, User } from "lucide-react";
+import { Settings, Bell, User, Blocks } from "lucide-react";
 import { useSettings, useUpdateSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { ProfileTab } from "./tabs/ProfileTab";
 import { NotificationTab } from "./tabs/NotificationTab";
 import { SystemTab } from "./tabs/SystemTab";
+import { IntegrationTab } from "./tabs/IntegrationTab";
 import { SystemSettings } from "@/types";
 
 import { useToast } from "@/components/ui/Toast";
@@ -54,6 +55,7 @@ export default function SettingsPage() {
     { id: "umum", label: "Profil & Akun", icon: User },
     { id: "notifikasi", label: "Notifikasi", icon: Bell },
     { id: "sistem", label: "Pengaturan Sistem", icon: Settings },
+    { id: "integrasi", label: "Integrasi", icon: Blocks },
   ];
 
   if (isLoading || !formData) {
@@ -116,9 +118,10 @@ export default function SettingsPage() {
                   users={users}
                 />
               )}
+              {activeTab === "integrasi" && <IntegrationTab />}
             </div>
 
-            {activeTab !== "umum" && (
+            {activeTab !== "umum" && activeTab !== "integrasi" && (
               <div className="mt-10 flex justify-end border-t border-slate-100 pt-6 w-full">
                 <button
                   onClick={handleSave}
