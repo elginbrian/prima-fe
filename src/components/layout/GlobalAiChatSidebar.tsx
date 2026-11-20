@@ -131,7 +131,10 @@ export function GlobalAiChatSidebar({
     }
   }, [isOpen, currentSession?.messages.length]);
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (
+    text: string,
+    attachmentFile?: File | null
+  ) => {
     if (!currentSession || omniAssistant.isPending) return;
 
     const userMsg: AiChatMessage = {
@@ -140,6 +143,13 @@ export function GlobalAiChatSidebar({
       content: text,
       createdAt: new Date().toISOString(),
       status: "done",
+      attachment: attachmentFile
+        ? {
+            name: attachmentFile.name,
+            size: attachmentFile.size,
+            type: attachmentFile.type || "application/octet-stream",
+          }
+        : null,
     };
 
     const assistantPlaceholderId = generateMessageId();
@@ -156,7 +166,7 @@ export function GlobalAiChatSidebar({
       title:
         currentSession.messages.length === 0 ||
         currentSession.title === "Diskusi AI Baru"
-          ? buildTitleFromPrompt(text)
+          ? buildTitleFromPrompt(text, attachmentFile?.name)
           : currentSession.title,
       messages: [...currentSession.messages, userMsg, placeholderMsg],
     };
@@ -176,6 +186,7 @@ export function GlobalAiChatSidebar({
       const res = await omniAssistant.mutateAsync({
         query: text,
         history: historyTurns,
+        file: attachmentFile,
       });
 
       const completedMsg: AiChatMessage = {

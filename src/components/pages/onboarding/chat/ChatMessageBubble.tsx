@@ -10,6 +10,7 @@ import {
   Play,
   AlertTriangle,
   CornerDownRight,
+  Paperclip,
 } from "lucide-react";
 import type { OmniCommandDto, OmniReferencedItemDto } from "@/lib/api";
 import type { AiChatMessage } from "@/lib/aiChatStore";
@@ -233,7 +234,15 @@ export function ChatMessageBubble({
   if (isUser) {
     return (
       <div className="flex items-start justify-end gap-3">
-        <div className="max-w-[82%] sm:max-w-[72%] rounded-2xl rounded-tr-xs bg-[#0a4d8c] px-4 py-3 text-xs sm:text-[13px] leading-relaxed text-white shadow-2xs">
+        <div className="max-w-[82%] sm:max-w-[72%] rounded-2xl rounded-tr-xs bg-[#0a4d8c] px-4 py-3 text-xs sm:text-[13px] leading-relaxed text-white shadow-2xs space-y-2">
+          {message.attachment && (
+            <div className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1 text-[11px] font-medium text-blue-50">
+              <Paperclip size={12} className="shrink-0" />
+              <span className="truncate max-w-[220px]">
+                {message.attachment.name}
+              </span>
+            </div>
+          )}
           <p className="whitespace-pre-line">{message.content}</p>
         </div>
         <div className="shrink-0 mt-0.5">

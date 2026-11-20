@@ -18,6 +18,7 @@ import {
   deleteChatSession,
   generateMessageId,
   buildTitleFromPrompt,
+  consumePendingChatAttachment,
 } from "@/lib/aiChatStore";
 import { useOmniAssistant } from "@/lib/query/hooks/ai/useOmniAssistant";
 import {
@@ -106,7 +107,11 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
 
   // Execute AI query for a given user message
   const triggerAiReply = useCallback(
-    async (sessionSnapshot: AiChatSession, userQueryText: string) => {
+    async (
+      sessionSnapshot: AiChatSession,
+      userQueryText: string,
+      attachmentFile?: File | null
+    ) => {
       const assistantPlaceholderId = generateMessageId();
       const placeholderMsg: AiChatMessage = {
         id: assistantPlaceholderId,
@@ -120,7 +125,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
         ...sessionSnapshot,
         title:
           sessionSnapshot.title === "Diskusi AI Baru"
-            ? buildTitleFromPrompt(userQueryText)
+            ? buildTitleFromPrompt(userQueryText, attachmentFile?.name)
             : sessionSnapshot.title,
         messages: [...sessionSnapshot.messages, placeholderMsg],
       };
@@ -143,6 +148,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
         const res = await omniAssistant.mutateAsync({
           query: userQueryText,
           history: historyTurns,
+          file: attachmentFile,
         });
 
         const completedMsg: AiChatMessage = {
@@ -202,11 +208,16 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
       autoTriggeredRef.current !== currentSession.id
     ) {
       autoTriggeredRef.current = currentSession.id;
-      triggerAiReply(currentSession, currentSession.messages[0].content);
+      const pendingFile = consumePendingChatAttachment(currentSession.id);
+      triggerAiReply(
+        currentSession,
+        currentSession.messages[0].content,
+        pendingFile
+      );
     }
   }, [currentSession, triggerAiReply]);
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = (text: string, attachmentFile?: File | null) => {
     if (!currentSession || omniAssistant.isPending) return;
 
     const userMsg: AiChatMessage = {
@@ -215,18 +226,25 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
       content: text,
       createdAt: new Date().toISOString(),
       status: "done",
+      attachment: attachmentFile
+        ? {
+            name: attachmentFile.name,
+            size: attachmentFile.size,
+            type: attachmentFile.type || "application/octet-stream",
+          }
+        : null,
     };
 
     const updatedSession: AiChatSession = {
       ...currentSession,
       title:
         currentSession.messages.length === 0
-          ? buildTitleFromPrompt(text)
+          ? buildTitleFromPrompt(text, attachmentFile?.name)
           : currentSession.title,
       messages: [...currentSession.messages, userMsg],
     };
 
-    triggerAiReply(updatedSession, text);
+    triggerAiReply(updatedSession, text, attachmentFile);
   };
 
   const handleMarkCommandExecuted = (messageId: string) => {

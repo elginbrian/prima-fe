@@ -2,12 +2,19 @@
 
 import type { OmniAssistantResponseDto } from "@/lib/api";
 
+export interface AiChatAttachmentMeta {
+  name: string;
+  size: number;
+  type: string;
+}
+
 export interface AiChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: string;
   status?: "sending" | "done" | "error";
+  attachment?: AiChatAttachmentMeta | null;
   aiData?: OmniAssistantResponseDto | null;
   errorMessage?: string | null;
   commandExecuted?: boolean;
@@ -22,6 +29,22 @@ export interface AiChatSession {
 }
 
 const STORAGE_KEY = "prima_ai_chat_sessions_v1";
+
+// In-memory bridge so an attachment uploaded in /dashboard/onboarding search bar
+// is seamlessly consumed when redirecting to /dashboard/onboarding/chat/[chatId]
+const pendingSessionFiles = new Map<string, File>();
+
+export function setPendingChatAttachment(chatId: string, file: File): void {
+  pendingSessionFiles.set(chatId, file);
+}
+
+export function consumePendingChatAttachment(chatId: string): File | null {
+  const f = pendingSessionFiles.get(chatId) ?? null;
+  if (f) {
+    pendingSessionFiles.delete(chatId);
+  }
+  return f;
+}
 
 function safeReadSessions(): AiChatSession[] {
   if (typeof window === "undefined") return [];
@@ -55,8 +78,14 @@ export function generateMessageId(): string {
   return `msg-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
 }
 
-export function buildTitleFromPrompt(prompt: string): string {
+export function buildTitleFromPrompt(
+  prompt: string,
+  attachmentName?: string
+): string {
   const clean = prompt.trim().replace(/\s+/g, " ");
+  if (!clean && attachmentName) {
+    return `Analisis: ${attachmentName}`.slice(0, 48);
+  }
   if (!clean) return "Diskusi AI Baru";
   return clean.length > 48 ? `${clean.slice(0, 48)}...` : clean;
 }
@@ -74,25 +103,44 @@ export function getChatSessionById(chatId: string): AiChatSession | null {
 
 export function createChatSession(
   initialPrompt?: string,
-  customId?: string
+  customId?: string,
+  initialFile?: File | null
 ): AiChatSession {
   const now = new Date().toISOString();
   const id = customId || generateChatId();
-  const initialMessages: AiChatMessage[] = initialPrompt?.trim()
+  const effectiveText =
+    initialPrompt?.trim() ||
+    (initialFile ? `Analisis berkas ${initialFile.name}` : "");
+
+  const initialMessages: AiChatMessage[] = effectiveText
     ? [
         {
           id: generateMessageId(),
           role: "user",
-          content: initialPrompt.trim(),
+          content: effectiveText,
           createdAt: now,
           status: "done",
+          attachment: initialFile
+            ? {
+                name: initialFile.name,
+                size: initialFile.size,
+                type: initialFile.type || "application/octet-stream",
+              }
+            : null,
         },
       ]
     : [];
 
+  if (initialFile) {
+    setPendingChatAttachment(id, initialFile);
+  }
+
   const newSession: AiChatSession = {
     id,
-    title: initialPrompt ? buildTitleFromPrompt(initialPrompt) : "Diskusi AI Baru",
+    title:
+      initialPrompt || initialFile
+        ? buildTitleFromPrompt(initialPrompt || "", initialFile?.name)
+        : "Diskusi AI Baru",
     createdAt: now,
     updatedAt: now,
     messages: initialMessages,
@@ -112,6 +160,7 @@ export function upsertChatSession(session: AiChatSession): void {
 }
 
 export function deleteChatSession(chatId: string): AiChatSession[] {
+  pendingSessionFiles.delete(chatId);
   const next = safeReadSessions().filter((s) => s.id !== chatId);
   safeWriteSessions(next);
   return next;

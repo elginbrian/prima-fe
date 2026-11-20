@@ -21,6 +21,7 @@ import {
   FileText,
   Sparkles,
   Zap,
+  Paperclip,
 } from "lucide-react";
 import {
   useProcurements,
@@ -36,6 +37,7 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { formatDateIndo, formatRequestCode, formatRupiah } from "@/lib/utils";
 import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
+import { AiModeDropdown } from "./chat/AiModeDropdown";
 import type { DeadlineItem, UrgencyLevel } from "@/types";
 
 type OmniCategory =
@@ -202,12 +204,23 @@ export default function OnboardingPage() {
   const documents = serverDocs.length > 0 ? serverDocs : state.documents;
 
   const [query, setQuery] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [selectedSlaModal, setSelectedSlaModal] = useState<DeadlineItem | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAttachment(file);
+      setIsFocused(true);
+    }
+    e.target.value = "";
+  };
 
   // Global keyboard shortcut: Ctrl+K or "/" to focus search bar
   useEffect(() => {
@@ -470,10 +483,10 @@ export default function OnboardingPage() {
 
   const handleAskAi = (customQuery?: string) => {
     const q = (customQuery ?? query).trim();
-    if (!q) return;
+    if (!q && !attachment) return;
 
     setIsFocused(false);
-    const session = createChatSession(q);
+    const session = createChatSession(q, undefined, attachment);
     router.push(`/dashboard/onboarding/chat/${encodeURIComponent(session.id)}`);
   };
 
@@ -533,7 +546,8 @@ export default function OnboardingPage() {
   );
 
   const firstName = currentUser?.name?.split(" ")[0] || "Rekan";
-  const showDropdown = isFocused && query.trim().length > 0;
+  const showDropdown =
+    isFocused && (query.trim().length > 0 || Boolean(attachment));
 
   // Group filteredResults by category for rendering headers
   const groupedSections = useMemo(() => {
@@ -575,66 +589,123 @@ export default function OnboardingPage() {
           className="relative w-full max-w-2xl z-30"
         >
           <div
-            className={`flex items-center w-full rounded-xl border bg-white px-4 py-3 shadow-xs transition-all duration-150 ${
+            className={`w-full rounded-xl border bg-white px-4 py-2.5 shadow-xs transition-all duration-150 ${
               isFocused
                 ? "border-[#0a4d8c] ring-3 ring-[#0a4d8c]/12 shadow-md"
                 : "border-slate-200/90 hover:border-slate-300"
             }`}
           >
-            <Search
-              size={18}
-              className={`shrink-0 transition-colors ${
-                isFocused ? "text-[#0a4d8c]" : "text-slate-400"
-              }`}
-            />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onFocus={() => setIsFocused(true)}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setIsFocused(true);
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder="Cari dokumen, pekerjaan, SLA, atau ketik pertanyaan & perintah untuk AI..."
-              className="w-full bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
-              aria-label="Cari atau tanya AI di seluruh PRIMA"
-            />
-            {query ? (
-              <div className="flex items-center gap-1.5 shrink-0">
+            {/* Selected Single Attachment Chip */}
+            {attachment && (
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#0a4d8c]/20 bg-[#f4f8fd] px-3 py-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText size={13} className="shrink-0 text-[#0a4d8c]" />
+                  <span className="truncate text-xs font-medium text-slate-800">
+                    {attachment.name}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-slate-400">
+                    ({Math.max(1, Math.round(attachment.size / 1024))} KB)
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleAskAi()}
-                  className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-2.5 py-1 text-[11px] font-semibold text-white shadow-2xs transition hover:!bg-[#083b6c]"
-                  title="Mulai Diskusi AI (Mode Cekatan)"
+                  onClick={() => setAttachment(null)}
+                  className="shrink-0 rounded-md p-0.5 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700"
+                  title="Hapus lampiran"
                 >
-                  <Sparkles size={12} />
-                  <span className="hidden sm:inline">Diskusi AI</span>
+                  <X size={13} />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    inputRef.current?.focus();
-                  }}
-                  className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                  aria-label="Bersihkan pencarian"
-                >
-                  <X size={15} />
-                </button>
-              </div>
-            ) : (
-              <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                <span className="inline-flex items-center gap-1 rounded-md border border-[#0a4d8c]/20 bg-[#e8f2fc] px-1.5 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
-                  <Zap size={10} />
-                  AI Cekatan
-                </span>
-                <kbd className="inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
-                  Ctrl K
-                </kbd>
               </div>
             )}
+
+            <div className="flex items-center w-full gap-2">
+              <Search
+                size={18}
+                className={`shrink-0 transition-colors ${
+                  isFocused ? "text-[#0a4d8c]" : "text-slate-400"
+                }`}
+              />
+
+              {/* Hidden file input (max 1 attachment) */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.webp"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition focus:outline-none ${
+                  attachment
+                    ? "border-[#0a4d8c]/30 bg-[#e8f2fc] text-[#0a4d8c]"
+                    : "border-slate-200 bg-slate-50 text-slate-500 hover:border-[#0a4d8c]/30 hover:bg-[#e8f2fc] hover:text-[#0a4d8c]"
+                }`}
+                title={
+                  attachment
+                    ? `Ganti lampiran (${attachment.name}) — Maks. 1 berkas`
+                    : "Unggah 1 berkas lampiran untuk dianalisis AI"
+                }
+                aria-label="Unggah lampiran"
+              >
+                <Paperclip size={13} />
+              </button>
+
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onFocus={() => setIsFocused(true)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setIsFocused(true);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  attachment
+                    ? "Tanyakan sesuatu atau beri perintah terkait berkas lampiran ini..."
+                    : "Cari dokumen, pekerjaan, SLA, atau ketik pertanyaan & perintah untuk AI..."
+                }
+                className="w-full bg-transparent px-1 py-0.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                aria-label="Cari atau tanya AI di seluruh PRIMA"
+              />
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <AiModeDropdown compact direction="down" />
+
+                {query || attachment ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleAskAi()}
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-2.5 py-1 text-[11px] font-semibold text-white shadow-2xs transition hover:!bg-[#083b6c]"
+                      title="Mulai Diskusi AI (Mode Cekatan)"
+                    >
+                      <Sparkles size={12} />
+                      <span className="hidden sm:inline">Diskusi AI</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        setAttachment(null);
+                        inputRef.current?.focus();
+                      }}
+                      className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                      aria-label="Bersihkan pencarian"
+                    >
+                      <X size={15} />
+                    </button>
+                  </>
+                ) : (
+                  <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                    Ctrl K
+                  </kbd>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Omni-Search Results Dropdown */}
@@ -659,7 +730,9 @@ export default function OnboardingPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-xs font-semibold text-slate-900">
-                          Tanya atau Perintahkan AI: &ldquo;{query}&rdquo;
+                          {query
+                            ? `Tanya atau Perintahkan AI: "${query}"`
+                            : `Analisis Lampiran dengan AI: "${attachment?.name}"`}
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[#0a4d8c]/20 bg-white px-2 py-0.5 text-[9px] font-semibold text-[#0a4d8c]">
                           <Zap size={9} />
@@ -667,7 +740,9 @@ export default function OnboardingPage() {
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                        Jawab pertanyaan dari data real-time PRIMA atau jalankan perintah langsung
+                        {attachment
+                          ? `Sertakan berkas "${attachment.name}" ke ruang Diskusi AI`
+                          : "Jawab pertanyaan dari data real-time PRIMA atau jalankan perintah langsung"}
                       </p>
                     </div>
                   </div>
