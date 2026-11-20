@@ -226,6 +226,7 @@ export default function OnboardingPage() {
   const [selectedSlaModal, setSelectedSlaModal] = useState<DeadlineItem | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -494,8 +495,26 @@ export default function OnboardingPage() {
   }, [query, allSearchItems]);
 
   useEffect(() => {
-    setActiveIndex(-1);
-  }, [query]);
+    setActiveIndex(filteredResults.length > 0 ? 0 : -1);
+  }, [query, filteredResults.length]);
+
+  // Keep active keyboard-selected suggestion visible strictly inside dropdown container
+  useEffect(() => {
+    if (!isFocused || activeIndex < 0) return;
+    const container = dropdownRef.current;
+    if (!container) return;
+    const targetEl = container.querySelector<HTMLElement>(
+      `[data-omni-index="${activeIndex}"]`
+    );
+    if (!targetEl) return;
+    const cRect = container.getBoundingClientRect();
+    const tRect = targetEl.getBoundingClientRect();
+    if (tRect.bottom > cRect.bottom) {
+      container.scrollTop += tRect.bottom - cRect.bottom + 6;
+    } else if (tRect.top < cRect.top) {
+      container.scrollTop -= cRect.top - tRect.top + 6;
+    }
+  }, [activeIndex, isFocused]);
 
   const handleAskAi = (customQuery?: string) => {
     const q = (customQuery ?? query).trim();
@@ -532,17 +551,17 @@ export default function OnboardingPage() {
         setActiveIndex(-1);
         return;
       }
-      setActiveIndex((prev) => (prev + 1 >= totalCount ? -1 : prev + 1));
+      setActiveIndex((prev) => (prev + 1 >= totalCount ? 0 : prev + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (totalCount === 0) {
         setActiveIndex(-1);
         return;
       }
-      setActiveIndex((prev) => (prev - 1 < -1 ? totalCount - 1 : prev - 1));
+      setActiveIndex((prev) => (prev - 1 < 0 ? totalCount - 1 : prev - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (activeIndex === -1 || totalCount === 0) {
+      if (totalCount === 0 || activeIndex < 0) {
         handleAskAi();
       } else {
         const target = filteredResults[activeIndex];
@@ -728,20 +747,79 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          {/* Omni-Search Results Dropdown */}
+          {/* Omni-Search Results Dropdown (Shows max ~4 suggestions at a time, scrollable) */}
           {showDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-2 max-h-[440px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl scrollbar-thin">
-              {/* Top Generative AI Option (Always available at index -1) */}
-              <div className="mb-1.5 pb-1.5 border-b border-slate-100">
+            <div
+              ref={dropdownRef}
+              className="absolute left-0 right-0 top-full mt-2 max-h-[244px] overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-2 shadow-xl scrollbar-thin"
+            >
+              {groupedSections.length > 0 ? (
+                <div className="space-y-2">
+                  {groupedSections.map(([category, entries]) => (
+                    <div key={category}>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        {getCategoryIcon(category)}
+                        <span>{category}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {entries.map(({ item, flatIndex }) => {
+                          const isSelected = flatIndex === activeIndex;
+                          return (
+                            <button
+                              key={item.id}
+                              data-omni-index={flatIndex}
+                              type="button"
+                              onMouseEnter={() => setActiveIndex(flatIndex)}
+                              onClick={() => handleSelectResult(item)}
+                              className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
+                                isSelected
+                                  ? "bg-[#e8f2fc] text-[#0a4d8c]"
+                                  : "text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 leading-4">
+                                  <span className="truncate text-xs font-semibold text-slate-900">
+                                    {item.title}
+                                  </span>
+                                  {item.badgeText && (
+                                    <span
+                                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                                        item.badgeUrgent
+                                          ? "border-red-200 bg-red-50 text-red-700"
+                                          : "border-slate-200 bg-slate-100 text-slate-600"
+                                      }`}
+                                    >
+                                      {item.badgeText}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-0.5 truncate text-[11px] leading-4 text-slate-500">
+                                  {item.subtitle}
+                                </p>
+                              </div>
+                              <CornerDownLeft
+                                size={13}
+                                className={`shrink-0 transition-opacity ${
+                                  isSelected
+                                    ? "opacity-100 text-[#0a4d8c]"
+                                    : "opacity-0"
+                                }`}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* Only show Ask/Command AI suggestion when no other relevant suggestions match */
                 <button
                   type="button"
                   onMouseEnter={() => setActiveIndex(-1)}
                   onClick={() => handleAskAi()}
-                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                    activeIndex === -1
-                      ? "bg-[#e8f2fc] text-[#0a4d8c]"
-                      : "text-slate-700 hover:bg-slate-50"
-                  }`}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg bg-[#e8f2fc] px-3 py-2.5 text-left text-[#0a4d8c] transition-colors hover:bg-[#dcebfa]"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0a4d8c] text-white">
@@ -764,86 +842,15 @@ export default function OnboardingPage() {
                       <p className="mt-0.5 truncate text-[11px] text-slate-500">
                         {attachment
                           ? `Sertakan berkas "${attachment.name}" ke ruang Diskusi AI`
-                          : "Jawab pertanyaan dari data real-time PRIMA atau jalankan perintah langsung"}
+                          : "Tidak ada kecocokan langsung — tekan Enter untuk bertanya atau memberi perintah ke AI"}
                       </p>
                     </div>
                   </div>
                   <CornerDownLeft
                     size={13}
-                    className={`shrink-0 transition-opacity ${
-                      activeIndex === -1
-                        ? "opacity-100 text-[#0a4d8c]"
-                        : "opacity-0"
-                    }`}
+                    className="shrink-0 text-[#0a4d8c]"
                   />
                 </button>
-              </div>
-
-              {groupedSections.length > 0 ? (
-                <div className="space-y-2.5">
-                  {groupedSections.map(([category, entries]) => (
-                    <div key={category}>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                        {getCategoryIcon(category)}
-                        <span>{category}</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {entries.map(({ item, flatIndex }) => {
-                          const isSelected = flatIndex === activeIndex;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onMouseEnter={() => setActiveIndex(flatIndex)}
-                              onClick={() => handleSelectResult(item)}
-                              className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
-                                isSelected
-                                  ? "bg-[#e8f2fc] text-[#0a4d8c]"
-                                  : "text-slate-700 hover:bg-slate-50"
-                              }`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="truncate text-xs font-semibold text-slate-900">
-                                    {item.title}
-                                  </span>
-                                  {item.badgeText && (
-                                    <span
-                                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                                        item.badgeUrgent
-                                          ? "border-red-200 bg-red-50 text-red-700"
-                                          : "border-slate-200 bg-slate-100 text-slate-600"
-                                      }`}
-                                    >
-                                      {item.badgeText}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                                  {item.subtitle}
-                                </p>
-                              </div>
-                              <CornerDownLeft
-                                size={13}
-                                className={`shrink-0 transition-opacity ${
-                                  isSelected
-                                    ? "opacity-100 text-[#0a4d8c]"
-                                    : "opacity-0"
-                                }`}
-                              />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-3 px-3 text-center">
-                  <p className="text-[11px] text-slate-500">
-                    Tidak ada kecocokan kata kunci langsung — tekan <strong className="font-semibold text-[#0a4d8c]">Enter</strong> untuk memulai Diskusi AI (Mode Cekatan).
-                  </p>
-                </div>
               )}
             </div>
           )}
