@@ -16,6 +16,7 @@ export function DashboardHeader({
   onOpenSidebar,
   onCloseSidebar,
   onLogout,
+  transparent = false,
 }: {
   title: string;
   subtitle: string;
@@ -26,6 +27,7 @@ export function DashboardHeader({
   onOpenSidebar?: () => void;
   onCloseSidebar?: () => void;
   onLogout?: () => void;
+  transparent?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -45,12 +47,18 @@ export function DashboardHeader({
   }, []);
 
   return (
-    <header className="flex h-[84px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3 sm:px-7">
-      <div className="lg:hidden">
+    <header
+      className={
+        transparent
+          ? "pointer-events-none absolute inset-x-0 top-0 z-30 flex h-[84px] items-center justify-between gap-3 bg-transparent px-5 py-3 sm:px-7"
+          : "flex h-[84px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3 sm:px-7"
+      }
+    >
+      <div className="pointer-events-auto lg:hidden">
         <button
           type="button"
           aria-label="Open navigation"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/90 backdrop-blur-sm text-slate-700 shadow-2xs focus:outline-none"
           onClick={onOpenSidebar}
         >
           <Menu size={16} />
@@ -68,14 +76,18 @@ export function DashboardHeader({
         </button>
       </div>
 
-      <div className="min-w-0 flex-1">
-        <h1 className="text-[1.25rem] font-semibold leading-tight tracking-tight text-slate-800 sm:text-[1.45rem]">
-          {title}
-        </h1>
-        <p className="mt-0.5 text-xs font-normal text-slate-500">{subtitle}</p>
-      </div>
+      {transparent ? (
+        <div className="flex-1" />
+      ) : (
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[1.25rem] font-semibold leading-tight tracking-tight text-slate-800 sm:text-[1.45rem]">
+            {title}
+          </h1>
+          <p className="mt-0.5 text-xs font-normal text-slate-500">{subtitle}</p>
+        </div>
+      )}
 
-      <div className="flex items-center gap-2.5 shrink-0">
+      <div className="pointer-events-auto flex items-center gap-2.5 shrink-0">
         {activeJobs.length > 0 && (
           <button
             type="button"

@@ -108,6 +108,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     return { title: "Dashboard", subtitle: "Overview" };
   };
 
+  const isOnboarding = (pathname || "").startsWith("/dashboard/onboarding");
   const header = getHeaderInfo(pathname || "");
 
   return (
@@ -123,7 +124,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
       <SidebarNav onLogout={logout} />
 
-      <div className="flex min-w-0 flex-1 flex-col transition-all duration-300">
+      <div className="relative flex min-w-0 flex-1 flex-col transition-all duration-300">
         <div>
           <DashboardHeader
             title={header.title}
@@ -135,11 +136,19 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
             onOpenSidebar={() => setMobileOpen(true)}
             onCloseSidebar={() => setMobileOpen(false)}
             onLogout={logout}
+            transparent={isOnboarding}
           />
         </div>
 
-        <main className="scrollbar-thin flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 sm:px-6 sm:py-4 lg:px-7 lg:py-5">
-          <div className="animate-page-enter">
+        <main
+          className={cn(
+            "scrollbar-thin flex-1 overflow-y-auto overflow-x-hidden",
+            isOnboarding
+              ? "p-0"
+              : "px-4 py-3 sm:px-6 sm:py-4 lg:px-7 lg:py-5"
+          )}
+        >
+          <div className={cn("animate-page-enter", isOnboarding && "h-full")}>
             {children}
           </div>
         </main>

@@ -525,8 +525,18 @@ export default function OnboardingPage() {
   }, [filteredResults]);
 
   return (
-    <div className="relative flex min-h-[calc(100vh-132px)] flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#f4f7fb] px-4 py-12">
+      {/* Animated Floating Blue Shades Background */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="animate-blue-shade-1 absolute -top-24 -left-20 h-[420px] w-[420px] rounded-full bg-[#0a4d8c]/12 blur-[95px]" />
+        <div className="animate-blue-shade-2 absolute top-1/4 -right-24 h-[460px] w-[460px] rounded-full bg-blue-400/15 blur-[110px]" />
+        <div className="animate-blue-shade-3 absolute -bottom-28 left-1/3 h-[380px] w-[440px] rounded-full bg-[#1565c0]/12 blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
         {/* Minimalist Greeting */}
         <div className="text-center mb-6">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">
