@@ -35,6 +35,7 @@ export { usersApi } from "./users.api";
 export { aiAssistantApi } from "./ai.api";
 export type {
   OmniAssistantResponseDto,
+  OmniChatHistoryTurnDto,
   OmniCommandDto,
   OmniCommandType,
   OmniIntentKind,

@@ -43,10 +43,15 @@ export interface OmniAssistantResponseDto {
   ai_fallback_notice?: string | null;
 }
 
+export interface OmniChatHistoryTurnDto {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export const aiAssistantApi = {
-  queryOmniAssistant: (query: string) =>
+  queryOmniAssistant: (query: string, history?: OmniChatHistoryTurnDto[]) =>
     apiFetch<OmniAssistantResponseDto>("/ai/omni-assistant", {
       method: "POST",
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, history: history ?? [] }),
     }),
 };

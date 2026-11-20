@@ -8,15 +8,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Play,
-  X,
   AlertTriangle,
   CornerDownRight,
 } from "lucide-react";
-import type {
-  OmniAssistantResponseDto,
-  OmniCommandDto,
-  OmniReferencedItemDto,
-} from "@/lib/api";
+import type { OmniCommandDto, OmniReferencedItemDto } from "@/lib/api";
+import type { AiChatMessage } from "@/lib/aiChatStore";
 import {
   useUpdateDeadline,
   useEscalateDeadline,
@@ -29,29 +25,30 @@ import {
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { getErrorMessage } from "@/lib/api/errors";
-import type { DeadlineItem, ProcurementOperationalStatus, ProcurementStage } from "@/types";
+import type {
+  ProcurementOperationalStatus,
+  ProcurementStage,
+} from "@/types";
 
-interface OmniAiAssistantPanelProps {
-  query: string;
-  response: OmniAssistantResponseDto | null;
-  isLoading: boolean;
-  error: string | null;
-  onClose: () => void;
-  onSelectFollowup: (followupQuery: string) => void;
-  onOpenSlaModal?: (deadlineId: string) => void;
-  deadlines?: DeadlineItem[];
+interface ChatMessageBubbleProps {
+  message: AiChatMessage;
+  userName?: string;
+  userAvatarUrl?: string | null;
+  onSelectFollowup: (prompt: string) => void;
+  onOpenSlaModal: (deadlineId: string) => void;
+  onMarkCommandExecuted: (messageId: string) => void;
 }
 
-export function OmniAiAssistantPanel({
-  query,
-  response,
-  isLoading,
-  error,
-  onClose,
+export function ChatMessageBubble({
+  message,
+  userName = "Pengguna",
+  userAvatarUrl,
   onSelectFollowup,
   onOpenSlaModal,
-}: OmniAiAssistantPanelProps) {
+  onMarkCommandExecuted,
+}: ChatMessageBubbleProps) {
   const router = useRouter();
   const toast = useToast();
   const { data: currentUser } = useCurrentUser();
@@ -65,7 +62,10 @@ export function OmniAiAssistantPanel({
   const evaluateSla = useEvaluateSla();
 
   const [isExecutingCmd, setIsExecutingCmd] = useState(false);
-  const [commandExecuted, setCommandExecuted] = useState(false);
+
+  const isUser = message.role === "user";
+  const aiData = message.aiData;
+  const commandExecuted = Boolean(message.commandExecuted);
 
   const handleExecuteCommand = async (cmd: OmniCommandDto) => {
     if (isExecutingCmd || commandExecuted) return;
@@ -77,13 +77,14 @@ export function OmniAiAssistantPanel({
       switch (cmd.type) {
         case "NAVIGATE": {
           const url = String(p.url || "/dashboard/overview");
+          onMarkCommandExecuted(message.id);
           router.push(url);
-          setCommandExecuted(true);
           break;
         }
         case "COMPLETE_SLA": {
           const deadlineId = String(p.deadline_id || "");
-          if (!deadlineId) throw new Error("ID SLA tidak ditemukan untuk perintah ini.");
+          if (!deadlineId)
+            throw new Error("ID SLA tidak ditemukan untuk perintah ini.");
           await updateDeadline.mutateAsync({
             id: deadlineId,
             payload: { status: "Selesai" },
@@ -91,22 +92,25 @@ export function OmniAiAssistantPanel({
           toast.success(
             `SLA "${p.task_name || deadlineId}" berhasil ditandai Selesai.`
           );
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           break;
         }
         case "ESCALATE_SLA": {
           const deadlineId = String(p.deadline_id || "");
-          if (!deadlineId) throw new Error("ID SLA tidak ditemukan untuk eskalasi.");
-          const targetMgr = String(p.escalated_to || "Manager Pengadaan Korporat");
+          if (!deadlineId)
+            throw new Error("ID SLA tidak ditemukan untuk eskalasi.");
+          const targetMgr = String(
+            p.escalated_to || "Manager Pengadaan Korporat"
+          );
           const reason = String(
-            p.reason || "Eskalasi melalui perintah AI Omni-Assistant"
+            p.reason || "Eskalasi melalui perintah Diskusi AI PRIMA"
           );
           await escalateDeadline.mutateAsync({
             id: deadlineId,
             payload: { escalated_to: targetMgr, reason },
           });
           toast.success(`SLA berhasil dieskalasi ke ${targetMgr}.`);
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           break;
         }
         case "SUBMIT_RECOVERY_PLAN": {
@@ -126,7 +130,7 @@ export function OmniAiAssistantPanel({
             },
           });
           toast.success("Rencana mitigasi SLA berhasil disimpan.");
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           break;
         }
         case "UPDATE_JOB_STATUS": {
@@ -140,14 +144,14 @@ export function OmniAiAssistantPanel({
             payload: {
               status,
               reason: String(
-                p.reason || `Diperbarui ke ${status} melalui AI Omni-Assistant`
+                p.reason || `Diperbarui ke ${status} melalui Diskusi AI PRIMA`
               ),
             },
           });
           toast.success(
             `Status operasional pekerjaan ${requestId} diubah menjadi "${status}".`
           );
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           break;
         }
         case "MOVE_JOB_STAGE": {
@@ -159,14 +163,14 @@ export function OmniAiAssistantPanel({
             payload: {
               stage,
               notes: String(
-                p.notes || `Tahap dipindahkan ke ${stage} melalui AI Omni-Assistant`
+                p.notes || `Tahap dipindahkan ke ${stage} melalui Diskusi AI`
               ),
             },
           });
           toast.success(
             `Tahap pekerjaan ${requestId} berhasil dipindahkan ke "${stage}".`
           );
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           break;
         }
         case "CREATE_PROCUREMENT": {
@@ -191,9 +195,11 @@ export function OmniAiAssistantPanel({
             is_urgent: isUrgent,
           });
           toast.success(`Pekerjaan "${title}" berhasil dibuat.`);
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           if (res.data?.id) {
-            router.push(`/dashboard/overview/${encodeURIComponent(res.data.id)}`);
+            router.push(
+              `/dashboard/overview/${encodeURIComponent(res.data.id)}`
+            );
           }
           break;
         }
@@ -203,7 +209,7 @@ export function OmniAiAssistantPanel({
           toast.success(
             `Sinkronisasi SLA selesai: ${d.total_evaluated} SLA diperiksa (${d.overdue} terlambat).`
           );
-          setCommandExecuted(true);
+          onMarkCommandExecuted(message.id);
           break;
         }
       }
@@ -215,7 +221,7 @@ export function OmniAiAssistantPanel({
   };
 
   const handleClickReference = (item: OmniReferencedItemDto) => {
-    if (item.category === "Target SLA" && onOpenSlaModal && item.id) {
+    if (item.category === "Target SLA" && item.id) {
       onOpenSlaModal(item.id);
       return;
     }
@@ -224,76 +230,76 @@ export function OmniAiAssistantPanel({
     }
   };
 
-  return (
-    <div className="mt-3 w-full max-w-2xl overflow-hidden rounded-xl border border-[#0a4d8c]/25 bg-white shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
-      {/* Header Bar with locked 'Cekatan' mode badge */}
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-[#f4f8fd] px-4 py-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#0a4d8c] text-white">
-            <Sparkles size={13} />
-          </div>
-          <span className="truncate text-xs font-semibold text-slate-900">
-            PRIMA Omni-Assistant
-          </span>
-          <span
-            className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c] shrink-0"
-            title="Mode AI dikunci pada Mode Cekatan untuk respons instan"
-          >
-            <Zap size={10} />
-            Mode Cekatan
-          </span>
+  if (isUser) {
+    return (
+      <div className="flex items-start justify-end gap-3">
+        <div className="max-w-[82%] sm:max-w-[72%] rounded-2xl rounded-tr-xs bg-[#0a4d8c] px-4 py-3 text-xs sm:text-[13px] leading-relaxed text-white shadow-2xs">
+          <p className="whitespace-pre-line">{message.content}</p>
         </div>
+        <div className="shrink-0 mt-0.5">
+          <UserAvatar name={userName} avatarUrl={userAvatarUrl} size="sm" />
+        </div>
+      </div>
+    );
+  }
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md p-1 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition-colors"
-          aria-label="Tutup panel AI"
-        >
-          <X size={14} />
-        </button>
+  return (
+    <div className="flex items-start gap-3">
+      {/* AI Avatar */}
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#0a4d8c] text-white shadow-2xs mt-0.5">
+        <Sparkles size={15} />
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-3.5 text-left">
-        {isLoading ? (
-          <div className="flex items-center gap-3 py-4">
-            <Spinner size="sm" />
+      {/* Assistant Bubble */}
+      <div className="min-w-0 flex-1 max-w-[90%] sm:max-w-[82%] rounded-2xl rounded-tl-xs border border-slate-200/90 bg-white p-4 shadow-2xs space-y-3">
+        {/* Header Meta */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-900">
+              PRIMA AI
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
+              <Zap size={9} />
+              Mode Cekatan
+            </span>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {message.status === "sending" ? (
+          <div className="flex items-center gap-2.5 py-2">
+            <Spinner size="xs" />
+            <span className="text-xs text-slate-500">
+              Menganalisis data pekerjaan, dokumen, warkat, dan SLA...
+            </span>
+          </div>
+        ) : message.status === "error" ? (
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50/70 p-3 text-xs text-red-700">
+            <AlertTriangle size={14} className="shrink-0 mt-0.5 text-red-600" />
             <div>
-              <p className="text-xs font-semibold text-slate-800">
-                Menganalisis data PRIMA untuk &ldquo;{query}&rdquo;...
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Memeriksa pekerjaan, hasil analisis AI, warkat jaminan, dan jadwal SLA
+              <p className="font-semibold">Gagal memproses jawaban AI</p>
+              <p className="mt-0.5 text-[11px] text-red-600">
+                {message.errorMessage || "Terjadi gangguan koneksi ke layanan AI."}
               </p>
             </div>
           </div>
-        ) : error ? (
-          <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50/70 p-3 text-xs text-red-700">
-            <AlertTriangle size={15} className="shrink-0 mt-0.5 text-red-600" />
-            <div className="flex-1">
-              <p className="font-semibold">Gagal memproses permintaan AI</p>
-              <p className="mt-0.5 text-[11px] text-red-600">{error}</p>
-            </div>
-          </div>
-        ) : response ? (
+        ) : (
           <>
-            {/* Fallback notice if Cekatan stepped down to Gemma 4 backup */}
-            {response.ai_fallback_notice && (
+            {aiData?.ai_fallback_notice && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
-                {response.ai_fallback_notice}
+                {aiData.ai_fallback_notice}
               </div>
             )}
 
-            {/* Main Answer */}
+            {/* Main Answer Text */}
             <div className="text-xs sm:text-[13px] leading-relaxed text-slate-800 whitespace-pre-line">
-              {response.answer}
+              {aiData?.answer || message.content}
             </div>
 
             {/* Key Highlights */}
-            {response.highlights && response.highlights.length > 0 && (
-              <ul className="space-y-1 rounded-lg border border-slate-100 bg-slate-50/80 px-3.5 py-2.5">
-                {response.highlights.map((h, i) => (
+            {aiData?.highlights && aiData.highlights.length > 0 && (
+              <ul className="space-y-1 rounded-xl border border-slate-100 bg-slate-50/80 px-3.5 py-2.5">
+                {aiData.highlights.map((h, i) => (
                   <li
                     key={i}
                     className="flex items-start gap-2 text-[11px] text-slate-700"
@@ -306,7 +312,7 @@ export function OmniAiAssistantPanel({
             )}
 
             {/* Actionable Command Execution Card */}
-            {response.command && (
+            {aiData?.command && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#0a4d8c]/25 bg-[#f4f8fd] p-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -314,12 +320,12 @@ export function OmniAiAssistantPanel({
                       Perintah AI
                     </span>
                     <span className="truncate text-xs font-semibold text-slate-900">
-                      {response.command.label}
+                      {aiData.command.label}
                     </span>
                   </div>
-                  {response.command.description && (
+                  {aiData.command.description && (
                     <p className="mt-0.5 text-[11px] text-slate-600">
-                      {response.command.description}
+                      {aiData.command.description}
                     </p>
                   )}
                 </div>
@@ -327,7 +333,7 @@ export function OmniAiAssistantPanel({
                 <button
                   type="button"
                   disabled={isExecutingCmd || commandExecuted}
-                  onClick={() => handleExecuteCommand(response.command!)}
+                  onClick={() => handleExecuteCommand(aiData.command!)}
                   className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold shadow-2xs transition ${
                     commandExecuted
                       ? "border border-slate-200 bg-slate-100 text-slate-600"
@@ -357,57 +363,56 @@ export function OmniAiAssistantPanel({
               </div>
             )}
 
-            {/* Referenced Data Items (1-Click Navigation) */}
-            {response.referenced_items &&
-              response.referenced_items.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Data Terkait ({response.referenced_items.length})
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {response.referenced_items.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleClickReference(item)}
-                        className="group flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition hover:border-[#0a4d8c]/40 hover:bg-[#f8fbff]"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate text-xs font-semibold text-slate-800 group-hover:text-[#0a4d8c]">
-                              {item.title}
-                            </span>
-                            {item.badge && (
-                              <span
-                                className={`shrink-0 rounded-full border px-1.5 py-0.2 text-[9px] font-medium ${
-                                  item.is_urgent
-                                    ? "border-red-200 bg-red-50 text-red-700"
-                                    : "border-slate-200 bg-slate-100 text-slate-600"
-                                }`}
-                              >
-                                {item.badge}
-                              </span>
-                            )}
-                          </div>
-                          <p className="truncate text-[10px] text-slate-500">
-                            {item.subtitle}
-                          </p>
-                        </div>
-                        <ArrowRight
-                          size={12}
-                          className="shrink-0 text-slate-400 group-hover:text-[#0a4d8c]"
-                        />
-                      </button>
-                    ))}
-                  </div>
+            {/* Referenced Data Items */}
+            {aiData?.referenced_items && aiData.referenced_items.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Data Terkait ({aiData.referenced_items.length})
                 </div>
-              )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {aiData.referenced_items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleClickReference(item)}
+                      className="group flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition hover:border-[#0a4d8c]/40 hover:bg-[#f8fbff]"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-xs font-semibold text-slate-800 group-hover:text-[#0a4d8c]">
+                            {item.title}
+                          </span>
+                          {item.badge && (
+                            <span
+                              className={`shrink-0 rounded-full border px-1.5 py-0.2 text-[9px] font-medium ${
+                                item.is_urgent
+                                  ? "border-red-200 bg-red-50 text-red-700"
+                                  : "border-slate-200 bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="truncate text-[10px] text-slate-500">
+                          {item.subtitle}
+                        </p>
+                      </div>
+                      <ArrowRight
+                        size={12}
+                        className="shrink-0 text-slate-400 group-hover:text-[#0a4d8c]"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            {/* Suggested Follow-up Questions/Commands */}
-            {response.suggested_followups &&
-              response.suggested_followups.length > 0 && (
+            {/* Suggested Follow-up Chips */}
+            {aiData?.suggested_followups &&
+              aiData.suggested_followups.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2.5">
-                  {response.suggested_followups.map((followup, idx) => (
+                  {aiData.suggested_followups.map((followup, idx) => (
                     <button
                       key={idx}
                       type="button"
@@ -421,7 +426,7 @@ export function OmniAiAssistantPanel({
                 </div>
               )}
           </>
-        ) : null}
+        )}
       </div>
     </div>
   );

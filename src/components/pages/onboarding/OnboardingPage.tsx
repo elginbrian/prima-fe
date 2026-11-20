@@ -31,14 +31,11 @@ import { useValidationLogs, useValidationProfiles } from "@/lib/query/hooks/proc
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
-import { useOmniAssistant } from "@/lib/query/hooks/ai/useOmniAssistant";
+import { createChatSession } from "@/lib/aiChatStore";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { formatDateIndo, formatRequestCode, formatRupiah } from "@/lib/utils";
-import { getErrorMessage } from "@/lib/api/errors";
 import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
-import { OmniAiAssistantPanel } from "./OmniAiAssistantPanel";
-import type { OmniAssistantResponseDto } from "@/lib/api";
 import type { DeadlineItem, UrgencyLevel } from "@/types";
 
 type OmniCategory =
@@ -208,12 +205,6 @@ export default function OnboardingPage() {
   const [isFocused, setIsFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [selectedSlaModal, setSelectedSlaModal] = useState<DeadlineItem | null>(null);
-
-  const omniAssistant = useOmniAssistant();
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const [aiQueryText, setAiQueryText] = useState("");
-  const [aiResponse, setAiResponse] = useState<OmniAssistantResponseDto | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -477,30 +468,13 @@ export default function OnboardingPage() {
     setActiveIndex(-1);
   }, [query]);
 
-  const handleAskAi = async (customQuery?: string) => {
+  const handleAskAi = (customQuery?: string) => {
     const q = (customQuery ?? query).trim();
     if (!q) return;
 
     setIsFocused(false);
-    setAiPanelOpen(true);
-    setAiQueryText(q);
-    setAiResponse(null);
-    setAiError(null);
-
-    try {
-      const res = await omniAssistant.mutateAsync(q);
-      setAiResponse(res);
-      if (
-        res.command &&
-        res.command.auto_execute &&
-        res.command.type === "NAVIGATE" &&
-        res.command.params?.url
-      ) {
-        router.push(String(res.command.params.url));
-      }
-    } catch (err) {
-      setAiError(getErrorMessage(err, "Gagal menghubungi PRIMA Omni-Assistant"));
-    }
+    const session = createChatSession(q);
+    router.push(`/dashboard/onboarding/chat/${encodeURIComponent(session.id)}`);
   };
 
   const handleSelectResult = (item: OmniSearchResult) => {
@@ -632,18 +606,16 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => handleAskAi()}
-                  disabled={omniAssistant.isPending}
-                  className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-2.5 py-1 text-[11px] font-semibold text-white shadow-2xs transition hover:!bg-[#083b6c] disabled:opacity-60"
-                  title="Tanya atau perintahkan AI (Mode Cekatan)"
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-2.5 py-1 text-[11px] font-semibold text-white shadow-2xs transition hover:!bg-[#083b6c]"
+                  title="Mulai Diskusi AI (Mode Cekatan)"
                 >
                   <Sparkles size={12} />
-                  <span className="hidden sm:inline">Tanya AI</span>
+                  <span className="hidden sm:inline">Diskusi AI</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setQuery("");
-                    setAiPanelOpen(false);
                     inputRef.current?.focus();
                   }}
                   className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
@@ -772,33 +744,13 @@ export default function OnboardingPage() {
               ) : (
                 <div className="py-3 px-3 text-center">
                   <p className="text-[11px] text-slate-500">
-                    Tidak ada kecocokan kata kunci langsung — tekan <strong className="font-semibold text-[#0a4d8c]">Enter</strong> untuk memproses dengan AI Mode Cekatan.
+                    Tidak ada kecocokan kata kunci langsung — tekan <strong className="font-semibold text-[#0a4d8c]">Enter</strong> untuk memulai Diskusi AI (Mode Cekatan).
                   </p>
                 </div>
               )}
             </div>
           )}
         </div>
-
-        {/* Inline Generative AI Answer & Command Execution Panel */}
-        {aiPanelOpen && (
-          <OmniAiAssistantPanel
-            query={aiQueryText}
-            response={aiResponse}
-            isLoading={omniAssistant.isPending}
-            error={aiError}
-            onClose={() => setAiPanelOpen(false)}
-            onSelectFollowup={(followup) => {
-              setQuery(followup);
-              handleAskAi(followup);
-            }}
-            onOpenSlaModal={(deadlineId) => {
-              const found = enrichedDeadlines.find((d) => d.id === deadlineId);
-              if (found) setSelectedSlaModal(found);
-            }}
-            deadlines={enrichedDeadlines}
-          />
-        )}
 
         {/* 4 Side-by-Side Quick Action Buttons */}
         <div className="mt-4 grid w-full max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

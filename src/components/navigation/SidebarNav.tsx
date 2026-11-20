@@ -1,5 +1,6 @@
 import {
   Compass,
+  MessageSquare,
   LayoutDashboard,
   FileSearch,
   BookOpen,
@@ -44,6 +45,14 @@ const MAIN_NAV_ITEMS: MainNavItemDef[] = [
     href: "/dashboard/onboarding",
     label: "Beranda",
     icon: Compass,
+    subItems: [
+      {
+        id: "onboarding-chat",
+        href: "/dashboard/onboarding/chat",
+        label: "Diskusi AI",
+        icon: MessageSquare,
+      },
+    ],
   },
   {
     id: "documents",
@@ -181,6 +190,9 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const isParentOpen = (itemId: MainNavItemDef["id"]): boolean => {
     if (!pathname) return false;
+    if (itemId === "onboarding") {
+      return pathname.startsWith("/dashboard/onboarding");
+    }
     if (itemId === "documents") {
       return pathname.startsWith("/dashboard/documents");
     }
@@ -197,6 +209,12 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const isParentPrimaryActive = (itemId: MainNavItemDef["id"]): boolean => {
     if (!pathname) return false;
+    if (itemId === "onboarding") {
+      return (
+        pathname.startsWith("/dashboard/onboarding") &&
+        !pathname.startsWith("/dashboard/onboarding/chat")
+      );
+    }
     if (itemId === "documents") {
       return (
         pathname.startsWith("/dashboard/documents") &&
@@ -214,6 +232,9 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const isSubItemActive = (sub: SubNavItemDef): boolean => {
     if (!pathname) return false;
+    if (sub.id === "onboarding-chat") {
+      return pathname.startsWith("/dashboard/onboarding/chat");
+    }
     if (sub.id === "templates") {
       return pathname.startsWith("/dashboard/documents/templates");
     }
