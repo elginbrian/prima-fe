@@ -7,7 +7,12 @@ export type ComplianceStatus =
 export type ChecklistItemStatus = "Memenuhi" | "Tidak Memenuhi" | "Perlu Perhatian";
 export type SeverityLevel = "SUCCESS" | "WARNING" | "ERROR";
 export type CriterionSource = "template" | "custom";
-export type AiTier = "cekatan" | "cermat" | "cerdas" | "custom";
+export type AiTier =
+  | "cekatan"
+  | "cermat"
+  | "cerdas"
+  | "custom"
+  | `custom:${string}`;
 export type AiTierUsed = AiTier | "gemma" | "external" | "mcp_takeover";
 export type ProcessingStatus = "processing" | "completed" | "failed";
 

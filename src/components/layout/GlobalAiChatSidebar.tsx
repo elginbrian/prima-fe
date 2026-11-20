@@ -33,10 +33,7 @@ import {
 } from "@/lib/query/hooks/procurement/useProcurement";
 import { useValidationLogs } from "@/lib/query/hooks/procurement/useValidation";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
-import {
-  useIntegrationConfig,
-  getCustomAiStatus,
-} from "@/lib/query/hooks/settings/useIntegrations";
+import { useChatAiMode } from "@/lib/query/hooks/settings/useIntegrations";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { formatRequestCode, formatRupiah } from "@/lib/utils";
@@ -87,10 +84,11 @@ export function GlobalAiChatSidebar({
   const { data: validationLogs = [] } = useValidationLogs();
   const { data: serverDeadlines = [] } = useDeadlines();
   const { data: settings } = useSettings();
-  const { data: integrationData } = useIntegrationConfig();
-  const { isCustomChat, customModelName } = getCustomAiStatus(
-    integrationData?.config
-  );
+  const {
+    activeMode: activeChatMode,
+    isCustom: isCustomChat,
+    label: chatCustomLabel,
+  } = useChatAiMode();
   const omniAssistant = useOmniAssistant();
 
   const slaWarningDays = settings?.slaWarningDays ?? 3;
@@ -404,6 +402,7 @@ export function GlobalAiChatSidebar({
         history: historyTurns,
         file: attachmentFile,
         pageContext: activePageContext.contextDescription,
+        aiTier: activeChatMode,
       });
 
       const completedMsg: AiChatMessage = {
@@ -532,7 +531,9 @@ export function GlobalAiChatSidebar({
                   <div className="flex items-center gap-1 text-[10px] font-medium text-[#0a4d8c]">
                     {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
                     <span className="truncate">
-                      {isCustomChat ? `Custom · ${customModelName}` : "Mode Cekatan"}
+                      {isCustomChat
+                        ? `Custom · ${chatCustomLabel}`
+                        : "Mode Cekatan"}
                     </span>
                   </div>
                 </div>

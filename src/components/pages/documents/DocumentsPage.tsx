@@ -372,8 +372,10 @@ export default function DocumentsPage() {
                               <div className="mt-0.5 text-[11px] font-normal text-slate-500">
                                 {doc.processingStatus === "processing"
                                   ? `Sedang dianalisis AI (${
-                                      AI_TIER_META[doc.aiTierRequested || "cekatan"]?.label ||
-                                      "Cekatan"
+                                      doc.aiTierRequested?.startsWith("custom")
+                                        ? "Custom"
+                                        : AI_TIER_META[doc.aiTierRequested || "cekatan"]
+                                            ?.label || "Cekatan"
                                     })...`
                                   : doc.processingStatus === "failed"
                                   ? "Analisis gagal — buka hasil untuk evaluasi ulang"

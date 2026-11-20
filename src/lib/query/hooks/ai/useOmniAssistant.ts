@@ -8,6 +8,7 @@ export interface OmniAssistantMutationInput {
   history?: OmniChatHistoryTurnDto[];
   file?: File | null;
   pageContext?: string | null;
+  aiTier?: string | null;
 }
 
 export function useOmniAssistant() {
@@ -18,8 +19,9 @@ export function useOmniAssistant() {
       const file = typeof input === "string" ? null : input.file;
       const pageContext =
         typeof input === "string" ? null : input.pageContext;
+      const aiTier = typeof input === "string" ? null : input.aiTier;
       return aiAssistantApi
-        .queryOmniAssistant(query, history, file, pageContext)
+        .queryOmniAssistant(query, history, file, pageContext, aiTier)
         .then((res) => res.data);
     },
   });

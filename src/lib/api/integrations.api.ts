@@ -3,9 +3,31 @@ import type { OmniAssistantResponseDto } from "./ai.api";
 
 export type ExternalProviderMode =
   | "internal_gemini"
+  | "external_mcp"
+  | "external_api"
+  | "external_webhook"
   | "openai_compatible"
   | "custom_webhook"
   | "mcp_takeover";
+
+export type CustomModelKind =
+  | "external_mcp"
+  | "external_api"
+  | "external_webhook";
+
+export interface CustomAiModelDto {
+  id: string;
+  display_name: string;
+  provider_kind: CustomModelKind;
+  provider_name?: string;
+  base_url?: string;
+  api_key?: string;
+  has_api_key?: boolean;
+  model_name?: string;
+  enable_chat: boolean;
+  enable_analysis: boolean;
+  clear_api_key?: boolean;
+}
 
 export interface TakeoverTicketDto {
   ticket_id: string;
@@ -28,6 +50,8 @@ export interface AiIntegrationConfigDto {
   model_name: string;
   replace_chat_brain: boolean;
   replace_analysis_brain: boolean;
+  active_custom_model_id?: string | null;
+  custom_models?: CustomAiModelDto[];
 }
 
 export interface McpToolSchemaDto {

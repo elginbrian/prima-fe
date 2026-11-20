@@ -11,5 +11,10 @@ export type { UserAvatarProps } from "./UserAvatar";
 export { SearchableSelect } from "./SearchableSelect";
 export type { SearchableSelectProps, SearchableOption } from "./SearchableSelect";
 export { ModalPortal } from "./ModalPortal";
-export { AiModeSelector, AI_TIER_META, AI_TIER_OPTIONS } from "./AiModeSelector";
+export {
+  AiModeSelector,
+  AI_TIER_META,
+  AI_TIER_OPTIONS,
+  getAiTierDisplayLabel,
+} from "./AiModeSelector";
 export { NotFoundView } from "./NotFoundView";

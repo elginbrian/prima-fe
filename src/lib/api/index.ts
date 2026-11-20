@@ -36,6 +36,8 @@ export { aiAssistantApi } from "./ai.api";
 export { integrationsApi } from "./integrations.api";
 export type {
   AiIntegrationConfigDto,
+  CustomAiModelDto,
+  CustomModelKind,
   ExternalProviderMode,
   GeneratedAgentTokenDto,
   IntegrationOverviewResponseDto,

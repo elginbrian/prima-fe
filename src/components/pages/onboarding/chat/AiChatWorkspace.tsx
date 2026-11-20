@@ -31,10 +31,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import { UserProfileBean } from "@/components/layout/UserProfileBean";
 import { useDeadlines } from "@/lib/query/hooks/procurement/useProcurement";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
-import {
-  useIntegrationConfig,
-  getCustomAiStatus,
-} from "@/lib/query/hooks/settings/useIntegrations";
+import { useChatAiMode } from "@/lib/query/hooks/settings/useIntegrations";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { getErrorMessage } from "@/lib/api/errors";
@@ -64,10 +61,11 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
   const logout = useLogout();
   const { data: serverDeadlines = [] } = useDeadlines();
   const { data: settings } = useSettings();
-  const { data: integrationData } = useIntegrationConfig();
-  const { isCustomChat, customModelName } = getCustomAiStatus(
-    integrationData?.config
-  );
+  const {
+    activeMode: activeChatMode,
+    isCustom: isCustomChat,
+    label: chatCustomLabel,
+  } = useChatAiMode();
   const omniAssistant = useOmniAssistant();
 
   const slaWarningDays = settings?.slaWarningDays ?? 3;
@@ -159,6 +157,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
           query: userQueryText,
           history: historyTurns,
           file: attachmentFile,
+          aiTier: activeChatMode,
         });
 
         const completedMsg: AiChatMessage = {
@@ -206,7 +205,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
         setSessions(getAllChatSessions());
       }
     },
-    [omniAssistant]
+    [omniAssistant, activeChatMode]
   );
 
   // If session was just created from /dashboard/onboarding Omni-Search with 1 user message and no AI reply yet, auto-trigger AI!
@@ -354,7 +353,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
                 </h1>
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
                   {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
-                  {isCustomChat ? `Custom · ${customModelName}` : "Mode Cekatan"}
+                  {isCustomChat ? `Custom · ${chatCustomLabel}` : "Mode Cekatan"}
                 </span>
               </div>
             </div>

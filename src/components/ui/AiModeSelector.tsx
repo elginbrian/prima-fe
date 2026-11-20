@@ -8,11 +8,12 @@ import {
   Cpu,
   ChevronDown,
   Check,
-  Lock,
+  Webhook,
 } from "lucide-react";
 import {
   useIntegrationConfig,
-  getCustomAiStatus,
+  getAnalysisCustomModels,
+  resolveAiSelectionMeta,
 } from "@/lib/query/hooks/settings/useIntegrations";
 import type { AiTier } from "@/types/validation";
 
@@ -57,6 +58,12 @@ export const AI_TIER_META: Record<
   mcp_takeover: { label: "Custom", badgeText: "Agent Takeover" },
 };
 
+export function getAiTierDisplayLabel(tier?: string | null): string {
+  if (!tier) return "Cekatan";
+  if (tier.startsWith("custom")) return "Custom";
+  return AI_TIER_META[tier]?.label ?? tier;
+}
+
 interface AiModeSelectorProps {
   value: AiTier;
   onChange: (tier: AiTier) => void;
@@ -76,19 +83,34 @@ export function AiModeSelector({
 }: AiModeSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasAutoInitRef = useRef(false);
   const { data: integrationData } = useIntegrationConfig();
-  const { isCustomAnalysis, customModelName } = getCustomAiStatus(
-    integrationData?.config
-  );
+  const config = integrationData?.config;
+  const analysisCustomModels = getAnalysisCustomModels(config);
 
-  // Sync parent state to "custom" when custom AI analysis brain is active
+  // Initialize once to active_custom_model_id if configured for analysis, while still allowing switching back to Cekatan/Cermat/Cerdas anytime
   useEffect(() => {
-    if (isCustomAnalysis && value !== "custom") {
-      onChange("custom");
-    } else if (!isCustomAnalysis && value === "custom") {
-      onChange("cekatan");
+    if (!config || hasAutoInitRef.current) return;
+    hasAutoInitRef.current = true;
+    const defaultId = config.active_custom_model_id;
+    if (
+      defaultId &&
+      analysisCustomModels.some((m) => m.id === defaultId) &&
+      value === "cekatan"
+    ) {
+      onChange(`custom:${defaultId}`);
     }
-  }, [isCustomAnalysis, value, onChange]);
+  }, [config, analysisCustomModels, value, onChange]);
+
+  // If currently selected custom model was deleted from Settings, revert to Cekatan
+  useEffect(() => {
+    if (config && typeof value === "string" && value.startsWith("custom:")) {
+      const id = value.slice("custom:".length);
+      if (!analysisCustomModels.some((m) => m.id === id)) {
+        onChange("cekatan");
+      }
+    }
+  }, [config, analysisCustomModels, value, onChange]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -103,17 +125,13 @@ export function AiModeSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const effectiveTier: AiTier = isCustomAnalysis
-    ? "custom"
-    : value === "custom"
-    ? "cekatan"
-    : value;
+  const selectedMeta = resolveAiSelectionMeta(config, value);
+  const activeDefaultOpt =
+    AI_TIER_OPTIONS.find((o) => o.value === selectedMeta.selection) ??
+    AI_TIER_OPTIONS[0];
 
-  const activeDefaultMeta =
-    AI_TIER_OPTIONS.find((o) => o.value === effectiveTier) ?? AI_TIER_OPTIONS[0];
-
-  const getIcon = (tier: AiTier, iconSize = 14) => {
-    if (tier === "custom") return <Cpu size={iconSize} />;
+  const getIcon = (tier: string, iconSize = 14) => {
+    if (tier.startsWith("custom")) return <Cpu size={iconSize} />;
     if (tier === "cekatan") return <Zap size={iconSize} />;
     if (tier === "cermat") return <Sparkles size={iconSize} />;
     return <Brain size={iconSize} />;
@@ -131,7 +149,7 @@ export function AiModeSelector({
           </span>
           {showHint && (
             <span className="text-[11px] font-normal text-slate-500">
-              {isCustomAnalysis ? customModelName : activeDefaultMeta.modelSummary}
+              {selectedMeta.modelName}
             </span>
           )}
         </div>
@@ -147,19 +165,23 @@ export function AiModeSelector({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f2fc] text-[#0a4d8c]">
-            {getIcon(effectiveTier, size === "sm" ? 13 : 14)}
+            {getIcon(selectedMeta.selection, size === "sm" ? 13 : 14)}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-900">
-                {isCustomAnalysis ? "Custom" : activeDefaultMeta.label}
+              <span className="truncate text-xs font-semibold text-slate-900">
+                {selectedMeta.isCustom
+                  ? `Custom · ${selectedMeta.label}`
+                  : activeDefaultOpt.label}
               </span>
-              <span className="rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-1.5 py-0.2 text-[9px] font-semibold text-[#0a4d8c]">
-                {isCustomAnalysis ? "Model Eksternal" : activeDefaultMeta.shortDesc}
+              <span className="shrink-0 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-1.5 py-0.2 text-[9px] font-semibold text-[#0a4d8c]">
+                {selectedMeta.isCustom
+                  ? "Tanpa Fallback"
+                  : activeDefaultOpt.shortDesc}
               </span>
             </div>
             <div className="truncate text-[11px] text-slate-500">
-              {isCustomAnalysis ? customModelName : activeDefaultMeta.modelSummary}
+              {selectedMeta.modelName}
             </div>
           </div>
         </div>
@@ -174,91 +196,13 @@ export function AiModeSelector({
 
       {open && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+          {/* Group 1: Internal via Gemini */}
           <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Pilih Mode Model AI Analisis
+            Internal via Gemini (Default)
           </div>
           <div className="space-y-0.5">
-            {/* Custom Mode Row */}
-            {isCustomAnalysis ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onChange("custom");
-                  setOpen(false);
-                }}
-                className="flex w-full items-start justify-between gap-2 rounded-lg bg-[#e8f2fc] px-2.5 py-2 text-left text-[#0a4d8c]"
-              >
-                <div className="flex items-start gap-2 min-w-0">
-                  <Cpu size={14} className="mt-0.5 shrink-0 text-[#0a4d8c]" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-slate-900">
-                      Custom
-                    </div>
-                    <div className="truncate text-[10px] font-medium text-[#0a4d8c]">
-                      {customModelName}
-                    </div>
-                  </div>
-                </div>
-                <Check size={13} className="mt-0.5 shrink-0 text-[#0a4d8c]" />
-              </button>
-            ) : (
-              <div
-                aria-disabled="true"
-                className="flex w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left opacity-55 cursor-not-allowed select-none"
-              >
-                <div className="flex items-start gap-2 min-w-0">
-                  <Cpu size={14} className="mt-0.5 shrink-0 text-slate-400" />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium text-slate-600">
-                        Custom
-                      </span>
-                      <span className="inline-flex items-center gap-0.5 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.2 text-[9px] font-medium text-slate-500">
-                        <Lock size={8} />
-                        Tidak Tersedia
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      Aktifkan di Pengaturan → Integrasi
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Default Tiers (Disabled when Custom AI is active) */}
             {AI_TIER_OPTIONS.map((opt) => {
-              const isSelected = !isCustomAnalysis && effectiveTier === opt.value;
-              if (isCustomAnalysis) {
-                return (
-                  <div
-                    key={opt.value}
-                    aria-disabled="true"
-                    className="flex w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left opacity-55 cursor-not-allowed select-none"
-                  >
-                    <div className="flex items-start gap-2 min-w-0">
-                      <span className="mt-0.5 shrink-0 text-slate-400">
-                        {getIcon(opt.value, 14)}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-medium text-slate-600">
-                            {opt.label}
-                          </span>
-                          <span className="inline-flex items-center gap-0.5 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.2 text-[9px] font-medium text-slate-500">
-                            <Lock size={8} />
-                            Tidak Tersedia
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                          {opt.modelSummary}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-
+              const isSelected = selectedMeta.selection === opt.value;
               return (
                 <button
                   key={opt.value}
@@ -302,11 +246,77 @@ export function AiModeSelector({
               );
             })}
           </div>
-          {isCustomAnalysis && (
-            <div className="mt-1 border-t border-slate-100 px-2.5 pt-1.5 pb-0.5 text-[10px] text-slate-500">
-              Mode default dinonaktifkan (tanpa fallback ke default).
+
+          {/* Group 2: Saved Custom Models */}
+          <div className="mt-1.5 border-t border-slate-100 pt-1.5">
+            <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Model Custom Tersimpan ({analysisCustomModels.length})
             </div>
-          )}
+
+            {analysisCustomModels.length === 0 ? (
+              <div className="px-2.5 py-2 text-[11px] text-slate-400">
+                Belum ada Model Custom API/Webhook. Tambah di Pengaturan → Integrasi.
+              </div>
+            ) : (
+              <div className="max-h-52 space-y-0.5 overflow-y-auto scrollbar-thin">
+                {analysisCustomModels.map((cm) => {
+                  const optionKey: AiTier = `custom:${cm.id}`;
+                  const isSelected = selectedMeta.selection === optionKey;
+                  const isWebhook = cm.provider_kind === "external_webhook";
+                  return (
+                    <button
+                      key={cm.id}
+                      type="button"
+                      onClick={() => {
+                        onChange(optionKey);
+                        setOpen(false);
+                      }}
+                      className={`flex w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                        isSelected
+                          ? "bg-[#e8f2fc] text-[#0a4d8c]"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2 min-w-0">
+                        <span
+                          className={`mt-0.5 shrink-0 ${
+                            isSelected ? "text-[#0a4d8c]" : "text-slate-500"
+                          }`}
+                        >
+                          {isWebhook ? <Webhook size={14} /> : <Cpu size={14} />}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate text-xs font-semibold text-slate-900">
+                              Custom · {cm.display_name}
+                            </span>
+                            <span className="shrink-0 rounded border border-slate-200 bg-slate-100 px-1 py-0.2 text-[9px] font-medium text-slate-600">
+                              {isWebhook ? "Webhook" : "API"}
+                            </span>
+                          </div>
+                          <div className="truncate text-[10px] text-[#0a4d8c]">
+                            {cm.model_name || cm.base_url || "Custom Model"}
+                          </div>
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <Check
+                          size={13}
+                          className="mt-0.5 shrink-0 text-[#0a4d8c]"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {selectedMeta.isCustom && (
+              <div className="mt-1 border-t border-slate-100 px-2.5 pt-1.5 pb-0.5 text-[10px] text-slate-500">
+                Model custom tidak fallback ke default jika gagal.
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

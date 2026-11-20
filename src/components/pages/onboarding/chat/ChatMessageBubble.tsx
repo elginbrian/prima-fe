@@ -369,7 +369,8 @@ export function ChatMessageBubble({
                   <span>Agent Takeover</span>
                 </>
               ) : aiData?.ai_tier_used === "custom" ||
-                aiData?.ai_tier_used === "external" ? (
+                aiData?.ai_tier_used === "external" ||
+                aiData?.ai_tier_used?.startsWith("custom") ? (
                 <>
                   <Cpu size={9} />
                   <span>Mode Custom</span>

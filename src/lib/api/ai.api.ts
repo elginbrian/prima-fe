@@ -55,7 +55,8 @@ export const aiAssistantApi = {
     query: string,
     history?: OmniChatHistoryTurnDto[],
     file?: File | null,
-    pageContext?: string | null
+    pageContext?: string | null,
+    aiTier?: string | null
   ) => {
     if (file) {
       const formData = new FormData();
@@ -63,6 +64,9 @@ export const aiAssistantApi = {
       formData.append("history", JSON.stringify(history ?? []));
       if (pageContext) {
         formData.append("page_context", pageContext);
+      }
+      if (aiTier) {
+        formData.append("ai_tier", aiTier);
       }
       formData.append("file", file);
       return apiFetch<OmniAssistantResponseDto>("/ai/omni-assistant", {
@@ -77,6 +81,7 @@ export const aiAssistantApi = {
         query,
         history: history ?? [],
         page_context: pageContext || undefined,
+        ai_tier: aiTier || undefined,
       }),
     });
   },

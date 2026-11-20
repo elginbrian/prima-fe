@@ -27,7 +27,7 @@ import {
   useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, Skeleton, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META } from "@/components/ui";
+import { Spinner, Skeleton, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META, getAiTierDisplayLabel } from "@/components/ui";
 import { resolveStorageUrl } from "@/lib/api/client";
 import { useAiJobs } from "@/context/AiJobsContext";
 import { formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
@@ -216,7 +216,7 @@ export default function DocumentResultPage() {
           aiTierRequested: reevalAiTier,
         });
         toast.info(
-          `Evaluasi ulang AI (${AI_TIER_META[reevalAiTier]?.label ?? reevalAiTier}) berjalan di latar belakang. Anda dapat berpindah halaman — notifikasi akan muncul saat selesai.`,
+          `Evaluasi ulang AI (${getAiTierDisplayLabel(reevalAiTier)}) berjalan di latar belakang. Anda dapat berpindah halaman — notifikasi akan muncul saat selesai.`,
           { durationMs: 6500 }
         );
       } else {
@@ -424,8 +424,10 @@ export default function DocumentResultPage() {
               <div className="space-y-1">
                 <div className="text-sm font-semibold text-slate-900">
                   Dokumen Sedang Dianalisis AI (
-                  {AI_TIER_META[validationData.ai_tier_requested || "cekatan"]?.badgeText ||
-                    "Mode Cekatan"}
+                  {validationData.ai_tier_requested?.startsWith("custom")
+                    ? "Mode Custom"
+                    : AI_TIER_META[validationData.ai_tier_requested || "cekatan"]
+                        ?.badgeText || "Mode Cekatan"}
                   )
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">

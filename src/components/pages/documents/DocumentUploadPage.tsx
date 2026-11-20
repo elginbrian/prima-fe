@@ -25,7 +25,7 @@ import {
   useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META } from "@/components/ui";
+import { Spinner, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META, getAiTierDisplayLabel } from "@/components/ui";
 import { useAiJobs } from "@/context/AiJobsContext";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 import { ValidationProfileSelector } from "@/components/widgets/documents/ValidationProfileSelector";
@@ -306,7 +306,7 @@ export default function DocumentUploadPage() {
           aiTierRequested: aiTier,
         });
         toast.info(
-          `Analisis AI (${AI_TIER_META[aiTier]?.label ?? aiTier}) dimulai untuk '${result.document_name}'. Anda dapat berpindah halaman — notifikasi akan muncul saat selesai.`,
+          `Analisis AI (${getAiTierDisplayLabel(aiTier)}) dimulai untuk '${result.document_name}'. Anda dapat berpindah halaman — notifikasi akan muncul saat selesai.`,
           { durationMs: 6500 }
         );
         router.push("/dashboard/documents");

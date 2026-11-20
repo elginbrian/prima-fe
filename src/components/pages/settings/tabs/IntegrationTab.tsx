@@ -11,63 +11,88 @@ import {
   Play,
   Sparkles,
   RefreshCw,
+  Radio,
+  Webhook,
+  Plus,
+  Pencil,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import {
   useIntegrationConfig,
   useUpdateIntegrationConfig,
   useGenerateAgentToken,
   useExecuteMcpTool,
+  getSavedCustomModels,
 } from "@/lib/query/hooks/settings/useIntegrations";
 import { API_ORIGIN } from "@/lib/api/client";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, Skeleton, SearchableSelect } from "@/components/ui";
+import { Spinner, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api/errors";
-import type { ExternalProviderMode } from "@/lib/api";
+import type {
+  CustomAiModelDto,
+  CustomModelKind,
+  ExternalProviderMode,
+} from "@/lib/api";
 
-const PROVIDER_MODE_OPTIONS: {
+const PROVIDER_KIND_CARDS: {
   value: ExternalProviderMode;
-  label: string;
-  description: string;
+  title: string;
+  subtitle: string;
+  icon: typeof Sparkles;
 }[] = [
   {
     value: "internal_gemini",
-    label: "PRIMA Internal AI (Google Gemini + Gemma 4 Failover)",
-    description: "Menggunakan mesin AI internal PRIMA dengan rantai Mode Cekatan/Cermat/Cerdas",
+    title: "Internal via Gemini",
+    subtitle: "Gemini 3.x & Gemini 4 bawaan PRIMA",
+    icon: Sparkles,
   },
   {
-    value: "mcp_takeover",
-    label: "External Agent Takeover via MCP (Antigravity / Claude Code / Codex / Cursor)",
-    description: "AI Eksternal mengambil alih penuh dan membalas langsung pesan Diskusi AI dari luar sistem tanpa butuh API Key di web",
+    value: "external_mcp",
+    title: "External via MCP",
+    subtitle: "Agent Takeover (Antigravity / Claude / Codex)",
+    icon: Radio,
   },
   {
-    value: "openai_compatible",
-    label: "External OpenAI-Compatible AI (ChatGPT, Claude/OpenRouter, Codex, Ollama)",
-    description: "Gantikan otak AI di dalam PRIMA dengan API OpenAI, OpenRouter, Groq, atau LLM lokal",
+    value: "external_api",
+    title: "External via API",
+    subtitle: "OpenAI, OpenRouter, Groq, Ollama",
+    icon: Cpu,
   },
   {
-    value: "custom_webhook",
-    label: "Custom External AI Agent Webhook",
-    description: "Hubungkan ke endpoint HTTP agent kustom eksternal Anda sendiri",
+    value: "external_webhook",
+    title: "External via Webhook",
+    subtitle: "Endpoint HTTP Agent Kustom",
+    icon: Webhook,
   },
 ];
 
 const PRESET_PROVIDERS = [
   {
-    name: "OpenAI (ChatGPT)",
+    displayName: "ChatGPT (OpenAI)",
+    providerName: "OpenAI (ChatGPT)",
     baseUrl: "https://api.openai.com/v1",
     model: "gpt-4o-mini",
   },
   {
-    name: "OpenRouter (Claude / Gemini / DeepSeek)",
+    displayName: "OpenRouter Free / Haiku",
+    providerName: "OpenRouter (Claude / Gemini / DeepSeek)",
     baseUrl: "https://openrouter.ai/api/v1",
     model: "anthropic/claude-3.5-haiku",
   },
   {
-    name: "Groq Cloud (Ultra-Fast)",
+    displayName: "Groq Cloud Ultra-Fast",
+    providerName: "Groq Cloud (Ultra-Fast)",
     baseUrl: "https://api.groq.com/openai/v1",
     model: "llama-3.3-70b-versatile",
   },
 ];
+
+function getKindBadgeText(kind: CustomModelKind): string {
+  if (kind === "external_mcp") return "External via MCP";
+  if (kind === "external_webhook") return "External via Webhook";
+  return "External via API";
+}
 
 export function IntegrationTab() {
   const toast = useToast();
@@ -76,16 +101,23 @@ export function IntegrationTab() {
   const generateToken = useGenerateAgentToken();
   const executeTool = useExecuteMcpTool();
 
-  const [providerMode, setProviderMode] =
+  const [selectedKind, setSelectedKind] =
     useState<ExternalProviderMode>("internal_gemini");
-  const [providerName, setProviderName] = useState(
-    "PRIMA Internal (Google Gemini)"
+  const [savedModels, setSavedModels] = useState<CustomAiModelDto[]>([]);
+  const [activeCustomModelId, setActiveCustomModelId] = useState<string | null>(
+    null
   );
+
+  // Add / Edit Custom Model Form State
+  const [editingModelId, setEditingModelId] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState("");
+  const [providerName, setProviderName] = useState("");
   const [baseUrl, setBaseUrl] = useState("https://api.openai.com/v1");
   const [apiKey, setApiKey] = useState("");
   const [modelName, setModelName] = useState("gpt-4o-mini");
-  const [replaceChatBrain, setReplaceChatBrain] = useState(true);
-  const [replaceAnalysisBrain, setReplaceAnalysisBrain] = useState(true);
+  const [enableChat, setEnableChat] = useState(true);
+  const [enableAnalysis, setEnableAnalysis] = useState(true);
+  const [setAsDefaultOnSave, setSetAsDefaultOnSave] = useState(true);
 
   const [tokenLabel, setTokenLabel] = useState("Antigravity & MCP Agent Key");
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
@@ -100,13 +132,9 @@ export function IntegrationTab() {
   useEffect(() => {
     if (integrationData?.config) {
       const c = integrationData.config;
-      setProviderMode(c.provider_mode || "internal_gemini");
-      setProviderName(c.provider_name || "PRIMA Internal (Google Gemini)");
-      setBaseUrl(c.base_url || "https://api.openai.com/v1");
-      setApiKey(c.api_key || "");
-      setModelName(c.model_name || "gpt-4o-mini");
-      setReplaceChatBrain(c.replace_chat_brain ?? true);
-      setReplaceAnalysisBrain(c.replace_analysis_brain ?? false);
+      const models = getSavedCustomModels(c);
+      setSavedModels(models);
+      setActiveCustomModelId(c.active_custom_model_id ?? null);
     }
   }, [integrationData]);
 
@@ -117,21 +145,152 @@ export function IntegrationTab() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const handleSaveProviderConfig = async () => {
+  const resetCustomForm = (kind: CustomModelKind = "external_api") => {
+    setEditingModelId(null);
+    setDisplayName("");
+    setProviderName("");
+    setBaseUrl(
+      kind === "external_webhook"
+        ? "https://agent.perusahaan.id/webhook/ai"
+        : "https://api.openai.com/v1"
+    );
+    setApiKey("");
+    setModelName(
+      kind === "external_mcp"
+        ? "External Agent Takeover (MCP)"
+        : "gpt-4o-mini"
+    );
+    setEnableChat(true);
+    setEnableAnalysis(kind !== "external_mcp");
+    setSetAsDefaultOnSave(true);
+  };
+
+  const persistRegistry = async (
+    nextModels: CustomAiModelDto[],
+    nextActiveId: string | null,
+    successMessage: string
+  ) => {
     try {
+      const activeModel = nextModels.find((m) => m.id === nextActiveId);
       await updateConfig.mutateAsync({
-        provider_mode: providerMode,
-        provider_name: providerName,
-        base_url: baseUrl,
-        api_key: apiKey,
-        model_name: modelName,
-        replace_chat_brain: replaceChatBrain,
-        replace_analysis_brain: replaceAnalysisBrain,
+        provider_mode: activeModel ? activeModel.provider_kind : "internal_gemini",
+        provider_name: activeModel
+          ? activeModel.display_name
+          : "PRIMA Internal (Google Gemini)",
+        active_custom_model_id: nextActiveId,
+        custom_models: nextModels,
       });
-      toast.success("Konfigurasi Otak AI & Integrasi berhasil disimpan.");
+      setSavedModels(nextModels);
+      setActiveCustomModelId(nextActiveId);
+      toast.success(successMessage);
     } catch (err) {
-      toast.error(getErrorMessage(err, "Gagal menyimpan konfigurasi AI"));
+      toast.error(getErrorMessage(err, "Gagal menyimpan konfigurasi model AI"));
     }
+  };
+
+  const handleSetInternalGeminiDefault = async () => {
+    await persistRegistry(
+      savedModels,
+      null,
+      "Internal via Gemini ditetapkan sebagai mode AI default (Model Custom tetap tersimpan)."
+    );
+  };
+
+  const handleSaveCustomModel = async () => {
+    const kind: CustomModelKind =
+      selectedKind === "external_mcp" ||
+      selectedKind === "external_webhook" ||
+      selectedKind === "external_api"
+        ? selectedKind
+        : "external_api";
+
+    const cleanName =
+      displayName.trim() ||
+      (kind === "external_mcp"
+        ? "External Agent Takeover (MCP)"
+        : modelName.trim());
+
+    if (!cleanName) {
+      toast.warning("Nama model custom wajib diisi.");
+      return;
+    }
+
+    if (kind !== "external_mcp" && (!baseUrl.trim() || !modelName.trim())) {
+      toast.warning("Base URL dan Nama Model Teknis wajib diisi.");
+      return;
+    }
+
+    const newId =
+      editingModelId ||
+      `CUST-${Math.random().toString(16).slice(2, 8).toUpperCase()}`;
+
+    const entry: CustomAiModelDto = {
+      id: newId,
+      display_name: cleanName,
+      provider_kind: kind,
+      provider_name: providerName.trim() || getKindBadgeText(kind),
+      base_url: kind === "external_mcp" ? "" : baseUrl.trim(),
+      api_key: kind === "external_mcp" ? "" : apiKey,
+      model_name:
+        kind === "external_mcp"
+          ? "External Agent Takeover (MCP)"
+          : modelName.trim(),
+      enable_chat: enableChat,
+      enable_analysis: kind === "external_mcp" ? false : enableAnalysis,
+    };
+
+    const exists = savedModels.some((m) => m.id === newId);
+    const nextModels = exists
+      ? savedModels.map((m) => (m.id === newId ? entry : m))
+      : [...savedModels, entry];
+
+    const nextActiveId = setAsDefaultOnSave ? newId : activeCustomModelId;
+
+    await persistRegistry(
+      nextModels,
+      nextActiveId,
+      exists
+        ? `Model custom '${cleanName}' berhasil diperbarui.`
+        : `Model custom '${cleanName}' berhasil ditambahkan.`
+    );
+    resetCustomForm(kind);
+  };
+
+  const handleStartEditModel = (m: CustomAiModelDto) => {
+    setSelectedKind(m.provider_kind);
+    setEditingModelId(m.id);
+    setDisplayName(m.display_name);
+    setProviderName(m.provider_name || "");
+    setBaseUrl(m.base_url || "https://api.openai.com/v1");
+    setApiKey(m.api_key || "");
+    setModelName(m.model_name || "");
+    setEnableChat(m.enable_chat);
+    setEnableAnalysis(m.enable_analysis);
+    setSetAsDefaultOnSave(activeCustomModelId === m.id);
+  };
+
+  const handleDeleteCustomModel = async (id: string) => {
+    const target = savedModels.find((m) => m.id === id);
+    const nextModels = savedModels.filter((m) => m.id !== id);
+    const nextActiveId =
+      activeCustomModelId === id ? null : activeCustomModelId;
+    if (editingModelId === id) {
+      resetCustomForm("external_api");
+    }
+    await persistRegistry(
+      nextModels,
+      nextActiveId,
+      `Model custom '${target?.display_name || id}' berhasil dihapus.`
+    );
+  };
+
+  const handleSetCustomDefault = async (id: string) => {
+    const target = savedModels.find((m) => m.id === id);
+    await persistRegistry(
+      savedModels,
+      id,
+      `'${target?.display_name || id}' dijadikan model default baru.`
+    );
   };
 
   const handleGenerateToken = async () => {
@@ -379,10 +538,14 @@ export function IntegrationTab() {
 
   const toolsList = integrationData?.mcp_tools || [];
 
+  const activeDefaultModel = savedModels.find(
+    (m) => m.id === activeCustomModelId
+  );
+
   return (
     <div className="space-y-7">
-      {/* SECTION 1: PLUGGABLE AI BRAIN ROUTER (GANTIKAN AI DI DALAM CHAT & ANALISIS) */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+      {/* SECTION 1: PLUGGABLE AI BRAIN & MULTI CUSTOM MODEL REGISTRY */}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3.5">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e8f2fc] text-[#0a4d8c]">
@@ -390,174 +553,397 @@ export function IntegrationTab() {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-900">
-                Pluggable AI Brain
+                Pluggable AI Brain &amp; Daftar Model Custom
               </h3>
               <p className="mt-0.5 text-xs text-slate-500">
-                Pilih apakah ruang Diskusi AI &amp; pemeriksaan dokumen menggunakan Gemini bawaan PRIMA atau digantikan oleh AI eksternal (ChatGPT, Claude, OpenRouter, Codex, atau Webhook Agent).
+                Simpan beberapa model AI eksternal bernama dan pilih langsung dari dropdown Chat maupun Analisis Dokumen. Model bawaan Gemini tetap selalu tersedia, sementara model custom tidak pernah fallback ke default.
               </p>
             </div>
           </div>
 
           <span className="rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-3 py-1 text-[11px] font-semibold text-[#0a4d8c]">
-            {providerMode === "internal_gemini"
-              ? "Aktif: Gemini Bawaan"
-              : providerMode === "mcp_takeover"
-              ? "Aktif: External Agent Takeover (MCP)"
-              : `Aktif: ${modelName}`}
+            {activeDefaultModel
+              ? `Default: Custom · ${activeDefaultModel.display_name}`
+              : "Default: Internal via Gemini"}
           </span>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-              Mode Provider AI
-            </label>
-            <SearchableSelect
-              value={providerMode}
-              onChange={(val) => {
-                const nextMode = val as ExternalProviderMode;
-                setProviderMode(nextMode);
-                if (
-                  nextMode === "openai_compatible" ||
-                  nextMode === "custom_webhook"
-                ) {
-                  setReplaceChatBrain(true);
-                  setReplaceAnalysisBrain(true);
-                } else if (nextMode === "mcp_takeover") {
-                  setReplaceChatBrain(true);
-                }
-              }}
-              options={PROVIDER_MODE_OPTIONS}
-              searchPlaceholder="Pilih mode provider AI..."
-            />
+        {/* 1A. 4-Option AI Kind Selector */}
+        <div className="space-y-2">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+            Jenis Model AI
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {PROVIDER_KIND_CARDS.map((card) => {
+              const Icon = card.icon;
+              const isSelected = selectedKind === card.value;
+              return (
+                <button
+                  key={card.value}
+                  type="button"
+                  onClick={() => {
+                    setSelectedKind(card.value);
+                    if (
+                      card.value === "external_mcp" ||
+                      card.value === "external_api" ||
+                      card.value === "external_webhook"
+                    ) {
+                      if (!editingModelId) {
+                        resetCustomForm(card.value);
+                      } else {
+                        setEnableAnalysis(card.value !== "external_mcp");
+                      }
+                    }
+                  }}
+                  className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition ${
+                    isSelected
+                      ? "border-[#0a4d8c] bg-[#f4f8fd] ring-2 ring-[#0a4d8c]/15"
+                      : "border-slate-200 bg-white hover:border-[#0a4d8c]/40 hover:bg-slate-50/70"
+                  }`}
+                >
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                      isSelected
+                        ? "bg-[#0a4d8c] text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <Icon size={15} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-slate-900">
+                      {card.title}
+                    </div>
+                    <div className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                      {card.subtitle}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {providerMode === "mcp_takeover" && (
-            <div className="rounded-xl border border-[#0a4d8c]/25 bg-[#f4f8fd] p-4 space-y-2.5 text-xs text-slate-700">
-              <div className="font-semibold text-[#0a4d8c]">
-                Mode External Agent Takeover (Live Bridge via MCP) Aktif
+        {/* 1B. Configurator Panel for Selected Kind */}
+        {selectedKind === "internal_gemini" ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1 text-xs text-slate-700">
+              <div className="font-semibold text-slate-900">
+                Internal via Gemini (Bawaan PRIMA)
               </div>
-              <p className="leading-relaxed">
-                Saat mode ini disimpan, setiap pertanyaan atau lampiran yang dikirim pengguna di <strong>Search Bar Beranda</strong>, <strong>Halaman Diskusi AI</strong>, maupun <strong>Sidebar Kanan</strong> akan masuk ke antrean tiket Takeover (<code className="font-mono text-[#0a4d8c]">TKT-...</code>).
-              </p>
-              <p className="leading-relaxed">
-                Agent eksternal Anda (seperti <strong>Antigravity, Claude Code, Codex, atau Cursor</strong>) dapat mengambil pertanyaan tersebut dengan tool <code className="font-mono text-[#0a4d8c]">prima_get_pending_chat_takeover</code> dan mengirimkan balasannya langsung ke layar chat pengguna dengan tool <code className="font-mono text-[#0a4d8c]">prima_reply_chat_takeover</code>.
+              <p className="text-slate-600 leading-relaxed">
+                Mode default <strong>Cekatan</strong> (Chat &amp; Analisis), <strong>Cermat</strong>, dan <strong>Cerdas</strong> (Analisis) selalu dapat dipilih langsung di dropdown meskipun Anda memiliki banyak Model Custom tersimpan.
               </p>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handleSetInternalGeminiDefault}
+              disabled={updateConfig.isPending || !activeCustomModelId}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#083b6c] disabled:opacity-50"
+            >
+              {activeCustomModelId ? (
+                <>
+                  <CheckCircle2 size={13} />
+                  <span>Jadikan Internal Gemini Default</span>
+                </>
+              ) : (
+                <>
+                  <Check size={13} />
+                  <span>Sudah Menjadi Default</span>
+                </>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-semibold text-slate-900">
+                {editingModelId
+                  ? `Edit Model Custom (${getKindBadgeText(
+                      selectedKind as CustomModelKind
+                    )})`
+                  : `Tambah Model Custom Baru (${getKindBadgeText(
+                      selectedKind as CustomModelKind
+                    )})`}
+              </div>
+              {editingModelId && (
+                <button
+                  type="button"
+                  onClick={() => resetCustomForm("external_api")}
+                  className="text-[11px] font-medium text-slate-500 hover:text-slate-800"
+                >
+                  Batal Edit
+                </button>
+              )}
+            </div>
 
-          {providerMode !== "internal_gemini" &&
-            providerMode !== "mcp_takeover" && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
-              {/* Quick Preset Pills */}
+            {selectedKind === "external_api" && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[11px] font-medium text-slate-500">
                   Preset Cepat:
                 </span>
                 {PRESET_PROVIDERS.map((preset) => (
                   <button
-                    key={preset.name}
+                    key={preset.displayName}
                     type="button"
                     onClick={() => {
-                      setProviderName(preset.name);
+                      if (!displayName.trim()) {
+                        setDisplayName(preset.displayName);
+                      }
+                      setProviderName(preset.providerName);
                       setBaseUrl(preset.baseUrl);
                       setModelName(preset.model);
                     }}
                     className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c]"
                   >
-                    {preset.name}
+                    {preset.providerName}
                   </button>
                 ))}
               </div>
+            )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-                    Base URL Endpoint
-                  </label>
-                  <input
-                    type="text"
-                    value={baseUrl}
-                    onChange={(e) => setBaseUrl(e.target.value)}
-                    placeholder="https://api.openai.com/v1"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-                    Nama Model AI Eksternal
-                  </label>
-                  <input
-                    type="text"
-                    value={modelName}
-                    onChange={(e) => setModelName(e.target.value)}
-                    placeholder="gpt-4o-mini / claude-3-5-sonnet"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-                    API Key / Bearer Secret Provider Eksternal
-                  </label>
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="sk-..."
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
-                  />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div
+                className={
+                  selectedKind === "external_mcp" ? "sm:col-span-2" : ""
+                }
+              >
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                  Nama Custom Model (Ditampilkan di Dropdown)
+                </label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={
+                    selectedKind === "external_mcp"
+                      ? "Contoh: Antigravity Live Agent"
+                      : "Contoh: Groq GPT-OSS 120B / OpenRouter Free"
+                  }
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                />
               </div>
 
-              <div className="flex flex-wrap items-center gap-5 pt-1">
-                <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={replaceChatBrain}
-                    onChange={(e) => setReplaceChatBrain(e.target.checked)}
-                    className="rounded border-slate-300 text-[#0a4d8c] focus:ring-[#0a4d8c]"
-                  />
-                  <span>Gantikan AI di dalam Diskusi AI &amp; Omni-Search</span>
-                </label>
-
-                <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={replaceAnalysisBrain}
-                    onChange={(e) => setReplaceAnalysisBrain(e.target.checked)}
-                    className="rounded border-slate-300 text-[#0a4d8c] focus:ring-[#0a4d8c]"
-                  />
-                  <span>Gantikan AI pada Pemeriksaan Dokumen &amp; OCR</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleSaveProviderConfig}
-              disabled={updateConfig.isPending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#083b6c] disabled:opacity-50"
-            >
-              {updateConfig.isPending ? (
+              {selectedKind !== "external_mcp" && (
                 <>
-                  <Spinner
-                    size="xs"
-                    className="border-white border-t-transparent"
-                  />
-                  <span>Menyimpan...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={13} />
-                  <span>Simpan Konfigurasi Otak AI</span>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                      ID / Nama Model Teknis
+                    </label>
+                    <input
+                      type="text"
+                      value={modelName}
+                      onChange={(e) => setModelName(e.target.value)}
+                      placeholder="openai/gpt-oss-120b / gpt-4o-mini"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                      {selectedKind === "external_webhook"
+                        ? "Endpoint Webhook URL"
+                        : "Base URL Endpoint"}
+                    </label>
+                    <input
+                      type="text"
+                      value={baseUrl}
+                      onChange={(e) => setBaseUrl(e.target.value)}
+                      placeholder={
+                        selectedKind === "external_webhook"
+                          ? "https://agent.anda.com/webhook"
+                          : "https://api.openai.com/v1"
+                      }
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                      API Key / Bearer Secret
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder={
+                        editingModelId
+                          ? "Biarkan seperti semula untuk mempertahankan key"
+                          : "sk-..."
+                      }
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                    />
+                  </div>
                 </>
               )}
-            </button>
+            </div>
+
+            {selectedKind === "external_mcp" && (
+              <div className="rounded-lg border border-[#0a4d8c]/20 bg-[#f4f8fd] p-3 text-xs text-slate-700 leading-relaxed">
+                Pertanyaan dari dropdown chat yang memilih model ini akan masuk ke antrean tiket Takeover (<code className="font-mono text-[#0a4d8c]">TKT-...</code>) dan dibalas real-time oleh client MCP Anda melalui <code className="font-mono text-[#0a4d8c]">prima_get_pending_chat_takeover</code> &amp; <code className="font-mono text-[#0a4d8c]">prima_reply_chat_takeover</code>.
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enableChat}
+                    onChange={(e) => setEnableChat(e.target.checked)}
+                    className="rounded border-slate-300 text-[#0a4d8c] focus:ring-[#0a4d8c]"
+                  />
+                  <span>Tampilkan di Dropdown Chat</span>
+                </label>
+
+                {selectedKind !== "external_mcp" && (
+                  <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={enableAnalysis}
+                      onChange={(e) => setEnableAnalysis(e.target.checked)}
+                      className="rounded border-slate-300 text-[#0a4d8c] focus:ring-[#0a4d8c]"
+                    />
+                    <span>Tampilkan di Dropdown Analisis Dokumen &amp; OCR</span>
+                  </label>
+                )}
+
+                <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={setAsDefaultOnSave}
+                    onChange={(e) => setSetAsDefaultOnSave(e.target.checked)}
+                    className="rounded border-slate-300 text-[#0a4d8c] focus:ring-[#0a4d8c]"
+                  />
+                  <span>Jadikan default pilihan awal</span>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveCustomModel}
+                disabled={updateConfig.isPending}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#083b6c] disabled:opacity-50"
+              >
+                {updateConfig.isPending ? (
+                  <>
+                    <Spinner
+                      size="xs"
+                      className="border-white border-t-transparent"
+                    />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus size={13} />
+                    <span>
+                      {editingModelId
+                        ? "Simpan Perubahan Model"
+                        : "Simpan Model Custom"}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
+        )}
+
+        {/* 1C. Saved Custom Models Registry List */}
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+              Model Custom Tersimpan ({savedModels.length})
+            </span>
+            <span className="text-[11px] text-slate-400">
+              Model custom gagal tidak akan fallback otomatis ke model default
+            </span>
+          </div>
+
+          {savedModels.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-5 text-center text-xs text-slate-500">
+              Belum ada model custom tersimpan. Pilih{" "}
+              <strong>External via MCP</strong>, <strong>External via API</strong>, atau{" "}
+              <strong>External via Webhook</strong> di atas untuk menambahkan.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {savedModels.map((m) => {
+                const isDefault = activeCustomModelId === m.id;
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3.5 transition ${
+                      isDefault
+                        ? "border-[#0a4d8c]/35 bg-[#f4f8fd]"
+                        : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-900">
+                          {m.display_name}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                          {getKindBadgeText(m.provider_kind)}
+                        </span>
+                        {isDefault && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#0a4d8c] px-2 py-0.5 text-[10px] font-semibold text-white">
+                            <Check size={10} />
+                            Default Aktif
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                        <span className="font-mono text-[#0a4d8c]">
+                          {m.model_name || "External via MCP"}
+                        </span>
+                        {m.base_url && (
+                          <span className="truncate max-w-[260px]">
+                            {m.base_url}
+                          </span>
+                        )}
+                        <span>
+                          {m.enable_chat ? "Chat" : ""}
+                          {m.enable_chat && m.enable_analysis ? " · " : ""}
+                          {m.enable_analysis ? "Analisis & OCR" : ""}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {!isDefault && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetCustomDefault(m.id)}
+                          disabled={updateConfig.isPending}
+                          className="rounded-lg border border-[#0a4d8c]/25 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#0a4d8c] hover:bg-[#e8f2fc]"
+                        >
+                          Jadikan Default
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditModel(m)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c]"
+                      >
+                        <Pencil size={11} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCustomModel(m.id)}
+                        disabled={updateConfig.isPending}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                      >
+                        <Trash2 size={11} />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

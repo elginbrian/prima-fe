@@ -29,6 +29,30 @@ export interface AiChatSession {
 }
 
 const STORAGE_KEY = "prima_ai_chat_sessions_v1";
+const CHAT_AI_MODE_KEY = "prima_ai_chat_mode_v1";
+
+export function getSavedChatAiMode(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(CHAT_AI_MODE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function setSavedChatAiMode(mode: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (mode) {
+      localStorage.setItem(CHAT_AI_MODE_KEY, mode);
+    } else {
+      localStorage.removeItem(CHAT_AI_MODE_KEY);
+    }
+    window.dispatchEvent(new CustomEvent("prima-ai-chat-mode-changed"));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 // In-memory bridge so an attachment uploaded in /dashboard/onboarding search bar
 // is seamlessly consumed when redirecting to /dashboard/onboarding/chat/[chatId]
