@@ -53,7 +53,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: "umum", label: "Profil & Akun", icon: User },
     { id: "sla", label: "Kebijakan SLA & Eskalasi", icon: Clock },
-    { id: "integrasi", label: "AI & Integrasi MCP", icon: Blocks },
+    { id: "integrasi", label: "Integrasi AI", icon: Blocks },
   ];
 
   if (isLoading || !formData) {

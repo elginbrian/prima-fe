@@ -20,6 +20,7 @@ import {
   Zap,
   Brain,
   ChevronDown,
+  Workflow,
 } from "lucide-react";
 import {
   useIntegrationConfig,
@@ -30,6 +31,8 @@ import {
   getInternalModesConfig,
   DEFAULT_INTERNAL_MODES,
 } from "@/lib/query/hooks/settings/useIntegrations";
+import { useN8nPlugin } from "@/lib/query/hooks/settings/useN8nPlugin";
+import { N8nPluginSection } from "./N8nPluginSection";
 import { API_ORIGIN } from "@/lib/api/client";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner, Skeleton } from "@/components/ui";
@@ -138,6 +141,10 @@ export function IntegrationTab() {
   const [toolArgsJson, setToolArgsJson] = useState("{}");
   const [toolResultJson, setToolResultJson] = useState<string | null>(null);
   const [showPlayground, setShowPlayground] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<"ai_mcp" | "n8n_plugins">(
+    "ai_mcp"
+  );
+  const { data: n8nOverview } = useN8nPlugin();
 
   useEffect(() => {
     if (integrationData?.config) {
@@ -609,9 +616,56 @@ export function IntegrationTab() {
   const activeDefaultModel = savedModels.find(
     (m) => m.id === activeCustomModelId
   );
+  const activeN8nCount = (n8nOverview?.webhooks || []).filter(
+    (w) => w.enabled
+  ).length;
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
+      {/* SUB-NAVIGATION INSIDE TAB 'INTEGRASI AI' */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-1.5">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("ai_mcp")}
+          className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition ${
+            activeSubTab === "ai_mcp"
+              ? "bg-white text-[#0a4d8c] shadow-2xs ring-1 ring-slate-200"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Cpu size={14} />
+          <span>Model AI &amp; MCP</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("n8n_plugins")}
+          className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition ${
+            activeSubTab === "n8n_plugins"
+              ? "bg-white text-[#0a4d8c] shadow-2xs ring-1 ring-slate-200"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Workflow size={14} />
+          <span>Plugin n8n &amp; Otomasi</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              activeSubTab === "n8n_plugins"
+                ? "bg-[#e8f2fc] text-[#0a4d8c]"
+                : "bg-slate-200/80 text-slate-600"
+            }`}
+          >
+            {activeN8nCount}
+          </span>
+        </button>
+      </div>
+
+      {activeSubTab === "n8n_plugins" ? (
+        <N8nPluginSection
+          onJumpToTokenSection={() => setActiveSubTab("ai_mcp")}
+        />
+      ) : (
+        <div className="space-y-7">
       {/* SECTION 1: PLUGGABLE AI BRAIN & MULTI CUSTOM MODEL REGISTRY */}
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3.5">
@@ -1391,6 +1445,8 @@ export function IntegrationTab() {
         </div>
         )}
       </section>
+        </div>
+      )}
     </div>
   );
 }

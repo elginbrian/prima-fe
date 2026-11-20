@@ -34,6 +34,16 @@ export type { DeadlineDto, EvaluateSlaResponseDto } from "./deadlines.api";
 export { usersApi } from "./users.api";
 export { aiAssistantApi } from "./ai.api";
 export { integrationsApi } from "./integrations.api";
+export { n8nPluginApi } from "./plugins.api";
+export type {
+  N8nDeliveryLogDto,
+  N8nEventCatalogItemDto,
+  N8nPluginOverviewDto,
+  N8nWebhookAuthType,
+  N8nWebhookCreatePayload,
+  N8nWebhookEndpointDto,
+  N8nWebhookUpdatePayload,
+} from "./plugins.api";
 export type {
   AiIntegrationConfigDto,
   CustomAiModelDto,
