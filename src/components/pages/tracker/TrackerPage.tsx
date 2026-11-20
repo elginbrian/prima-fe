@@ -315,18 +315,6 @@ export default function TrackerPage() {
             >
               {guaranteesData.length}
             </span>
-            {warningGuaranteesCount > 0 && (
-              <span
-                title={`${warningGuaranteesCount} warkat mendekati jatuh tempo`}
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
-                  activeLens === "guarantees"
-                    ? "bg-white text-[#0a4d8c]"
-                    : "bg-[#e8f2fc] text-[#0a4d8c] border border-[#0a4d8c]/20"
-                }`}
-              >
-                {warningGuaranteesCount}!
-              </span>
-            )}
           </button>
 
           <button
@@ -349,18 +337,6 @@ export default function TrackerPage() {
             >
               {pendingActionsCount}
             </span>
-            {overdueOrRiskSlaCount > 0 && (
-              <span
-                title={`${overdueOrRiskSlaCount} SLA perlu perhatian`}
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
-                  activeLens === "sla-actions"
-                    ? "bg-white text-[#0a4d8c]"
-                    : "bg-[#e8f2fc] text-[#0a4d8c] border border-[#0a4d8c]/20"
-                }`}
-              >
-                {overdueOrRiskSlaCount}!
-              </span>
-            )}
           </button>
 
           <button

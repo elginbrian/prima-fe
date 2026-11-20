@@ -157,7 +157,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const containerClasses = cn(
     "fixed left-0 top-0 h-screen bg-white border-r border-slate-200 z-40 transition-all duration-300 ease-in-out flex flex-col",
-    effectiveCollapsed ? "lg:w-20" : "lg:w-56",
+    effectiveCollapsed ? "lg:w-20" : "lg:w-60",
     "w-[280px]",
     mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
     "lg:translate-x-0 lg:static lg:shadow-none"
@@ -265,8 +265,6 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
           const groupOpen = isParentOpen(item.id);
           const primaryActive = isParentPrimaryActive(item.id);
           const showUnread = item.id === "notifications" && unreadCount > 0;
-          const showPendingParentDot =
-            item.id === "overview" && !groupOpen && pendingActionsCount > 0;
 
           return (
             <div key={item.id}>
@@ -302,24 +300,16 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
-                    {showPendingParentDot && (
-                      <span
-                        title={`${pendingActionsCount} tindakan SLA menunggu`}
-                        className="bg-slate-200 text-[#0a4d8c] text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                      >
-                        {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
-                      </span>
-                    )}
                   </span>
                 )}
-                {effectiveCollapsed && (showUnread || showPendingParentDot) && (
+                {effectiveCollapsed && (showUnread || (item.id === "overview" && pendingActionsCount > 0)) && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full" />
                 )}
               </Link>
 
-              {/* Sub-tabs ONLY appear when this parent module is currently open */}
-              {!effectiveCollapsed && groupOpen && item.subItems && (
-                <div className="mt-1 ml-4 pl-2.5 border-l-2 border-[#0a4d8c]/20 space-y-0.5 animate-in fade-in duration-150">
+              {/* Sub-tabs always stay visible under their parent module */}
+              {!effectiveCollapsed && item.subItems && (
+                <div className="mt-1 ml-4 pl-2.5 border-l-2 border-slate-200/80 space-y-0.5">
                   {item.subItems.map((sub) => {
                     const SubIcon = sub.icon;
                     const subActive = isSubItemActive(sub);
