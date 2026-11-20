@@ -40,7 +40,7 @@ import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useToast } from "@/components/ui/Toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { SearchableSelect, Spinner } from "@/components/ui";
+import { SearchableSelect, Spinner, ModalPortal } from "@/components/ui";
 import type { MilestoneUpsertPayload } from "@/lib/api/procurement.api";
 import { getErrorMessage } from "@/lib/api/errors";
 import { formatRupiah, formatRequestCode } from "@/lib/utils";
@@ -474,20 +474,26 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         )}
       </div>
 
-      {/* Consistent Underline Tab Navigation Bar */}
-      <div className="flex overflow-x-auto border-b border-slate-200 gap-6 hide-scrollbar">
+      {/* Consistent Bean Pill Tab Navigation Bar */}
+      <div className="inline-flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs w-fit max-w-full">
         <button
           type="button"
           onClick={() => setActiveTab("timeline")}
-          className={`flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all whitespace-nowrap focus:outline-none ${
             activeTab === "timeline"
-              ? "border-[#0a4d8c] text-[#0a4d8c]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "bg-[#0a4d8c] text-white shadow-xs"
+              : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
           }`}
         >
           <GitBranch size={14} />
           <span>Tahapan &amp; Jadwal SLA</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+              activeTab === "timeline"
+                ? "bg-white/20 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
             {completedMilestones}/{milestones.length}
           </span>
         </button>
@@ -495,15 +501,21 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         <button
           type="button"
           onClick={() => setActiveTab("docs-guarantees")}
-          className={`flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all whitespace-nowrap focus:outline-none ${
             activeTab === "docs-guarantees"
-              ? "border-[#0a4d8c] text-[#0a4d8c]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "bg-[#0a4d8c] text-white shadow-xs"
+              : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
           }`}
         >
           <ShieldCheck size={14} />
           <span>Dokumen &amp; Warkat Jaminan</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+              activeTab === "docs-guarantees"
+                ? "bg-white/20 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
             {docs.length + guars.length}
           </span>
         </button>
@@ -511,15 +523,21 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         <button
           type="button"
           onClick={() => setActiveTab("audit-log")}
-          className={`flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all whitespace-nowrap focus:outline-none ${
             activeTab === "audit-log"
-              ? "border-[#0a4d8c] text-[#0a4d8c]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "bg-[#0a4d8c] text-white shadow-xs"
+              : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
           }`}
         >
           <History size={14} />
           <span>Riwayat &amp; Log Audit</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+              activeTab === "audit-log"
+                ? "bg-white/20 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
             {totalAuditCount}
           </span>
         </button>
@@ -648,9 +666,10 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         />
       )}
 
-      {/* Modal: Admin Kelola Tahapan Pekerjaan (per Request) */}
+      {/* Modal: Admin Kelola Tahapan Pekerjaan (per Request, full-screen centered via Portal) */}
       {showManageStagesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
               <div>
@@ -829,7 +848,8 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

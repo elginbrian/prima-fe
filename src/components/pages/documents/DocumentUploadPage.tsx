@@ -24,7 +24,7 @@ import {
   useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, SearchableSelect } from "@/components/ui";
+import { Spinner, SearchableSelect, ModalPortal } from "@/components/ui";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 import { ValidationProfileSelector } from "@/components/widgets/documents/ValidationProfileSelector";
 import {
@@ -543,9 +543,10 @@ export default function DocumentUploadPage() {
         </div>
       </div>
 
-      {/* Modal: Save Criteria as Reusable Template */}
+      {/* Modal: Save Criteria as Reusable Template (full-screen centered via Portal) */}
       {isSaveTemplateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
               <div>
@@ -658,7 +659,8 @@ export default function DocumentUploadPage() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

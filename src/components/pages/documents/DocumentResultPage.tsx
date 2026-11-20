@@ -27,7 +27,7 @@ import {
   useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, Skeleton, SearchableSelect } from "@/components/ui";
+import { Spinner, Skeleton, SearchableSelect, ModalPortal } from "@/components/ui";
 import { formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
 import { ValidationScoreCard } from "@/components/widgets/documents/ValidationScoreCard";
 import { ChecklistEvaluationList } from "@/components/widgets/documents/ChecklistEvaluationList";
@@ -501,9 +501,10 @@ export default function DocumentResultPage() {
           />
         )}
 
-        {/* Modal: Re-Evaluate with AI (Spacious 4xl layout, single scroll) */}
+        {/* Modal: Re-Evaluate with AI (Spacious 4xl layout, full-screen centered via Portal) */}
         {isReevalModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 backdrop-blur-[1px] p-4">
+          <ModalPortal>
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
             <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
                 <div>
@@ -577,12 +578,14 @@ export default function DocumentResultPage() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
+          </ModalPortal>
         )}
 
         {/* Modal: Reviewer Decision Override */}
         {isDecisionModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+          <ModalPortal>
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
             <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                 <div>
@@ -695,12 +698,14 @@ export default function DocumentResultPage() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
+          </ModalPortal>
         )}
 
         {/* Modal: Publish / Link to Tracker Confirmation */}
         {isPublishModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+          <ModalPortal>
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
             <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                 <div>
@@ -927,7 +932,8 @@ export default function DocumentResultPage() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
+          </ModalPortal>
         )}
       </div>
     );

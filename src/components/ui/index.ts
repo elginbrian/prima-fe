@@ -10,3 +10,4 @@ export { UserAvatar, resolveAvatarUrl } from "./UserAvatar";
 export type { UserAvatarProps } from "./UserAvatar";
 export { SearchableSelect } from "./SearchableSelect";
 export type { SearchableSelectProps, SearchableOption } from "./SearchableSelect";
+export { ModalPortal } from "./ModalPortal";

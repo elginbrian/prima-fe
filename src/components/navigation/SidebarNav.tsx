@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/ui/LogoutModal";
 import { useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
 
-interface NavItemDef {
+interface SubNavItemDef {
   id: string;
   href: string;
   label: string;
@@ -29,34 +29,69 @@ interface NavItemDef {
   lens?: string;
 }
 
-interface NavGroupDef {
-  title: string;
-  items: NavItemDef[];
+interface MainNavItemDef {
+  id: "documents" | "overview" | "notifications" | "settings";
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  subItems?: SubNavItemDef[];
 }
 
-const NAV_GROUPS: NavGroupDef[] = [
+const MAIN_NAV_ITEMS: MainNavItemDef[] = [
   {
-    title: "Dokumen & Standar",
-    items: [
-      { id: "documents", href: "/dashboard/documents", label: "Pemeriksaan Dokumen", icon: FileSearch },
-      { id: "templates", href: "/dashboard/documents/templates", label: "Template & Tahapan", icon: BookOpen },
+    id: "documents",
+    href: "/dashboard/documents",
+    label: "Pemeriksaan Dokumen",
+    icon: FileSearch,
+    subItems: [
+      {
+        id: "templates",
+        href: "/dashboard/documents/templates",
+        label: "Template & Tahapan",
+        icon: BookOpen,
+      },
     ],
   },
   {
-    title: "Pekerjaan & Jaminan",
-    items: [
-      { id: "overview-jobs", href: "/dashboard/overview", label: "Daftar Pekerjaan", icon: LayoutDashboard, lens: "jobs" },
-      { id: "overview-guarantees", href: "/dashboard/overview?lens=guarantees", label: "Warkat Jaminan", icon: ShieldCheck, lens: "guarantees" },
-      { id: "overview-sla", href: "/dashboard/overview?lens=sla-actions", label: "SLA & Tindak Lanjut", icon: Clock, lens: "sla-actions" },
-      { id: "overview-analytics", href: "/dashboard/overview?lens=analytics", label: "Analitik & Performa", icon: BarChart3, lens: "analytics" },
+    id: "overview",
+    href: "/dashboard/overview",
+    label: "Daftar Pekerjaan",
+    icon: LayoutDashboard,
+    subItems: [
+      {
+        id: "overview-guarantees",
+        href: "/dashboard/overview?lens=guarantees",
+        label: "Warkat Jaminan",
+        icon: ShieldCheck,
+        lens: "guarantees",
+      },
+      {
+        id: "overview-sla",
+        href: "/dashboard/overview?lens=sla-actions",
+        label: "SLA & Tindak Lanjut",
+        icon: Clock,
+        lens: "sla-actions",
+      },
+      {
+        id: "overview-analytics",
+        href: "/dashboard/overview?lens=analytics",
+        label: "Analitik & Performa",
+        icon: BarChart3,
+        lens: "analytics",
+      },
     ],
   },
   {
-    title: "Sistem",
-    items: [
-      { id: "notifications", href: "/dashboard/notifications", label: "Notifikasi", icon: Bell },
-      { id: "settings", href: "/dashboard/settings", label: "Pengaturan", icon: Settings },
-    ],
+    id: "notifications",
+    href: "/dashboard/notifications",
+    label: "Notifikasi",
+    icon: Bell,
+  },
+  {
+    id: "settings",
+    href: "/dashboard/settings",
+    label: "Pengaturan",
+    icon: Settings,
   },
 ];
 
@@ -137,28 +172,53 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
       effectiveCollapsed ? "lg:justify-center lg:px-2" : "lg:justify-start lg:px-3"
     );
 
-  const isNavItemActive = (item: NavItemDef): boolean => {
+  const isParentOpen = (itemId: MainNavItemDef["id"]): boolean => {
     if (!pathname) return false;
-    if (item.id === "templates") {
-      return pathname.startsWith("/dashboard/documents/templates");
+    if (itemId === "documents") {
+      return pathname.startsWith("/dashboard/documents");
     }
-    if (item.id === "documents") {
+    if (itemId === "overview") {
+      return (
+        pathname.startsWith("/dashboard/overview") ||
+        pathname.startsWith("/dashboard/guarantees") ||
+        pathname.startsWith("/dashboard/next-action") ||
+        pathname.startsWith("/dashboard/tracker")
+      );
+    }
+    return pathname.startsWith(`/dashboard/${itemId}`);
+  };
+
+  const isParentPrimaryActive = (itemId: MainNavItemDef["id"]): boolean => {
+    if (!pathname) return false;
+    if (itemId === "documents") {
       return (
         pathname.startsWith("/dashboard/documents") &&
         !pathname.startsWith("/dashboard/documents/templates")
       );
     }
-    if (item.lens) {
+    if (itemId === "overview") {
+      if (pathname.startsWith("/dashboard/overview/guarantees")) return false;
+      if (!pathname.startsWith("/dashboard/overview")) return false;
+      if (/^\/dashboard\/overview\/[^/]+/.test(pathname)) return true;
+      return currentLens === "jobs";
+    }
+    return pathname.startsWith(`/dashboard/${itemId}`);
+  };
+
+  const isSubItemActive = (sub: SubNavItemDef): boolean => {
+    if (!pathname) return false;
+    if (sub.id === "templates") {
+      return pathname.startsWith("/dashboard/documents/templates");
+    }
+    if (sub.lens) {
       if (pathname.startsWith("/dashboard/overview/guarantees")) {
-        return item.lens === "guarantees";
+        return sub.lens === "guarantees";
       }
       if (!pathname.startsWith("/dashboard/overview")) return false;
-      if (/^\/dashboard\/overview\/[^/]+/.test(pathname)) {
-        return item.lens === "jobs";
-      }
-      return currentLens === item.lens;
+      if (/^\/dashboard\/overview\/[^/]+/.test(pathname)) return false;
+      return currentLens === sub.lens;
     }
-    return pathname.startsWith(item.href);
+    return pathname.startsWith(sub.href);
   };
 
   return (
@@ -195,71 +255,117 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
       <nav
         className={cn(
-          "flex flex-1 flex-col gap-4 py-4 overflow-y-auto",
+          "flex flex-1 flex-col gap-1.5 py-4 overflow-y-auto",
           effectiveCollapsed ? "px-2 hide-scrollbar" : "px-3"
         )}
         aria-label="Sidebar navigation"
       >
-        {NAV_GROUPS.map((group) => (
-          <div key={group.title} className="space-y-1">
-            {!effectiveCollapsed ? (
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                {group.title}
-              </div>
-            ) : (
-              <div className="mx-3 my-1 border-t border-slate-100 first:hidden" />
-            )}
+        {MAIN_NAV_ITEMS.map((item, idx) => {
+          const Icon = item.icon;
+          const groupOpen = isParentOpen(item.id);
+          const primaryActive = isParentPrimaryActive(item.id);
+          const showUnread = item.id === "notifications" && unreadCount > 0;
+          const showPendingParentDot =
+            item.id === "overview" && !groupOpen && pendingActionsCount > 0;
 
-            {group.items.map((item) => {
-              const Icon = item.icon;
-              const isActive = isNavItemActive(item);
-              const showUnread = item.id === "notifications" && unreadCount > 0;
-              const showPendingSla = item.id === "overview-sla" && pendingActionsCount > 0;
+          return (
+            <div key={item.id}>
+              {idx === 2 && (
+                <div className="my-2 border-t border-slate-100 mx-1" />
+              )}
 
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={navItemClasses(isActive)}
-                  onClick={() => {
-                    setMobileOpen(false);
-                    if (item.lens && typeof window !== "undefined") {
-                      setCurrentLens(item.lens);
-                      window.dispatchEvent(
-                        new CustomEvent("prima-lens-change", { detail: item.lens })
-                      );
-                    }
-                  }}
-                  aria-current={isActive ? "page" : undefined}
-                  title={effectiveCollapsed ? item.label : undefined}
-                >
-                  <Icon size={17} className="transition-colors shrink-0" />
-                  {!effectiveCollapsed && (
-                    <span className="flex-1 flex items-center justify-between gap-2 min-w-0">
-                      <span className="truncate">{item.label}</span>
-                      {showUnread && (
-                        <span className="bg-[#0a4d8c] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0">
-                          {unreadCount > 99 ? "99+" : unreadCount}
+              <Link
+                href={item.href}
+                className={cn(
+                  navItemClasses(primaryActive || (groupOpen && effectiveCollapsed)),
+                  !primaryActive && groupOpen && !effectiveCollapsed &&
+                    "bg-[#f4f8fd] text-[#0a4d8c] font-semibold"
+                )}
+                onClick={() => {
+                  setMobileOpen(false);
+                  if (item.id === "overview" && typeof window !== "undefined") {
+                    setCurrentLens("jobs");
+                    window.dispatchEvent(
+                      new CustomEvent("prima-lens-change", { detail: "jobs" })
+                    );
+                  }
+                }}
+                aria-current={primaryActive ? "page" : undefined}
+                title={effectiveCollapsed ? item.label : undefined}
+              >
+                <Icon size={17} className="transition-colors shrink-0" />
+                {!effectiveCollapsed && (
+                  <span className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                    <span className="truncate">{item.label}</span>
+                    {showUnread && (
+                      <span className="bg-[#0a4d8c] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                    {showPendingParentDot && (
+                      <span
+                        title={`${pendingActionsCount} tindakan SLA menunggu`}
+                        className="bg-slate-200 text-[#0a4d8c] text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                      >
+                        {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
+                      </span>
+                    )}
+                  </span>
+                )}
+                {effectiveCollapsed && (showUnread || showPendingParentDot) && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full" />
+                )}
+              </Link>
+
+              {/* Sub-tabs ONLY appear when this parent module is currently open */}
+              {!effectiveCollapsed && groupOpen && item.subItems && (
+                <div className="mt-1 ml-4 pl-2.5 border-l-2 border-[#0a4d8c]/20 space-y-0.5 animate-in fade-in duration-150">
+                  {item.subItems.map((sub) => {
+                    const SubIcon = sub.icon;
+                    const subActive = isSubItemActive(sub);
+                    const showPendingSla =
+                      sub.id === "overview-sla" && pendingActionsCount > 0;
+
+                    return (
+                      <Link
+                        key={sub.id}
+                        href={sub.href}
+                        onClick={() => {
+                          setMobileOpen(false);
+                          if (sub.lens && typeof window !== "undefined") {
+                            setCurrentLens(sub.lens);
+                            window.dispatchEvent(
+                              new CustomEvent("prima-lens-change", {
+                                detail: sub.lens,
+                              })
+                            );
+                          }
+                        }}
+                        aria-current={subActive ? "page" : undefined}
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors",
+                          subActive
+                            ? "bg-[#eaf3ff] text-[#0a4d8c] font-semibold shadow-2xs"
+                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                        )}
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <SubIcon size={14} className="shrink-0" />
+                          <span className="truncate">{sub.label}</span>
                         </span>
-                      )}
-                      {showPendingSla && (
-                        <span
-                          title={`${pendingActionsCount} tindakan menunggu`}
-                          className="bg-[#0a4d8c] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                        >
-                          {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
-                        </span>
-                      )}
-                    </span>
-                  )}
-                  {effectiveCollapsed && (showUnread || showPendingSla) && (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+                        {showPendingSla && (
+                          <span className="bg-[#0a4d8c] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0">
+                            {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       <div className="mt-auto border-t border-slate-200 px-3 py-4">

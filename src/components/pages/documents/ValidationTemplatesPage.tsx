@@ -36,7 +36,7 @@ import {
   normalizeWeightsTo100,
 } from "@/components/widgets/documents/ChecklistEditor";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, Skeleton, SearchableSelect } from "@/components/ui";
+import { Spinner, Skeleton, SearchableSelect, ModalPortal } from "@/components/ui";
 import { formatDateIndo } from "@/lib/utils";
 import type {
   ValidationProfile,
@@ -428,20 +428,26 @@ export default function ValidationTemplatesPage() {
         </div>
       </div>
 
-      {/* 2. Tabs Switcher: Template Kriteria vs Kelola Tahapan Pekerjaan */}
-      <div className="border-b border-slate-200 flex items-center gap-6 px-1">
+      {/* 2. Bean-style Tabs Switcher: Template Kriteria vs Kelola Tahapan Pekerjaan */}
+      <div className="inline-flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs w-fit">
         <button
           type="button"
           onClick={() => setActiveTab("templates")}
-          className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-medium border-b-2 transition-colors focus:outline-none ${
+          className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium transition-all focus:outline-none ${
             activeTab === "templates"
-              ? "border-[#0a4d8c] text-[#0a4d8c]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "bg-[#0a4d8c] text-white shadow-xs"
+              : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
           }`}
         >
-          <BookOpen size={15} />
+          <BookOpen size={14} />
           <span>Template Kriteria Standar</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium leading-none ${
+              activeTab === "templates"
+                ? "bg-white/20 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
             {profiles.length}
           </span>
         </button>
@@ -449,15 +455,21 @@ export default function ValidationTemplatesPage() {
         <button
           type="button"
           onClick={() => setActiveTab("stages")}
-          className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-medium border-b-2 transition-colors focus:outline-none ${
+          className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium transition-all focus:outline-none ${
             activeTab === "stages"
-              ? "border-[#0a4d8c] text-[#0a4d8c]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "bg-[#0a4d8c] text-white shadow-xs"
+              : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
           }`}
         >
-          <GitBranch size={15} />
+          <GitBranch size={14} />
           <span>Kelola Tahapan Pekerjaan</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium leading-none ${
+              activeTab === "stages"
+                ? "bg-white/20 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
             {allStages.length}
           </span>
         </button>
@@ -828,9 +840,10 @@ export default function ValidationTemplatesPage() {
         </div>
       )}
 
-      {/* Modal Create / Edit Template (Spacious 4xl workspace, single smooth scroll) */}
+      {/* Modal Create / Edit Template (Portal-rendered full-screen centered) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 backdrop-blur-[1px] p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
               <div>
@@ -1019,12 +1032,14 @@ export default function ValidationTemplatesPage() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* Modal Create / Edit Workflow Stage */}
       {isStageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
               <div>
@@ -1151,7 +1166,8 @@ export default function ValidationTemplatesPage() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

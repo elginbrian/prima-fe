@@ -270,21 +270,27 @@ export default function TrackerPage() {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* SLEEK UNIFIED MODULE TABS & PRIMARY ACTIONS BAR */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200 pb-0">
-        <div className="flex items-center gap-5 overflow-x-auto no-scrollbar">
+      {/* BEAN-STYLE MODULE TABS & PRIMARY ACTIONS BAR (Zero overflow) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs">
           <button
             type="button"
             onClick={() => handleSelectLens("jobs")}
-            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-all focus:outline-none ${
               activeLens === "jobs"
-                ? "border-[#0a4d8c] text-[#0a4d8c]"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "bg-[#0a4d8c] text-white shadow-xs"
+                : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
             }`}
           >
-            <Briefcase size={15} />
+            <Briefcase size={14} />
             <span>Daftar Pekerjaan</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                activeLens === "jobs"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 text-slate-700"
+              }`}
+            >
               {requests.length}
             </span>
           </button>
@@ -292,21 +298,31 @@ export default function TrackerPage() {
           <button
             type="button"
             onClick={() => handleSelectLens("guarantees")}
-            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-all focus:outline-none ${
               activeLens === "guarantees"
-                ? "border-[#0a4d8c] text-[#0a4d8c]"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "bg-[#0a4d8c] text-white shadow-xs"
+                : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
             }`}
           >
-            <ShieldCheck size={15} />
+            <ShieldCheck size={14} />
             <span>Warkat Jaminan</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                activeLens === "guarantees"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 text-slate-700"
+              }`}
+            >
               {guaranteesData.length}
             </span>
             {warningGuaranteesCount > 0 && (
               <span
                 title={`${warningGuaranteesCount} warkat mendekati jatuh tempo`}
-                className="rounded-full bg-[#e8f2fc] border border-[#0a4d8c]/20 px-1.5 py-0.5 text-[10px] font-medium text-[#0a4d8c]"
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+                  activeLens === "guarantees"
+                    ? "bg-white text-[#0a4d8c]"
+                    : "bg-[#e8f2fc] text-[#0a4d8c] border border-[#0a4d8c]/20"
+                }`}
               >
                 {warningGuaranteesCount}!
               </span>
@@ -316,21 +332,31 @@ export default function TrackerPage() {
           <button
             type="button"
             onClick={() => handleSelectLens("sla-actions")}
-            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-all focus:outline-none ${
               activeLens === "sla-actions"
-                ? "border-[#0a4d8c] text-[#0a4d8c]"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "bg-[#0a4d8c] text-white shadow-xs"
+                : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
             }`}
           >
-            <Clock size={15} />
+            <Clock size={14} />
             <span>SLA &amp; Tindak Lanjut</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                activeLens === "sla-actions"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 text-slate-700"
+              }`}
+            >
               {pendingActionsCount}
             </span>
             {overdueOrRiskSlaCount > 0 && (
               <span
                 title={`${overdueOrRiskSlaCount} SLA perlu perhatian`}
-                className="rounded-full bg-[#e8f2fc] border border-[#0a4d8c]/20 px-1.5 py-0.5 text-[10px] font-medium text-[#0a4d8c]"
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+                  activeLens === "sla-actions"
+                    ? "bg-white text-[#0a4d8c]"
+                    : "bg-[#e8f2fc] text-[#0a4d8c] border border-[#0a4d8c]/20"
+                }`}
               >
                 {overdueOrRiskSlaCount}!
               </span>
@@ -340,23 +366,18 @@ export default function TrackerPage() {
           <button
             type="button"
             onClick={() => handleSelectLens("analytics")}
-            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-all focus:outline-none ${
               activeLens === "analytics"
-                ? "border-[#0a4d8c] text-[#0a4d8c]"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "bg-[#0a4d8c] text-white shadow-xs"
+                : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
             }`}
           >
-            <BarChart3 size={15} />
+            <BarChart3 size={14} />
             <span>Analitik &amp; Performa</span>
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 pb-2.5 shrink-0">
-          {activeLens === "guarantees" && totalGuaranteesValue > 0 && (
-            <span className="hidden xl:inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600">
-              Total Warkat: {formatRupiah(totalGuaranteesValue)}
-            </span>
-          )}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => router.push("/dashboard/overview/guarantees/upload")}

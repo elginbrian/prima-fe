@@ -1,7 +1,7 @@
 import { ShieldAlert } from "lucide-react";
 import type { ProcurementStep } from "@/types";
 import type { GatekeeperCheckDto } from "@/lib/api/procurement.api";
-import { Spinner } from "@/components/ui";
+import { Spinner, ModalPortal } from "@/components/ui";
 
 interface ManagerOverrideModalProps {
   pendingStep: ProcurementStep;
@@ -23,10 +23,11 @@ export function ManagerOverrideModal({
   onConfirm,
 }: ManagerOverrideModalProps) {
   return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-      onClick={onCancel}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+        onClick={onCancel}
+      >
       <div
         className="w-full max-w-lg rounded-2xl border border-rose-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -95,5 +96,6 @@ export function ManagerOverrideModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

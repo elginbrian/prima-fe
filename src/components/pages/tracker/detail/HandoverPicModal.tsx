@@ -1,5 +1,5 @@
 import { ArrowRightLeft } from "lucide-react";
-import { Spinner, SearchableSelect } from "@/components/ui";
+import { Spinner, SearchableSelect, ModalPortal } from "@/components/ui";
 
 interface HandoverPicModalProps {
   currentPic: { id: string; name: string };
@@ -25,10 +25,11 @@ export function HandoverPicModal({
   onSubmit,
 }: HandoverPicModalProps) {
   return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-      onClick={onCancel}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+        onClick={onCancel}
+      >
       <div
         className="w-full max-w-md rounded-2xl border border-blue-100 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -107,5 +108,6 @@ export function HandoverPicModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

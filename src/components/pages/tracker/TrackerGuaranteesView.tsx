@@ -163,6 +163,11 @@ export function TrackerGuaranteesView({
       direction: current.key === key ? nextSortDirection(current.direction) : "asc",
     }));
 
+  const totalValue = useMemo(
+    () => allGuarantees.reduce((acc, g) => acc + (g.value || 0), 0),
+    [allGuarantees]
+  );
+
   return (
     <div className="space-y-4">
       <GuaranteeFilterBar
@@ -174,6 +179,19 @@ export function TrackerGuaranteesView({
         setTypeFilter={setTypeFilter}
         onExport={() => exportGuaranteesToCsv(allGuarantees)}
       />
+
+      {totalValue > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-xs text-slate-600">
+          <span>
+            Menampilkan <strong className="text-slate-800">{sortedGuarantees.length}</strong> dari{" "}
+            <strong className="text-slate-800">{allGuarantees.length}</strong> warkat jaminan
+          </span>
+          <span>
+            Total Nilai Jaminan:{" "}
+            <strong className="text-[#0a4d8c]">{formatRupiah(totalValue)}</strong>
+          </span>
+        </div>
+      )}
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]">
