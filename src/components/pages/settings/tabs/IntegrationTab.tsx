@@ -242,6 +242,78 @@ export function IntegrationTab() {
           2
         )
       );
+    } else if (name === "prima_manage_procurement_full") {
+      setToolArgsJson(
+        JSON.stringify(
+          {
+            action: "UPDATE_DETAILS",
+            request_id: "REQ-BD3BE5A9",
+            is_urgent: true,
+          },
+          null,
+          2
+        )
+      );
+    } else if (name === "prima_manage_guarantee") {
+      setToolArgsJson(
+        JSON.stringify(
+          {
+            action: "CREATE",
+            request_id: "REQ-BD3BE5A9",
+            reference_no: "BG-MANDIRI-2026-9901",
+            type: "Jaminan Pelaksanaan",
+            value: 322500000,
+            issuer: "PT Bank Mandiri (Persero) Tbk",
+            issuer_type: "Bank",
+            vendor_name: "PT Telkom Industrial Telemetry",
+            expiry_date: "2027-06-30",
+          },
+          null,
+          2
+        )
+      );
+    } else if (name === "prima_manage_validation_template") {
+      setToolArgsJson(
+        JSON.stringify(
+          {
+            action: "LIST",
+          },
+          null,
+          2
+        )
+      );
+    } else if (name === "prima_manage_workflow_stages") {
+      setToolArgsJson(
+        JSON.stringify(
+          {
+            action: "LIST",
+            procurement_method: "Tender Terbuka",
+          },
+          null,
+          2
+        )
+      );
+    } else if (name === "prima_manage_document_and_validation") {
+      setToolArgsJson(
+        JSON.stringify(
+          {
+            action: "GET_DETAIL_OR_FILE_URL",
+            id: "VAL-12345678",
+          },
+          null,
+          2
+        )
+      );
+    } else if (name === "prima_manage_users_notifications_settings") {
+      setToolArgsJson(
+        JSON.stringify(
+          {
+            action: "LIST_USERS",
+          },
+          null,
+          2
+        )
+      );
     } else if (name === "prima_get_pending_chat_takeover") {
       setToolArgsJson(
         JSON.stringify(
@@ -318,17 +390,17 @@ export function IntegrationTab() {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-900">
-                Pluggable AI Brain (Otak AI di Dalam Chat &amp; Analisis PRIMA)
+                Pluggable AI Brain
               </h3>
               <p className="mt-0.5 text-xs text-slate-500">
-                Pilih apakah ruang Diskusi AI &amp; pemeriksaan dokumen menggunakan Gemini internal PRIMA atau digantikan oleh AI eksternal (ChatGPT, Claude, OpenRouter, Codex, atau Webhook Agent).
+                Pilih apakah ruang Diskusi AI &amp; pemeriksaan dokumen menggunakan Gemini bawaan PRIMA atau digantikan oleh AI eksternal (ChatGPT, Claude, OpenRouter, Codex, atau Webhook Agent).
               </p>
             </div>
           </div>
 
           <span className="rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-3 py-1 text-[11px] font-semibold text-[#0a4d8c]">
             {providerMode === "internal_gemini"
-              ? "Aktif: Gemini Internal"
+              ? "Aktif: Gemini Bawaan"
               : providerMode === "mcp_takeover"
               ? "Aktif: External Agent Takeover (MCP)"
               : `Aktif: ${modelName}`}
@@ -338,7 +410,7 @@ export function IntegrationTab() {
         <div className="space-y-4">
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-              Mode Provider Otak AI
+              Mode Provider AI
             </label>
             <SearchableSelect
               value={providerMode}
