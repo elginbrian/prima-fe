@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FileSearch,
   BookOpen,
+  GitBranch,
   ShieldCheck,
   Clock,
   BarChart3,
@@ -63,8 +64,14 @@ const MAIN_NAV_ITEMS: MainNavItemDef[] = [
       {
         id: "templates",
         href: "/dashboard/documents/templates",
-        label: "Template & Tahapan",
+        label: "Template Kriteria",
         icon: BookOpen,
+      },
+      {
+        id: "stages",
+        href: "/dashboard/documents/stages",
+        label: "Kelola Tahapan",
+        icon: GitBranch,
       },
     ],
   },
@@ -218,7 +225,8 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
     if (itemId === "documents") {
       return (
         pathname.startsWith("/dashboard/documents") &&
-        !pathname.startsWith("/dashboard/documents/templates")
+        !pathname.startsWith("/dashboard/documents/templates") &&
+        !pathname.startsWith("/dashboard/documents/stages")
       );
     }
     if (itemId === "overview") {
@@ -237,6 +245,9 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
     }
     if (sub.id === "templates") {
       return pathname.startsWith("/dashboard/documents/templates");
+    }
+    if (sub.id === "stages") {
+      return pathname.startsWith("/dashboard/documents/stages");
     }
     if (sub.lens) {
       if (pathname.startsWith("/dashboard/overview/guarantees")) {

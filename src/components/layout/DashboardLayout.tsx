@@ -77,8 +77,13 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       };
     if (path.includes("documents/templates"))
       return {
-        title: "Pustaka Template Standar Kelayakan",
+        title: "Pustaka Template Kriteria Standar",
         subtitle: "Kelola profil standar checklist, ambang batas skor, dan instruksi validasi AI per jenis dokumen.",
+      };
+    if (path.includes("documents/stages"))
+      return {
+        title: "Kelola Metode & Tahapan Pekerjaan",
+        subtitle: "Susun metode pengadaan custom beserta urutan tahapan dan target SLA standar organisasi.",
       };
     if (path.includes("documents/upload"))
       return {

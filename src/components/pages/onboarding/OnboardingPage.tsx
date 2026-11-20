@@ -82,11 +82,20 @@ const STATIC_FEATURE_RESULTS: OmniSearchResult[] = [
   {
     id: "feat-templates",
     category: "Fitur & Navigasi",
-    title: "Pustaka Template & Tahapan Pekerjaan",
-    subtitle: "Kelola standar checklist kelayakan dan master tahapan metode pengadaan",
+    title: "Pustaka Template Kriteria Standar",
+    subtitle: "Kelola standar checklist kelayakan dan ambang batas skor validasi AI",
     badgeText: "Menu",
     href: "/dashboard/documents/templates",
-    keywords: "template standar kelayakan kriteria tahapan workflow rks kak",
+    keywords: "template standar kelayakan kriteria checklist rks kak",
+  },
+  {
+    id: "feat-stages",
+    category: "Fitur & Navigasi",
+    title: "Kelola Metode & Tahapan Pekerjaan",
+    subtitle: "Buat metode pengadaan baru dan atur urutan tahapan beserta target SLA",
+    badgeText: "Menu",
+    href: "/dashboard/documents/stages",
+    keywords: "kelola tahapan pekerjaan metode pengadaan baru custom workflow",
   },
   {
     id: "feat-template-new",
