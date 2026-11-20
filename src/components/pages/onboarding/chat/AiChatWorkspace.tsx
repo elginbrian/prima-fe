@@ -92,11 +92,15 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
     null
   );
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesStreamRef = useRef<HTMLDivElement>(null);
   const autoTriggeredRef = useRef<string | null>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesStreamRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    });
   }, []);
 
   // Load session & session list on mount or chatId change
@@ -333,7 +337,7 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
       </div>
 
       {/* Left/Center Main Chat Column */}
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col h-full">
+      <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col h-full">
         {/* Top Bar of Center Column: Title + Mode Cekatan on Left, User Bean on Right */}
         <div className="flex h-[76px] shrink-0 items-center justify-between gap-3 border-b border-slate-200/70 bg-white/80 backdrop-blur-md px-4 sm:px-6">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -379,7 +383,10 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
         </div>
 
         {/* Scrollable Message Stream */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 scrollbar-thin">
+        <div
+          ref={messagesStreamRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 scrollbar-thin"
+        >
           <div className="mx-auto max-w-3xl space-y-5">
             {currentSession && currentSession.messages.length > 0 ? (
               currentSession.messages.map((msg) => (
@@ -426,7 +433,6 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
         </div>
 

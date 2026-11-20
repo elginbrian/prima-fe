@@ -134,7 +134,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const header = getHeaderInfo(pathname || "");
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f7fb] text-slate-900">
+    <div className="flex h-screen overflow-hidden overscroll-none bg-[#f4f7fb] text-slate-900">
       <div
         className={cn(
           "fixed inset-0 z-30 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
@@ -146,7 +146,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
       <SidebarNav onLogout={logout} />
 
-      <div className="relative flex min-w-0 flex-1 flex-col transition-all duration-300">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col transition-all duration-300">
         {!isOnboardingChat && (
           <div>
             <DashboardHeader
