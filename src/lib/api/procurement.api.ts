@@ -121,6 +121,18 @@ export interface UpdateOperationalStatusPayload {
   reason?: string;
 }
 
+export interface MilestoneUpsertPayload {
+  id?: string;
+  step: string;
+  status: "Pending" | "In Progress" | "Done" | "Skipped";
+  notes?: string | null;
+}
+
+export interface UpdateMilestonesPayload {
+  milestones: MilestoneUpsertPayload[];
+  notes?: string;
+}
+
 // ─── Analytics & Intelligence DTOs (Fitur 4.3) ─────────────────────────────
 
 export interface AnalyticsSummaryDto {
@@ -193,6 +205,11 @@ export const procurementApi = {
     apiFetch<GatekeeperCheckDto>(`/procurement/${id}/gatekeeper`),
   assignPic: (id: string, payload: AssignPicPayload) =>
     apiFetch<ProcurementRequestDto>(`/procurement/${id}/assign-pic`, { method: "PATCH", body: JSON.stringify(payload) }),
+  updateMilestones: (id: string, payload: UpdateMilestonesPayload) =>
+    apiFetch<MilestoneDto[]>(`/procurement/${id}/milestones`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
   getAnalytics: () =>
     apiFetch<AnalyticsOverviewDto>("/procurement/analytics/overview"),
 };

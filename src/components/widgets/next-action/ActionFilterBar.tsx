@@ -1,5 +1,21 @@
 import { Search, Filter, RefreshCw, Download } from "lucide-react";
+import { SearchableSelect } from "@/components/ui";
 import { ActionFilterBarProps } from "./types";
+
+const SOURCE_OPTIONS = [
+  { value: "All", label: "Semua Sumber" },
+  { value: "Dokumen", label: "Dokumen" },
+  { value: "Jaminan", label: "Jaminan" },
+  { value: "Deadline", label: "Batas Waktu (SLA)" },
+  { value: "Proses Pengadaan", label: "Pekerjaan" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "All", label: "Semua Prioritas" },
+  { value: "High", label: "Tinggi (High)" },
+  { value: "Medium", label: "Sedang (Medium)" },
+  { value: "Low", label: "Rendah (Low)" },
+];
 
 export function ActionFilterBar({
   searchQuery,
@@ -26,27 +42,22 @@ export function ActionFilterBar({
       </div>
       <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
         <Filter className="hidden sm:block text-slate-400 shrink-0" size={16} />
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-44"
           value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value as any)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Sumber</option>
-          <option value="Dokumen">Dokumen</option>
-          <option value="Jaminan">Jaminan</option>
-          <option value="Deadline">Batas Waktu (SLA)</option>
-          <option value="Proses Pengadaan">Pekerjaan</option>
-        </select>
-        <select
+          onChange={(val) => setSourceFilter(val as any)}
+          searchPlaceholder="Cari sumber..."
+          options={SOURCE_OPTIONS}
+        />
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-44"
           value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value as any)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Prioritas</option>
-          <option value="High">Tinggi (High)</option>
-          <option value="Medium">Sedang (Medium)</option>
-          <option value="Low">Rendah (Low)</option>
-        </select>
+          onChange={(val) => setPriorityFilter(val as any)}
+          searchPlaceholder="Cari prioritas..."
+          options={PRIORITY_OPTIONS}
+        />
         {onSyncSla && (
           <button
             type="button"

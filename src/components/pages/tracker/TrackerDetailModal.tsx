@@ -16,10 +16,11 @@ import {
   useProcurementGatekeeper,
   useAssignPic,
 } from "@/lib/query/hooks/procurement/useProcurement";
-import { useValidationLogs } from "@/lib/query/hooks/procurement/useValidation";
+import { useValidationLogs, useWorkflowStages } from "@/lib/query/hooks/procurement/useValidation";
 import { useActions } from "@/lib/query/hooks/procurement/useActions";
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { useToast } from "@/components/ui/Toast";
+import { SearchableSelect } from "@/components/ui";
 import { getErrorMessage } from "@/lib/api/errors";
 import { formatRupiah } from "@/lib/utils";
 
@@ -79,6 +80,7 @@ export function TrackerDetailModal({
   );
   const { data: gatekeeperData } = useProcurementGatekeeper(selectedRequestId || "");
   const { data: validationLogs = [] } = useValidationLogs(selectedRequestId || "");
+  const { data: workflowStages = [] } = useWorkflowStages();
   const { data: allActions = [] } = useActions();
   const { data: usersList } = useUsers();
   const assignPicMutation = useAssignPic();
@@ -121,8 +123,7 @@ export function TrackerDetailModal({
     : milestones.slice(timelineStart, timelineStart + 4);
   const hasHiddenMilestones = !showFullTimeline && milestones.length > visibleMilestones.length;
 
-  const handleStepChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const targetStep = event.target.value as ProcurementStep;
+  const handleStepChange = async (targetStep: ProcurementStep) => {
     if (targetStep === request?.currentStep) return;
     if (gatekeeperData && !gatekeeperData.is_ready_to_advance) {
       setPendingStep(targetStep);
@@ -348,44 +349,46 @@ export function TrackerDetailModal({
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                  <label className="w-full sm:w-64">
+                  <div className="w-full sm:w-64">
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       Update tahap manual
                     </span>
-                    <select
+                    <SearchableSelect
+                      size="sm"
                       value={request.currentStep}
                       onChange={handleStepChange}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
-                    >
-                      {(milestones.length > 0 ? milestones.map((m) => m.step) : PROCUREMENT_STEPS).map(
-                        (step) => (
-                          <option key={step} value={step}>
-                            {step}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </label>
-                  <label className="w-full sm:w-44">
+                      searchPlaceholder="Cari tahapan..."
+                      options={(
+                        milestones.length > 0
+                          ? milestones.map((m) => m.step)
+                          : workflowStages.length > 0
+                          ? Array.from(new Set(workflowStages.map((s) => s.step_name)))
+                          : PROCUREMENT_STEPS
+                      ).map((step) => ({ value: step, label: step }))}
+                    />
+                  </div>
+                  <div className="w-full sm:w-44">
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       Status pekerjaan
                     </span>
-                    <select
+                    <SearchableSelect
+                      size="sm"
                       value={request.operationalStatus}
-                      onChange={(event) =>
+                      onChange={(val) =>
                         updateRequestOperationalStatus(
                           selectedRequestId,
-                          event.target.value as ProcurementOperationalStatus,
-                          event.target.value === "On Going" ? "" : statusReasonDraft
+                          val as ProcurementOperationalStatus,
+                          val === "On Going" ? "" : statusReasonDraft
                         )
                       }
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
-                    >
-                      <option value="On Going">On Going</option>
-                      <option value="On Hold">On Hold (SLA Dijeda)</option>
-                      <option value="Batal">Batal</option>
-                    </select>
-                  </label>
+                      searchPlaceholder="Cari status..."
+                      options={[
+                        { value: "On Going", label: "On Going" },
+                        { value: "On Hold", label: "On Hold (SLA Dijeda)" },
+                        { value: "Batal", label: "Batal" },
+                      ]}
+                    />
+                  </div>
                 </div>
               </div>
 

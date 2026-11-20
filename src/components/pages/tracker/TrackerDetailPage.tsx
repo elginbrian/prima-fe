@@ -10,6 +10,12 @@ import {
   Building2,
   UserCheck,
   AlertTriangle,
+  Plus,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Check,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProcurementOperationalStatus, ProcurementStep } from "@/types";
@@ -20,19 +26,22 @@ import {
   useAssignPic,
   useMoveStep,
   useUpdateOperationalStatus,
+  useUpdateMilestones,
   useDeadlines,
   useDocuments,
   useUpdateDeadline,
   useCreateDeadline,
 } from "@/lib/query/hooks/procurement/useProcurement";
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
-import { useValidationLogs } from "@/lib/query/hooks/procurement/useValidation";
+import { useValidationLogs, useWorkflowStages } from "@/lib/query/hooks/procurement/useValidation";
 import { useActions } from "@/lib/query/hooks/procurement/useActions";
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useToast } from "@/components/ui/Toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { SearchableSelect, Spinner } from "@/components/ui";
+import type { MilestoneUpsertPayload } from "@/lib/api/procurement.api";
 import { getErrorMessage } from "@/lib/api/errors";
 import { formatRupiah, formatRequestCode } from "@/lib/utils";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
@@ -80,6 +89,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
     useProcurementActivities(requestId);
   const { data: gatekeeperData } = useProcurementGatekeeper(requestId);
   const { data: validationLogs = [] } = useValidationLogs(requestId);
+  const { data: workflowStages = [] } = useWorkflowStages();
   const { data: allDocuments = [] } = useDocuments();
   const { data: allGuarantees = [] } = useGuarantees();
   const { data: allDeadlines = [] } = useDeadlines();
@@ -92,6 +102,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
   const updateStep = useMoveStep();
   const updateStatus = useUpdateOperationalStatus();
   const assignPicMutation = useAssignPic();
+  const updateMilestonesMutation = useUpdateMilestones();
   const editDeadline = useUpdateDeadline();
   const createDeadline = useCreateDeadline();
 
@@ -100,6 +111,10 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
   const [statusReasonDraft, setStatusReasonDraft] = useState("");
   const [editingDeadlineId, setEditingDeadlineId] = useState<string | null>(null);
   const [showAddDeadline, setShowAddDeadline] = useState(false);
+
+  const [showManageStagesModal, setShowManageStagesModal] = useState(false);
+  const [draftMilestones, setDraftMilestones] = useState<MilestoneUpsertPayload[]>([]);
+  const [newDraftStepName, setNewDraftStepName] = useState("");
 
   const [pendingStep, setPendingStep] = useState<ProcurementStep | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
@@ -161,8 +176,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
       )
     : 0;
 
-  const handleStepChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const targetStep = event.target.value as ProcurementStep;
+  const handleStepChange = async (targetStep: ProcurementStep) => {
     if (targetStep === request?.currentStep) return;
     if (gatekeeperData && !gatekeeperData.is_ready_to_advance) {
       setPendingStep(targetStep);
@@ -242,6 +256,41 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
       toast.error(getErrorMessage(err));
     } finally {
       setIsSubmittingHandover(false);
+    }
+  };
+
+  const handleOpenManageStages = () => {
+    const initial: MilestoneUpsertPayload[] = milestones.map((m) => ({
+      id: m.id,
+      step: m.step,
+      status: m.status,
+      notes: m.notes ?? null,
+    }));
+    setDraftMilestones(initial);
+    setNewDraftStepName("");
+    setShowManageStagesModal(true);
+  };
+
+  const handleSaveManagedStages = async () => {
+    const cleaned = draftMilestones
+      .map((m) => ({ ...m, step: m.step.trim() }))
+      .filter((m) => m.step.length > 0);
+    if (cleaned.length === 0) {
+      toast.warning("Minimal harus terdapat 1 tahapan pekerjaan.");
+      return;
+    }
+    try {
+      await updateMilestonesMutation.mutateAsync({
+        id: requestId,
+        payload: {
+          milestones: cleaned,
+          notes: "Pembaruan tahapan pekerjaan melalui Detail Pekerjaan Tracker",
+        },
+      });
+      toast.success("Daftar tahapan pekerjaan berhasil diperbarui.");
+      setShowManageStagesModal(false);
+    } catch (err: any) {
+      toast.error(getErrorMessage(err, "Gagal memperbarui tahapan pekerjaan."));
     }
   };
 
@@ -350,33 +399,34 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
           {/* Right: Inline Step & Status Controls */}
           {request && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 rounded-xl bg-slate-50 p-3 border border-slate-200/80">
-              <label className="w-full sm:w-56">
+              <div className="w-full sm:w-56">
                 <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-slate-500">
                   Tahap Saat Ini
                 </span>
-                <select
+                <SearchableSelect
+                  size="sm"
                   value={request.currentStep}
                   onChange={handleStepChange}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
-                >
-                  {(milestones.length > 0 ? milestones.map((m) => m.step) : PROCUREMENT_STEPS).map(
-                    (step) => (
-                      <option key={step} value={step}>
-                        {step}
-                      </option>
-                    )
-                  )}
-                </select>
-              </label>
+                  searchPlaceholder="Cari tahapan..."
+                  options={(
+                    milestones.length > 0
+                      ? milestones.map((m) => m.step)
+                      : workflowStages.length > 0
+                      ? Array.from(new Set(workflowStages.map((s) => s.step_name)))
+                      : PROCUREMENT_STEPS
+                  ).map((step) => ({ value: step, label: step }))}
+                />
+              </div>
 
-              <label className="w-full sm:w-44">
+              <div className="w-full sm:w-44">
                 <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-slate-500">
                   Status Pekerjaan
                 </span>
-                <select
+                <SearchableSelect
+                  size="sm"
                   value={request.operationalStatus}
-                  onChange={(event) => {
-                    const nextStatus = event.target.value as ProcurementOperationalStatus;
+                  onChange={(val) => {
+                    const nextStatus = val as ProcurementOperationalStatus;
                     updateStatus.mutate({
                       id: requestId,
                       payload: {
@@ -385,13 +435,14 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
                       },
                     });
                   }}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
-                >
-                  <option value="On Going">Berjalan (On Going)</option>
-                  <option value="On Hold">Ditunda (On Hold)</option>
-                  <option value="Batal">Dibatalkan</option>
-                </select>
-              </label>
+                  searchPlaceholder="Cari status..."
+                  options={[
+                    { value: "On Going", label: "Berjalan (On Going)" },
+                    { value: "On Hold", label: "Ditunda (On Hold)" },
+                    { value: "Batal", label: "Dibatalkan" },
+                  ]}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -500,6 +551,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
           onAddSla={() => setShowAddDeadline(true)}
           onEditSla={(id) => setEditingDeadlineId(id)}
           onOpenDocsTab={() => setActiveTab("docs-guarantees")}
+          onManageStages={handleOpenManageStages}
         />
       )}
 
@@ -608,6 +660,190 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
             })
           }
         />
+      )}
+
+      {/* Modal: Admin Kelola Tahapan Pekerjaan (per Request) */}
+      {showManageStagesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">
+                  Kelola Tahapan Pekerjaan
+                </h3>
+                <p className="text-xs font-normal text-slate-500 mt-0.5">
+                  Tambah, ubah nama, atur status, atau geser urutan tahapan untuk pekerjaan ini.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowManageStagesModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 focus:outline-none"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-3 overflow-y-auto flex-1">
+              {draftMilestones.map((ms, idx) => (
+                <div
+                  key={`${ms.id || "new"}-${idx}`}
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-slate-200 bg-white p-3"
+                >
+                  <span className="text-xs font-semibold text-[#0a4d8c] w-6 shrink-0">
+                    {idx + 1}.
+                  </span>
+                  <input
+                    type="text"
+                    value={ms.step}
+                    onChange={(e) =>
+                      setDraftMilestones((prev) =>
+                        prev.map((item, i) =>
+                          i === idx ? { ...item, step: e.target.value } : item
+                        )
+                      )
+                    }
+                    className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                  />
+                  <div className="w-full sm:w-36 shrink-0">
+                    <SearchableSelect
+                      size="sm"
+                      value={ms.status}
+                      onChange={(val) =>
+                        setDraftMilestones((prev) =>
+                          prev.map((item, i) =>
+                            i === idx
+                              ? {
+                                  ...item,
+                                  status: val as MilestoneUpsertPayload["status"],
+                                }
+                              : item
+                          )
+                        )
+                      }
+                      searchPlaceholder="Status..."
+                      options={[
+                        { value: "Pending", label: "Pending" },
+                        { value: "In Progress", label: "In Progress" },
+                        { value: "Done", label: "Done" },
+                        { value: "Skipped", label: "Skipped" },
+                      ]}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() =>
+                        setDraftMilestones((prev) => {
+                          const copy = [...prev];
+                          [copy[idx], copy[idx - 1]] = [copy[idx - 1], copy[idx]];
+                          return copy;
+                        })
+                      }
+                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+                      title="Naikkan"
+                    >
+                      <ArrowUp size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === draftMilestones.length - 1}
+                      onClick={() =>
+                        setDraftMilestones((prev) => {
+                          const copy = [...prev];
+                          [copy[idx], copy[idx + 1]] = [copy[idx + 1], copy[idx]];
+                          return copy;
+                        })
+                      }
+                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+                      title="Turunkan"
+                    >
+                      <ArrowDown size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDraftMilestones((prev) =>
+                          prev.filter((_, i) => i !== idx)
+                        )
+                      }
+                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      title="Hapus tahapan"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex gap-2 pt-2">
+                <input
+                  type="text"
+                  value={newDraftStepName}
+                  onChange={(e) => setNewDraftStepName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (!newDraftStepName.trim()) return;
+                      setDraftMilestones((prev) => [
+                        ...prev,
+                        { step: newDraftStepName.trim(), status: "Pending", notes: null },
+                      ]);
+                      setNewDraftStepName("");
+                    }
+                  }}
+                  placeholder="Tambah tahapan baru (contoh: Klarifikasi Teknis Lapangan)..."
+                  className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  disabled={!newDraftStepName.trim()}
+                  onClick={() => {
+                    if (!newDraftStepName.trim()) return;
+                    setDraftMilestones((prev) => [
+                      ...prev,
+                      { step: newDraftStepName.trim(), status: "Pending", notes: null },
+                    ]);
+                    setNewDraftStepName("");
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-3.5 py-2 text-xs font-medium text-white hover:bg-[#083b6c] disabled:opacity-50"
+                >
+                  <Plus size={13} />
+                  <span>Tambah</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowManageStagesModal(false)}
+                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveManagedStages}
+                disabled={updateMilestonesMutation.isPending}
+                className="px-5 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {updateMilestonesMutation.isPending ? (
+                  <>
+                    <Spinner size="xs" className="border-white border-t-transparent" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    <span>Simpan Tahapan</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

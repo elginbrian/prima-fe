@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ArrowLeft,
   UploadCloud,
@@ -12,6 +12,7 @@ import {
   BookOpen,
   BookmarkPlus,
   Check,
+  ShieldCheck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
@@ -20,14 +21,29 @@ import {
   useValidationProfiles,
   useAnalyzeDocumentChecklist,
   useCreateValidationProfile,
+  useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner } from "@/components/ui";
+import { Spinner, SearchableSelect } from "@/components/ui";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 import { ValidationProfileSelector } from "@/components/widgets/documents/ValidationProfileSelector";
-import { ChecklistEditor } from "@/components/widgets/documents/ChecklistEditor";
+import {
+  ChecklistEditor,
+  normalizeWeightsTo100,
+} from "@/components/widgets/documents/ChecklistEditor";
 import { formatRequestCode } from "@/lib/utils";
 import type { ChecklistRuleItem, ValidationProfile } from "@/types/validation";
+
+const DOCUMENT_KIND_OPTIONS = [
+  "Kerangka Acuan Kerja",
+  "Rencana Anggaran Biaya",
+  "Jaminan Pelaksanaan",
+  "Jaminan Penawaran",
+  "Dokumen Penawaran",
+  "Kontrak & Perjanjian",
+  "Berita Acara",
+  "Umum",
+];
 
 export default function DocumentUploadPage() {
   const router = useRouter();
@@ -38,6 +54,7 @@ export default function DocumentUploadPage() {
 
   const { data: profiles = [], isLoading: isLoadingProfiles } =
     useValidationProfiles();
+  const { data: workflowStages = [] } = useWorkflowStages();
   const analyzeMutation = useAnalyzeDocumentChecklist();
   const createProfileMutation = useCreateValidationProfile();
 
@@ -45,7 +62,7 @@ export default function DocumentUploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [checklistRules, setChecklistRules] = useState<ChecklistRuleItem[]>([]);
-  const [passingScore, setPassingScore] = useState<number>(75);
+  const [passingScore, setPassingScore] = useState<number>(80);
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
 
@@ -54,6 +71,48 @@ export default function DocumentUploadPage() {
   const [newTemplateKind, setNewTemplateKind] = useState("Kerangka Acuan Kerja");
   const [newTemplateDesc, setNewTemplateDesc] = useState("");
   const [newTemplateStage, setNewTemplateStage] = useState("");
+
+  const requestOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: "-- Buat Pekerjaan Baru Otomatis dari Ekstraksi Dokumen --",
+        description: "AI mengekstrak judul, estimasi anggaran, dan urutan tahapan otomatis",
+      },
+      ...requests.map((r) => ({
+        value: r.id,
+        label: `${formatRequestCode(r.id)} – ${r.title}`,
+        description: `${r.department?.name || "-"} · Tahap: ${r.currentStep}`,
+        keywords: `${r.id} ${r.title} ${r.department?.name || ""}`,
+      })),
+    ],
+    [requests]
+  );
+
+  const stageOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { value: string; label: string; description?: string }[] = [
+      { value: "", label: "-- Tidak Ada --" },
+    ];
+    workflowStages.forEach((s) => {
+      if (!seen.has(s.step_name)) {
+        seen.add(s.step_name);
+        list.push({
+          value: s.step_name,
+          label: s.step_name,
+          description: `${s.stage_group} · ${s.procurement_method}`,
+        });
+      }
+    });
+    return list;
+  }, [workflowStages]);
+
+  const templateRuleCount = checklistRules.filter(
+    (r) => r.source === "template"
+  ).length;
+  const customRuleCount = checklistRules.filter(
+    (r) => r.source !== "template"
+  ).length;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -92,7 +151,10 @@ export default function DocumentUploadPage() {
         strict_mandatory_enforcement: true,
         target_stage_to_clear: newTemplateStage || undefined,
         custom_system_prompt: customPrompt.trim() || undefined,
-        checklist_rules: checklistRules,
+        checklist_rules: normalizeWeightsTo100(checklistRules).map((r) => ({
+          ...r,
+          source: "template" as const,
+        })),
         is_default: false,
       });
       setSelectedProfileId(created.id);
@@ -108,14 +170,23 @@ export default function DocumentUploadPage() {
   const handleSelectProfile = (profile: ValidationProfile | null) => {
     if (profile) {
       setSelectedProfileId(profile.id);
-      setChecklistRules(profile.checklist_rules || []);
-      setPassingScore(profile.passing_score_threshold || 75);
+      const normalized = normalizeWeightsTo100(
+        (profile.checklist_rules || []).map((r) => ({
+          ...r,
+          source: "template" as const,
+        }))
+      );
+      setChecklistRules(normalized);
+      setPassingScore(profile.passing_score_threshold || 80);
       const prompt = profile.custom_system_prompt || profile.prompt_template;
-      if (prompt && !customPrompt) {
+      if (prompt) {
         setCustomPrompt(prompt);
       }
     } else {
       setSelectedProfileId("");
+      setChecklistRules((prev) =>
+        prev.map((r) => ({ ...r, source: "custom" as const }))
+      );
     }
   };
 
@@ -206,7 +277,7 @@ export default function DocumentUploadPage() {
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors shadow-2xs focus:outline-none"
         >
           <BookOpen size={13} className="text-[#0a4d8c]" />
-          <span>Kelola Pustaka Template</span>
+          <span>Kelola Template & Tahapan</span>
         </button>
       </div>
 
@@ -216,7 +287,7 @@ export default function DocumentUploadPage() {
         <div className="w-full lg:w-5/12 bg-slate-50/70 border-r border-slate-200 p-6 flex flex-col space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-              Berkas Dokumen
+              Berkas Dokumen Target
             </h2>
             {file && (
               <button
@@ -248,7 +319,7 @@ export default function DocumentUploadPage() {
                 Tarik & Lepas Berkas ke Sini
               </h3>
               <p className="text-xs font-normal text-slate-500 text-center max-w-xs mb-4 leading-relaxed">
-                Mendukung berkas PDF, DOCX, atau pindaian resmi (Maks. 25MB)
+                Mendukung berkas PDF, DOCX, XLSX, atau pindaian resmi (Maks. 25MB)
               </p>
 
               <label className="cursor-pointer bg-[#0a4d8c] hover:bg-[#083b6c] text-white px-4 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2">
@@ -256,7 +327,7 @@ export default function DocumentUploadPage() {
                 <input
                   type="file"
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                   onChange={handleFileChange}
                 />
               </label>
@@ -271,10 +342,10 @@ export default function DocumentUploadPage() {
           <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-xs text-slate-600 space-y-1">
             <div className="font-medium text-[#0a4d8c] flex items-center gap-1.5">
               <Sparkles size={13} />
-              Verifikasi Dokumen & Ekstraksi Tahapan
+              Verifikasi Berbobot & Ekstraksi Tahapan AI
             </div>
             <p className="text-[11px] font-normal leading-relaxed text-slate-500">
-              PRIMA AI membaca isi dokumen, memverifikasi kriteria kelayakan, menghitung skor kepatuhan, serta mengekstrak tahapan pekerjaan secara otomatis.
+              PRIMA AI mengevaluasi setiap kriteria secara terukur sesuai bobot persentase (termasuk perbandingan jadwal/nilai), menormalisasi bobot ke 100%, serta menyusun tahapan pekerjaan otomatis baik dengan maupun tanpa template.
             </p>
           </div>
         </div>
@@ -286,12 +357,12 @@ export default function DocumentUploadPage() {
               Konfigurasi Standar Kelayakan Dokumen
             </h2>
             <p className="text-xs font-normal text-slate-500 mt-0.5">
-              Pilih standar template Pertamina atau sesuaikan kriteria kelayakan sesuai kebutuhan pengadaan.
+              Pilih template standar Pertamina, unggah file daftar kriteria, atau sesuaikan bobot & kriteria kustom.
             </p>
           </div>
 
           <div className="p-6 space-y-5 flex-1 overflow-y-auto max-h-[calc(100vh-260px)]">
-            {/* 1. Validation Profile Selector */}
+            {/* 1. Validation Profile Selector (Searchable) */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
               <ValidationProfileSelector
                 profiles={profiles}
@@ -301,42 +372,50 @@ export default function DocumentUploadPage() {
               />
             </div>
 
-            {/* 2. Bind to Existing Tracker Job (Optional) */}
+            {/* 2. Bind to Existing Tracker Job (Optional, Searchable) */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <Building2 size={12} className="text-[#0a4d8c]" />
                 Tautkan ke Pekerjaan Pengadaan (Opsional)
               </label>
-              <select
+              <SearchableSelect
+                options={requestOptions}
                 value={selectedRequestId}
-                onChange={(e) => setSelectedRequestId(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 transition-colors focus:border-[#0a4d8c] focus:outline-none"
-              >
-                <option value="">
-                  -- Buat Pekerjaan Baru Otomatis dari Ekstraksi Dokumen --
-                </option>
-                {requests.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {formatRequestCode(r.id)} &ndash; {r.title}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedRequestId}
+                allowClear={Boolean(selectedRequestId)}
+                placeholder="-- Buat Pekerjaan Baru Otomatis dari Ekstraksi Dokumen --"
+                searchPlaceholder="Ketik kode atau nama pekerjaan..."
+              />
               <p className="text-[11px] font-normal text-slate-400">
-                Jika dikosongkan, sistem dapat mengekstrak judul pekerjaan, nilai anggaran, dan vendor untuk diterbitkan sebagai pekerjaan baru.
+                Jika dikosongkan, AI akan mengekstrak judul pekerjaan, nilai anggaran, dan tahapan otomatis untuk diterbitkan sebagai pekerjaan baru.
               </p>
             </div>
 
-            {/* 3. Interactive Checklist Rules Editor */}
+            {/* 3. Interactive Weighted Checklist Rules Editor */}
             <div className="rounded-xl border border-slate-200 p-4 bg-white space-y-4">
               <div className="border-b border-slate-100 pb-2.5 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#0a4d8c] flex items-center gap-1.5">
                     <Sliders size={13} />
-                    Daftar Kriteria Kelayakan (Checklist)
+                    Daftar Kriteria Kelayakan & Bobot (%)
                   </h3>
-                  <p className="text-[11px] font-normal text-slate-500 mt-0.5">
-                    Tentukan syarat kelayakan dan tandai kriteria yang bersifat wajib.
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {selectedProfileId ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-normal text-slate-600">
+                        <ShieldCheck size={11} className="text-[#0a4d8c]" />
+                        {templateRuleCount} dari Template Standar
+                        {customRuleCount > 0 && (
+                          <span className="text-[#0a4d8c] font-medium">
+                            + {customRuleCount} Kriteria Kustom
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-normal text-slate-500">
+                        Mode Kriteria Kustom Mandiri (tanpa template standar)
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {checklistRules.length > 0 && (
                   <button
@@ -355,6 +434,12 @@ export default function DocumentUploadPage() {
                 onChange={setChecklistRules}
                 passingScore={passingScore}
                 onPassingScoreChange={setPassingScore}
+                showSourceBadges
+                onCriteriaFileExtracted={(meta) => {
+                  if (!customPrompt.trim() && meta.suggested_system_prompt) {
+                    setCustomPrompt(meta.suggested_system_prompt);
+                  }
+                }}
               />
             </div>
 
@@ -367,7 +452,7 @@ export default function DocumentUploadPage() {
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Contoh: Pastikan nama penerima jaminan tertulis PT Pertamina Patra Niaga dan masa berlaku minimal 90 hari kalender."
+                placeholder="Contoh: Bandingkan durasi pelaksanaan terhadap target KAK 12 bulan (lebih cepat = memenuhi) dan verifikasi rincian PPN 11%."
                 rows={3}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none resize-none"
               />
@@ -423,7 +508,7 @@ export default function DocumentUploadPage() {
                   Simpan ke Pustaka Template Standar
                 </h3>
                 <p className="text-xs font-normal text-slate-500 mt-0.5">
-                  Simpan {checklistRules.length} butir kriteria & ambang batas {passingScore}% ke database
+                  Simpan {checklistRules.length} butir kriteria berbobot & ambang batas {passingScore}% ke database
                 </p>
               </div>
               <button
@@ -454,42 +539,32 @@ export default function DocumentUploadPage() {
                   <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
                     Jenis Dokumen
                   </label>
-                  <select
+                  <SearchableSelect
+                    size="sm"
                     value={newTemplateKind}
-                    onChange={(e) => setNewTemplateKind(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
-                  >
-                    <option value="Kerangka Acuan Kerja">Kerangka Acuan Kerja</option>
-                    <option value="Rencana Anggaran Biaya">Rencana Anggaran Biaya</option>
-                    <option value="Jaminan Pelaksanaan">Jaminan Pelaksanaan</option>
-                    <option value="Dokumen Penawaran">Dokumen Penawaran</option>
-                    <option value="Kontrak & Perjanjian">Kontrak & Perjanjian</option>
-                    <option value="Umum">Umum</option>
-                  </select>
+                    onChange={setNewTemplateKind}
+                    allowCustomValue
+                    searchPlaceholder="Cari jenis dokumen..."
+                    options={DOCUMENT_KIND_OPTIONS.map((k) => ({
+                      value: k,
+                      label: k,
+                    }))}
+                  />
                 </div>
 
                 <div>
                   <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
                     Auto-Clear Tahap (Opsional)
                   </label>
-                  <select
+                  <SearchableSelect
+                    size="sm"
                     value={newTemplateStage}
-                    onChange={(e) => setNewTemplateStage(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
-                  >
-                    <option value="">-- Tidak Ada --</option>
-                    <option value="Pembuatan TOR">Pembuatan TOR</option>
-                    <option value="Penyusunan RKS & Spesifikasi Teknis">
-                      Penyusunan RKS & Spesifikasi Teknis
-                    </option>
-                    <option value="Rapat Pra-Tender">Rapat Pra-Tender</option>
-                    <option value="Pemasukan Dokumen Penawaran">
-                      Pemasukan Dokumen Penawaran
-                    </option>
-                    <option value="Evaluasi Dokumen Penawaran">
-                      Evaluasi Dokumen Penawaran
-                    </option>
-                  </select>
+                    onChange={setNewTemplateStage}
+                    allowClear
+                    allowCustomValue
+                    searchPlaceholder="Cari tahapan..."
+                    options={stageOptions}
+                  />
                 </div>
               </div>
 

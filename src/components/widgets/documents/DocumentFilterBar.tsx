@@ -1,5 +1,21 @@
 import { Search, Filter, Download } from "lucide-react";
+import { SearchableSelect } from "@/components/ui";
 import { DocumentFilterBarProps } from "./types";
+
+const TYPE_OPTIONS = [
+  { value: "All", label: "Semua Tipe" },
+  { value: "Wajib", label: "Wajib" },
+  { value: "Kondisional", label: "Kondisional" },
+  { value: "Best Practice", label: "Best Practice" },
+  { value: "Dokumentasi", label: "Dokumentasi" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "All", label: "Semua Status" },
+  { value: "Lulus Verifikasi", label: "Lulus Verifikasi" },
+  { value: "Catatan Procurement", label: "Catatan Procurement" },
+  { value: "Tindak Lanjut FPP", label: "Tindak Lanjut FPP" },
+];
 
 export function DocumentFilterBar({
   searchQuery,
@@ -24,28 +40,23 @@ export function DocumentFilterBar({
       </div>
       <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
         <Filter className="hidden sm:block text-slate-400 shrink-0" size={16} />
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-40"
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Tipe</option>
-          <option value="Wajib">Wajib</option>
-          <option value="Kondisional">Kondisional</option>
-          <option value="Best Practice">Best Practice</option>
-          <option value="Dokumentasi">Dokumentasi</option>
-        </select>
+          onChange={setTypeFilter}
+          searchPlaceholder="Cari tipe..."
+          options={TYPE_OPTIONS}
+        />
 
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-48"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Status</option>
-          <option value="Lulus Verifikasi">Lulus Verifikasi</option>
-          <option value="Catatan Procurement">Catatan Procurement</option>
-          <option value="Tindak Lanjut FPP">Tindak Lanjut FPP</option>
-        </select>
+          onChange={(val) => setStatusFilter(val as any)}
+          searchPlaceholder="Cari status..."
+          options={STATUS_OPTIONS}
+        />
 
         {onExport && (
           <button

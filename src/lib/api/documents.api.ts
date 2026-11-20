@@ -4,9 +4,15 @@ import type {
   CreateValidationProfilePayload,
   UpdateValidationProfilePayload,
   DocumentValidationResponse,
+  ExtractedCriteriaResponse,
+  ReevaluateValidationPayload,
   PublishValidationToTrackerPayload,
   UpdateValidationDecisionPayload,
   ValidationLogListItem,
+  WorkflowStage,
+  CreateWorkflowStagePayload,
+  UpdateWorkflowStagePayload,
+  ReorderWorkflowStagesPayload,
 } from "@/types/validation";
 
 export interface DocumentDto {
@@ -70,10 +76,23 @@ export const documentsApi = {
     apiFetch<{ message: string }>(`/documents/profiles/${id}`, {
       method: "DELETE",
     }),
+  extractCriteria: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return apiFetch<ExtractedCriteriaResponse>("/documents/extract-criteria", {
+      method: "POST",
+      body: fd,
+    });
+  },
   analyzeChecklist: (formData: FormData) =>
     apiFetch<DocumentValidationResponse>("/documents/analyze-checklist", {
       method: "POST",
       body: formData,
+    }),
+  reevaluateValidation: (id: string, payload: ReevaluateValidationPayload) =>
+    apiFetch<DocumentValidationResponse>(`/documents/validations/${id}/re-evaluate`, {
+      method: "POST",
+      body: JSON.stringify(payload),
     }),
   publishToTracker: (payload: PublishValidationToTrackerPayload) =>
     apiFetch<{ success: boolean; message: string; request_id: string; auto_cleared_stages_count: number }>(
@@ -91,4 +110,31 @@ export const documentsApi = {
     apiFetch<ValidationLogListItem[]>(
       requestId ? `/documents/validations?request_id=${encodeURIComponent(requestId)}` : "/documents/validations"
     ),
+
+  // ─── ADMIN WORKFLOW STAGES ───────────────────────────────────────────────
+  getWorkflowStages: (procurementMethod?: string) => {
+    const qs = procurementMethod
+      ? `?procurement_method=${encodeURIComponent(procurementMethod)}`
+      : "";
+    return apiFetch<WorkflowStage[]>(`/workflow/stages${qs}`);
+  },
+  createWorkflowStage: (payload: CreateWorkflowStagePayload) =>
+    apiFetch<WorkflowStage>("/workflow/stages", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateWorkflowStage: (id: string, payload: UpdateWorkflowStagePayload) =>
+    apiFetch<WorkflowStage>(`/workflow/stages/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  reorderWorkflowStages: (payload: ReorderWorkflowStagesPayload) =>
+    apiFetch<WorkflowStage[]>("/workflow/stages/reorder", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteWorkflowStage: (id: string) =>
+    apiFetch<{ message: string }>(`/workflow/stages/${id}`, {
+      method: "DELETE",
+    }),
 };

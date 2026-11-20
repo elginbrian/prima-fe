@@ -1,6 +1,23 @@
 import { Search, Filter, LayoutGrid, LayoutList, Download } from "lucide-react";
 import type { ProcurementOperationalStatus } from "@/types";
+import { SearchableSelect } from "@/components/ui";
 import { TrackerHeaderProps } from "./types";
+
+const DEPARTMENT_FILTER_OPTIONS = [
+  { value: "All", label: "Semua Departemen" },
+  { value: "IT Infrastructure", label: "IT Infrastructure" },
+  { value: "HR", label: "Human Resources" },
+  { value: "Operations", label: "Operations" },
+  { value: "Creative", label: "Creative" },
+  { value: "General Affairs", label: "General Affairs" },
+];
+
+const OP_STATUS_OPTIONS = [
+  { value: "All", label: "Semua Status" },
+  { value: "On Going", label: "Berjalan (On Going)" },
+  { value: "On Hold", label: "Ditunda (On Hold)" },
+  { value: "Batal", label: "Dibatalkan" },
+];
 
 export function TrackerHeader({
   searchQuery,
@@ -27,31 +44,25 @@ export function TrackerHeader({
       </div>
       <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
         <Filter className="hidden sm:block text-slate-400 shrink-0" size={16} />
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-48"
           value={departmentFilter}
-          onChange={(e) => setDepartmentFilter(e.target.value)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Departemen</option>
-          <option value="IT Infrastructure">IT Infrastructure</option>
-          <option value="HR">Human Resources</option>
-          <option value="Operations">Operations</option>
-          <option value="Creative">Creative</option>
-          <option value="General Affairs">General Affairs</option>
-        </select>
+          onChange={setDepartmentFilter}
+          searchPlaceholder="Cari departemen..."
+          options={DEPARTMENT_FILTER_OPTIONS}
+        />
 
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-44"
           value={operationalStatusFilter}
-          onChange={(e) =>
-            setOperationalStatusFilter(e.target.value as ProcurementOperationalStatus | "All")
+          onChange={(val) =>
+            setOperationalStatusFilter(val as ProcurementOperationalStatus | "All")
           }
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Status</option>
-          <option value="On Going">Berjalan (On Going)</option>
-          <option value="On Hold">Ditunda (On Hold)</option>
-          <option value="Batal">Dibatalkan</option>
-        </select>
+          searchPlaceholder="Cari status..."
+          options={OP_STATUS_OPTIONS}
+        />
 
         <div className="flex shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-0.5">
           <button

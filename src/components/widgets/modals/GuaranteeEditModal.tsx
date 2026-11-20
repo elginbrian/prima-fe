@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { GuaranteeItem } from "@/types";
@@ -9,6 +9,7 @@ import { useUpdateGuarantee } from "@/lib/query/hooks/procurement/useGuarantees"
 
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { getErrorMessage } from "@/lib/api/errors";
 import { vendorIdFromName } from "@/lib/adapters/procurement.mutations";
 
@@ -20,6 +21,7 @@ interface GuaranteeEditModalProps {
 export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalProps) {
   const updateGuarantee = useUpdateGuarantee();
   const toast = useToast();
+  const [issuerType, setIssuerType] = useState<string>(guarantee.issuerType ?? "Bank");
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -86,14 +88,20 @@ export function GuaranteeEditModal({ guarantee, onClose }: GuaranteeEditModalPro
 
         {/* Body */}
         <div className="grid gap-5 p-6 sm:grid-cols-2">
-          <label>
+          <div>
             <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Jenis penerbit</span>
-            <select name="issuerType" defaultValue={guarantee.issuerType ?? "Bank"} className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50">
-              <option>Bank</option>
-              <option>Asuransi</option>
-              <option>Lainnya</option>
-            </select>
-          </label>
+            <input type="hidden" name="issuerType" value={issuerType} />
+            <SearchableSelect
+              value={issuerType}
+              onChange={setIssuerType}
+              searchPlaceholder="Cari jenis penerbit..."
+              options={[
+                { value: "Bank", label: "Bank" },
+                { value: "Asuransi", label: "Asuransi" },
+                { value: "Lainnya", label: "Lainnya" },
+              ]}
+            />
+          </div>
           <label>
             <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Nama penerbit</span>
             <input required name="issuer" defaultValue={guarantee.issuer} className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-[#0a4d8c] focus:outline-none focus:ring-4 focus:ring-blue-100/50" />

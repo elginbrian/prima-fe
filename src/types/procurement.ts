@@ -9,26 +9,7 @@ export type ProcurementStage =
 
 export type ProcurementOperationalStatus = "On Going" | "On Hold" | "Batal";
 
-export type ProcurementStep =
-  | "Rapat Pra-Tender"
-  | "Pengumuman Pengadaan"
-  | "Prebid Meeting"
-  | "Pemasukan Dokumen Penawaran"
-  | "Pembukaan Penawaran"
-  | "Evaluasi Dokumen Penawaran"
-  | "Sosialisasi e-Auction"
-  | "Negosiasi e-Auction"
-  | "Negosiasi Manual"
-  | "Laporan Hasil Pemilihan"
-  | "Pengumuman Pemenang"
-  | "Penunjukan Pemenang"
-  | "Undangan Pemilihan"
-  | "Pembukaan & Evaluasi Penawaran"
-  | "Klarifikasi & Negosiasi Teknis"
-  | "Penetapan Pemenang"
-  | "Undangan Penunjukan Langsung"
-  | "Pemasukan & Evaluasi Dokumen"
-  | "Klarifikasi & Negosiasi Harga";
+export type ProcurementStep = string;
 
 export type ProcurementMilestoneStatus = "Pending" | "In Progress" | "Done" | "Skipped";
 

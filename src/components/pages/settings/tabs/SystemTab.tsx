@@ -1,5 +1,6 @@
 import { SettingsTabProps } from "./types";
 import { formatRupiah } from "@/lib/utils";
+import { SearchableSelect } from "@/components/ui";
 
 export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
   return (
@@ -61,31 +62,28 @@ export function SystemTab({ formData, handleChange, users }: SettingsTabProps) {
                   <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
                     {dept.name}
                   </label>
-                  <select
+                  <SearchableSelect
                     value={currentReviewer}
-                    onChange={(e) => {
+                    onChange={(val) => {
                       const newReviewers = { ...(formData.departmentReviewers || {}) };
-                      newReviewers[dept.id] = e.target.value;
+                      newReviewers[dept.id] = val;
                       handleChange("departmentReviewers", newReviewers);
                     }}
-                    className="w-full px-3 py-2 text-sm font-normal text-slate-700 border border-slate-200 rounded-md focus:outline-none focus:border-[#0a4d8c]"
-                  >
-                    <option value="" disabled>
-                      Pilih Reviewer...
-                    </option>
-                    {users
-                      ?.filter(
+                    placeholder="Pilih Reviewer..."
+                    searchPlaceholder="Cari nama reviewer..."
+                    options={(users ?? [])
+                      .filter(
                         (u) =>
                           u.role.includes("Reviewer") ||
                           u.role.includes("Manager") ||
                           u.role.includes("Admin")
                       )
-                      .map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.role})
-                        </option>
-                      ))}
-                  </select>
+                      .map((u) => ({
+                        value: u.id,
+                        label: `${u.name} (${u.role})`,
+                        keywords: `${u.name} ${u.role}`,
+                      }))}
+                  />
                 </div>
               );
             })}

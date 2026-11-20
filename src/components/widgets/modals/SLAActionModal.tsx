@@ -8,6 +8,7 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { useUpdateDeadline, useProcurements, useEscalateDeadline, useSubmitRecoveryPlan } from "@/lib/query/hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { getErrorMessage } from "@/lib/api/errors";
 import { formatDateIndo } from "@/lib/utils";
 
@@ -248,18 +249,21 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                 <ShieldAlert size={16} className="text-amber-700 shrink-0" />
                 <span className="text-xs font-bold text-amber-900">Eskalasi Manual ke Manajer</span>
               </div>
-              <label className="block text-xs">
+              <div className="block text-xs">
                 <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-amber-800">Tujuan Eskalasi</span>
-                <select
+                <SearchableSelect
+                  size="sm"
                   value={escalateTo}
-                  onChange={(e) => setEscalateTo(e.target.value)}
-                  className="w-full rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none"
-                >
-                  <option value="Manager Pengadaan Korporat">Manager Pengadaan Korporat</option>
-                  <option value="VP Procurement Strategy">VP Procurement Strategy</option>
-                  <option value="Senior Manager Risk & Compliance">Senior Manager Risk & Compliance</option>
-                </select>
-              </label>
+                  onChange={setEscalateTo}
+                  allowCustomValue
+                  searchPlaceholder="Cari atau ketik tujuan eskalasi..."
+                  options={[
+                    { value: "Manager Pengadaan Korporat", label: "Manager Pengadaan Korporat" },
+                    { value: "VP Procurement Strategy", label: "VP Procurement Strategy" },
+                    { value: "Senior Manager Risk & Compliance", label: "Senior Manager Risk & Compliance" },
+                  ]}
+                />
+              </div>
               <label className="block text-xs">
                 <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-amber-800">Alasan Eskalasi</span>
                 <textarea

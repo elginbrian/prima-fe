@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -23,15 +23,32 @@ import {
   useValidationDetail,
   usePublishValidationToTracker,
   useUpdateValidationDecision,
+  useReevaluateValidation,
+  useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, Skeleton } from "@/components/ui";
+import { Spinner, Skeleton, SearchableSelect } from "@/components/ui";
 import { formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
 import { ValidationScoreCard } from "@/components/widgets/documents/ValidationScoreCard";
 import { ChecklistEvaluationList } from "@/components/widgets/documents/ChecklistEvaluationList";
 import { ExtractedStagesTimeline } from "@/components/widgets/documents/ExtractedStagesTimeline";
+import { ChecklistEditor } from "@/components/widgets/documents/ChecklistEditor";
 import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
-import type { DocumentValidationResponse, ComplianceStatus } from "@/types/validation";
+import type {
+  DocumentValidationResponse,
+  ComplianceStatus,
+  ChecklistRuleItem,
+  ExtractedStage,
+} from "@/types/validation";
+
+const COMPLIANCE_STATUS_OPTIONS = [
+  { value: "Lulus Verifikasi", label: "Lulus Verifikasi" },
+  { value: "Catatan Procurement", label: "Catatan Procurement" },
+  {
+    value: "Perlu Perbaikan",
+    label: "Perlu Perbaikan (Tindak Lanjut FPP)",
+  },
+];
 
 export default function DocumentResultPage() {
   const router = useRouter();
@@ -41,8 +58,10 @@ export default function DocumentResultPage() {
 
   const { data: serverValidationData, isLoading: isLoadingVal } =
     useValidationDetail(docId);
+  const { data: workflowStages = [] } = useWorkflowStages();
   const publishMutation = usePublishValidationToTracker();
   const decisionMutation = useUpdateValidationDecision();
+  const reevaluateMutation = useReevaluateValidation();
 
   const { state } = useProcurement();
   const { data: serverRequests = [] } = useProcurements();
@@ -52,7 +71,49 @@ export default function DocumentResultPage() {
   const validationData: DocumentValidationResponse | null =
     serverValidationData ?? null;
 
+  const [editedStages, setEditedStages] = useState<ExtractedStage[] | null>(null);
+
+  useEffect(() => {
+    if (validationData?.extracted_project?.stages) {
+      setEditedStages(validationData.extracted_project.stages);
+    }
+  }, [validationData?.id, validationData?.extracted_project?.stages]);
+
+  const activeStages = useMemo(
+    () => editedStages ?? validationData?.extracted_project?.stages ?? [],
+    [editedStages, validationData]
+  );
+
+  const methodOptions = useMemo(() => {
+    const set = new Set<string>([
+      "Tender Terbuka",
+      "Pemilihan Langsung",
+      "Penunjukan Langsung",
+      "Tender Terbatas",
+      "Pengadaan Langsung",
+    ]);
+    workflowStages.forEach((s) => {
+      if (s.procurement_method) set.add(s.procurement_method);
+    });
+    return Array.from(set).map((m) => ({ value: m, label: m }));
+  }, [workflowStages]);
+
+  const requestOptions = useMemo(
+    () => [
+      { value: "", label: "-- Pilih Pekerjaan --" },
+      ...requests.map((r) => ({
+        value: r.id,
+        label: `${formatRequestCode(r.id)} – ${r.title}`,
+        description: `${r.department?.name || "-"} · ${r.currentStep}`,
+        keywords: `${r.id} ${r.title} ${r.department?.name || ""}`,
+      })),
+    ],
+    [requests]
+  );
+
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Reviewer manual override modal
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
   const [decisionStatus, setDecisionStatus] =
     useState<ComplianceStatus>("Lulus Verifikasi");
@@ -60,6 +121,13 @@ export default function DocumentResultPage() {
   const [decisionNotes, setDecisionNotes] = useState<string>("");
   const [decisionNextAction, setDecisionNextAction] = useState<string>("");
 
+  // AI Re-evaluation modal (adjust criteria/weights/prompt & re-run AI without re-uploading file)
+  const [isReevalModalOpen, setIsReevalModalOpen] = useState(false);
+  const [reevalRules, setReevalRules] = useState<ChecklistRuleItem[]>([]);
+  const [reevalPassingScore, setReevalPassingScore] = useState<number>(80);
+  const [reevalPrompt, setReevalPrompt] = useState<string>("");
+
+  // Publish / Link to Tracker modal
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [publishMode, setPublishMode] = useState<"existing" | "new">("new");
   const [targetRequestId, setTargetRequestId] = useState<string>("");
@@ -96,6 +164,48 @@ export default function DocumentResultPage() {
       setIsDecisionModalOpen(false);
     } catch (err: any) {
       toast.error(err?.message || "Gagal memperbarui keputusan verifikasi.");
+    }
+  };
+
+  const handleOpenReevalModal = () => {
+    if (!validationData) return;
+    const baseRules: ChecklistRuleItem[] =
+      validationData.checklist_rules && validationData.checklist_rules.length > 0
+        ? validationData.checklist_rules
+        : validationData.checklist_evaluations.map((ev) => ({
+            category: "Umum",
+            item: ev.item,
+            is_mandatory: ev.is_mandatory,
+            weight: ev.weight ?? ev.normalized_weight ?? 20,
+            severity_on_failure: ev.is_mandatory ? "ERROR" : "WARNING",
+            source: ev.source ?? "custom",
+          }));
+    setReevalRules(baseRules);
+    setReevalPassingScore(validationData.passing_score_threshold || 80);
+    setReevalPrompt(validationData.user_prompt || "");
+    setIsReevalModalOpen(true);
+  };
+
+  const handleConfirmReevaluate = async () => {
+    if (!validationData) return;
+    if (reevalRules.length === 0) {
+      toast.warning("Tambahkan minimal 1 kriteria untuk evaluasi ulang AI.");
+      return;
+    }
+    try {
+      toast.info("Menjalankan evaluasi ulang AI dengan kriteria & bobot terbaru...");
+      await reevaluateMutation.mutateAsync({
+        id: validationData.id,
+        payload: {
+          checklist_rules: reevalRules,
+          passing_score_threshold: reevalPassingScore,
+          custom_prompt: reevalPrompt.trim() || undefined,
+        },
+      });
+      toast.success("Evaluasi ulang AI selesai dan hasil berhasil diperbarui!");
+      setIsReevalModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal menjalankan evaluasi ulang AI.");
     }
   };
 
@@ -136,7 +246,7 @@ export default function DocumentResultPage() {
         procurement_method: publishForm.method,
         department_name: publishForm.departmentName,
         vendor_name: publishForm.vendorName,
-        stages: validationData.extracted_project.stages?.map((s) => ({
+        stages: activeStages.map((s) => ({
           step: s.step,
           status: s.status,
           auto_cleared: s.auto_cleared,
@@ -180,9 +290,7 @@ export default function DocumentResultPage() {
   }
 
   if (validationData) {
-    const autoClearedCount = (
-      validationData.extracted_project.stages || []
-    ).filter((s) => s.auto_cleared).length;
+    const autoClearedCount = activeStages.filter((s) => s.auto_cleared).length;
 
     const linkedRequest = validationData.request_id
       ? requests.find((r) => r.id === validationData.request_id)
@@ -213,32 +321,21 @@ export default function DocumentResultPage() {
 
             <button
               type="button"
+              onClick={handleOpenReevalModal}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+              title="Sesuaikan bobot, kriteria, atau prompt lalu jalankan ulang AI pada berkas ini"
+            >
+              <RefreshCw size={13} className="text-[#0a4d8c]" />
+              <span>Evaluasi Ulang AI</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleOpenDecisionModal}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
             >
               <Sliders size={14} className="text-[#0a4d8c]" />
               <span>Keputusan Reviewer</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                const qs = new URLSearchParams();
-                if (validationData.request_id)
-                  qs.set("requestId", validationData.request_id);
-                if (validationData.profile_id)
-                  qs.set("profileId", validationData.profile_id);
-                router.push(
-                  `/dashboard/documents/upload${
-                    qs.toString() ? `?${qs.toString()}` : ""
-                  }`
-                );
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
-              title="Unggah revisi atau jalankan analisis ulang"
-            >
-              <RefreshCw size={13} />
-              <span>Analisis Ulang</span>
             </button>
 
             <button
@@ -288,7 +385,7 @@ export default function DocumentResultPage() {
                 <>
                   <span>
                     {validationData.request_id
-                      ? "Perbarui / Terbitkan Pekerjaan"
+                      ? "Perbarui Tautan & Pekerjaan"
                       : "Terbitkan ke Pekerjaan"}
                   </span>
                   <ArrowUpRight size={14} />
@@ -313,7 +410,7 @@ export default function DocumentResultPage() {
 
         {/* 2. Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* Left Column (5/12): Recommendations & Extracted Stages */}
+          {/* Left Column (5/12): Recommendations & Editable Extracted Stages */}
           <div className="lg:col-span-5 space-y-5">
             {validationData.recommendations &&
               validationData.recommendations.length > 0 && (
@@ -347,10 +444,17 @@ export default function DocumentResultPage() {
                 </div>
               )}
 
-            <ExtractedStagesTimeline project={validationData.extracted_project} />
+            <ExtractedStagesTimeline
+              project={{
+                ...validationData.extracted_project,
+                stages: activeStages,
+              }}
+              editable
+              onChangeStages={setEditedStages}
+            />
           </div>
 
-          {/* Right Column (7/12): Checklist Evaluations */}
+          {/* Right Column (7/12): Weighted Checklist Evaluations */}
           <div className="lg:col-span-7 space-y-5">
             <ChecklistEvaluationList
               evaluations={validationData.checklist_evaluations}
@@ -399,6 +503,85 @@ export default function DocumentResultPage() {
           />
         )}
 
+        {/* Modal: Re-Evaluate with AI */}
+        {isReevalModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
+            <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Evaluasi Ulang Dokumen dengan AI
+                  </h3>
+                  <p className="text-xs font-normal text-slate-500 mt-0.5">
+                    Sesuaikan bobot, kriteria, atau panduan perbandingan untuk berkas &ldquo;{validationData.document_name}&rdquo; lalu jalankan ulang analisis AI.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReevalModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 focus:outline-none"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                <ChecklistEditor
+                  items={reevalRules}
+                  onChange={setReevalRules}
+                  passingScore={reevalPassingScore}
+                  onPassingScoreChange={setReevalPassingScore}
+                  showSourceBadges
+                />
+
+                <div>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                    Instruksi Tambahan / Fokus Evaluasi Ulang AI
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={reevalPrompt}
+                    onChange={(e) => setReevalPrompt(e.target.value)}
+                    placeholder="Contoh: Fokus evaluasi perbandingan jadwal penawaran (12 bulan) terhadap KAK (13 bulan) dan detail rincian PPN..."
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsReevalModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmReevaluate}
+                  disabled={reevaluateMutation.isPending}
+                  className="px-5 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {reevaluateMutation.isPending ? (
+                    <>
+                      <Spinner
+                        size="xs"
+                        className="border-white border-t-transparent"
+                      />
+                      <span>Menganalisis Ulang...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={13} />
+                      <span>Jalankan Evaluasi Ulang AI</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal: Reviewer Decision Override */}
         {isDecisionModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
@@ -427,21 +610,15 @@ export default function DocumentResultPage() {
                     <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
                       Status Kelayakan Dokumen
                     </label>
-                    <select
+                    <SearchableSelect
+                      size="sm"
                       value={decisionStatus}
-                      onChange={(e) =>
-                        setDecisionStatus(e.target.value as ComplianceStatus)
+                      onChange={(val) =>
+                        setDecisionStatus(val as ComplianceStatus)
                       }
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
-                    >
-                      <option value="Lulus Verifikasi">Lulus Verifikasi</option>
-                      <option value="Catatan Procurement">
-                        Catatan Procurement
-                      </option>
-                      <option value="Perlu Perbaikan">
-                        Perlu Perbaikan (Tindak Lanjut FPP)
-                      </option>
-                    </select>
+                      searchPlaceholder="Cari status..."
+                      options={COMPLIANCE_STATUS_OPTIONS}
+                    />
                   </div>
 
                   <div>
@@ -533,7 +710,7 @@ export default function DocumentResultPage() {
                     Terbitkan atau Tautkan ke Pusat Kendali Pekerjaan
                   </h3>
                   <p className="text-xs font-normal text-slate-500 mt-0.5">
-                    Pilih untuk membuat pekerjaan baru atau menautkan ke pekerjaan yang sudah berjalan
+                    Pilih untuk membuat pekerjaan baru atau memperbarui tautan pada pekerjaan yang sudah berjalan
                   </p>
                 </div>
                 <button
@@ -597,18 +774,12 @@ export default function DocumentResultPage() {
                       <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
                         Pilih Pekerjaan Pengadaan
                       </label>
-                      <select
+                      <SearchableSelect
                         value={targetRequestId}
-                        onChange={(e) => setTargetRequestId(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-xs font-normal text-slate-800 bg-white focus:border-[#0a4d8c] focus:outline-none"
-                      >
-                        <option value="">-- Pilih Pekerjaan --</option>
-                        {requests.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {formatRequestCode(r.id)} &ndash; {r.title}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setTargetRequestId}
+                        options={requestOptions}
+                        searchPlaceholder="Cari kode atau nama pekerjaan..."
+                      />
                     </div>
                     <p className="text-xs font-normal text-slate-500 leading-relaxed">
                       Dokumen{" "}
@@ -662,27 +833,19 @@ export default function DocumentResultPage() {
                         <label className="text-[11px] font-medium text-slate-600 uppercase tracking-wider block mb-1">
                           Metode Pengadaan
                         </label>
-                        <select
+                        <SearchableSelect
+                          size="sm"
                           value={publishForm.method}
-                          onChange={(e) =>
+                          onChange={(val) =>
                             setPublishForm({
                               ...publishForm,
-                              method: e.target.value,
+                              method: val,
                             })
                           }
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none bg-white"
-                        >
-                          <option value="Tender Terbuka">Tender Terbuka</option>
-                          <option value="Tender Terbatas">
-                            Tender Terbatas
-                          </option>
-                          <option value="Penunjukan Langsung">
-                            Penunjukan Langsung
-                          </option>
-                          <option value="Pengadaan Langsung">
-                            Pengadaan Langsung
-                          </option>
-                        </select>
+                          allowCustomValue
+                          searchPlaceholder="Cari metode..."
+                          options={methodOptions}
+                        />
                       </div>
                     </div>
 

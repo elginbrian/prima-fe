@@ -1,5 +1,22 @@
 import { Search, Filter, Download } from "lucide-react";
+import { SearchableSelect } from "@/components/ui";
 import { GuaranteeFilterBarProps } from "./types";
+
+const GUARANTEE_TYPE_OPTIONS = [
+  { value: "All", label: "Semua Tipe" },
+  { value: "Jaminan Pelaksanaan", label: "Pelaksanaan" },
+  { value: "Jaminan Masa Pemeliharaan", label: "Pemeliharaan" },
+  { value: "Jaminan Uang Muka", label: "Uang Muka" },
+];
+
+const GUARANTEE_STATUS_OPTIONS = [
+  { value: "All", label: "Semua Status" },
+  { value: "Aktif", label: "Aktif" },
+  { value: "Mendekati Expiry", label: "Mendekati Jatuh Tempo" },
+  { value: "Expired", label: "Kedaluwarsa" },
+  { value: "Klaim Diajukan", label: "Klaim Diajukan" },
+  { value: "Dikembalikan", label: "Dikembalikan" },
+];
 
 export function GuaranteeFilterBar({
   searchQuery,
@@ -24,28 +41,22 @@ export function GuaranteeFilterBar({
       </div>
       <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
         <Filter className="hidden sm:block text-slate-400 shrink-0" size={16} />
-        <select
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-40"
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Tipe</option>
-          <option value="Jaminan Pelaksanaan">Pelaksanaan</option>
-          <option value="Jaminan Masa Pemeliharaan">Pemeliharaan</option>
-          <option value="Jaminan Uang Muka">Uang Muka</option>
-        </select>
-        <select
+          onChange={setTypeFilter}
+          searchPlaceholder="Cari tipe..."
+          options={GUARANTEE_TYPE_OPTIONS}
+        />
+        <SearchableSelect
+          size="sm"
+          className="w-full sm:w-48"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="border border-slate-200 rounded-lg text-xs font-medium text-slate-700 px-3 py-2 focus:outline-none focus:border-[#0a4d8c] bg-white"
-        >
-          <option value="All">Semua Status</option>
-          <option value="Aktif">Aktif</option>
-          <option value="Mendekati Expiry">Mendekati Jatuh Tempo</option>
-          <option value="Expired">Kedaluwarsa</option>
-          <option value="Klaim Diajukan">Klaim Diajukan</option>
-          <option value="Dikembalikan">Dikembalikan</option>
-        </select>
+          onChange={(val) => setStatusFilter(val as any)}
+          searchPlaceholder="Cari status..."
+          options={GUARANTEE_STATUS_OPTIONS}
+        />
         {onExport && (
           <button
             type="button"

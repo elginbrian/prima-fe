@@ -9,6 +9,7 @@ import {
   Plus,
   AlertCircle,
   ArrowRight,
+  Edit3,
 } from "lucide-react";
 import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
 import type { ProcurementMilestone, DeadlineItem } from "@/types";
@@ -26,6 +27,7 @@ interface ProcurementTimelineProps {
   onAddSla: () => void;
   onEditSla: (id: string) => void;
   onOpenDocsTab?: () => void;
+  onManageStages?: () => void;
 }
 
 export function ProcurementTimeline({
@@ -38,6 +40,7 @@ export function ProcurementTimeline({
   onAddSla,
   onEditSla,
   onOpenDocsTab,
+  onManageStages,
 }: ProcurementTimelineProps) {
   const [previewDoc, setPreviewDoc] = React.useState<{ id: string; title: string } | null>(null);
 
@@ -62,14 +65,26 @@ export function ProcurementTimeline({
             Alur berurutan dari tahap awal hingga selesai beserta target waktu (SLA) di setiap tahapan.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onAddSla}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c]"
-        >
-          <Plus size={13} className="text-[#0a4d8c]" />
-          <span>Tambah Target SLA</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {onManageStages && (
+            <button
+              type="button"
+              onClick={onManageStages}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c]"
+            >
+              <Edit3 size={13} className="text-[#0a4d8c]" />
+              <span>Kelola Tahapan</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onAddSla}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c]"
+          >
+            <Plus size={13} className="text-[#0a4d8c]" />
+            <span>Tambah Target SLA</span>
+          </button>
+        </div>
       </div>
 
       <div className="relative mt-5 space-y-2.5">

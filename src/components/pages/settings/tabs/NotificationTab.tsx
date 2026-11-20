@@ -1,4 +1,5 @@
 import { SettingsTabProps } from "./types";
+import { SearchableSelect } from "@/components/ui";
 
 export function NotificationTab({ formData, handleChange, users }: SettingsTabProps) {
   return (
@@ -102,27 +103,24 @@ export function NotificationTab({ formData, handleChange, users }: SettingsTabPr
                   <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
                     Manajer Tujuan Eskalasi
                   </label>
-                  <select
+                  <SearchableSelect
                     value={formData.escalationManagerId || ""}
-                    onChange={(e) => handleChange("escalationManagerId", e.target.value)}
-                    className="w-full px-3 py-2 text-sm font-normal bg-white text-slate-700 border border-slate-200 rounded-lg focus:outline-none focus:border-[#0a4d8c]"
-                  >
-                    <option value="" disabled>
-                      Pilih Manajer...
-                    </option>
-                    {users
-                      ?.filter(
+                    onChange={(val) => handleChange("escalationManagerId", val)}
+                    placeholder="Pilih Manajer..."
+                    searchPlaceholder="Cari nama atau peran manajer..."
+                    options={(users ?? [])
+                      .filter(
                         (u) =>
                           u.role.includes("Manager") ||
                           u.role.includes("Admin") ||
                           u.role.includes("Reviewer")
                       )
-                      .map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.role})
-                        </option>
-                      ))}
-                  </select>
+                      .map((u) => ({
+                        value: u.id,
+                        label: `${u.name} (${u.role})`,
+                        keywords: `${u.name} ${u.role}`,
+                      }))}
+                  />
                 </div>
               </div>
             </div>

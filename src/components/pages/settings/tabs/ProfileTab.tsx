@@ -9,6 +9,7 @@ import {
 } from "@/lib/query/hooks/auth/useCurrentUser";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Spinner } from "@/components/ui/Spinner";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { useToast } from "@/components/ui/Toast";
 import { getErrorMessage } from "@/lib/api/errors";
 
@@ -220,34 +221,28 @@ export function ProfileTab() {
             <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
               Fungsi / Departemen
             </label>
-            <select
+            <SearchableSelect
               value={departmentName}
-              onChange={(e) => setDepartmentName(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 font-normal focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c]"
-            >
-              {DEPARTMENT_OPTIONS.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+              onChange={setDepartmentName}
+              allowCustomValue
+              searchPlaceholder="Cari atau ketik departemen..."
+              options={DEPARTMENT_OPTIONS.map((dept) => ({
+                value: dept,
+                label: dept,
+              }))}
+            />
           </div>
 
           <div>
             <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
               Peran (Role)
             </label>
-            <select
+            <SearchableSelect
               value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 font-normal focus:outline-none focus:border-[#0a4d8c] focus:ring-1 focus:ring-[#0a4d8c]"
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+              onChange={setRole}
+              searchPlaceholder="Cari peran..."
+              options={ROLE_OPTIONS.map((r) => ({ value: r, label: r }))}
+            />
           </div>
 
           <div>

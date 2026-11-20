@@ -8,3 +8,5 @@ export { useToast, ToastProvider } from "./Toast";
 export { LogoutModal } from "./LogoutModal";
 export { UserAvatar, resolveAvatarUrl } from "./UserAvatar";
 export type { UserAvatarProps } from "./UserAvatar";
+export { SearchableSelect } from "./SearchableSelect";
+export type { SearchableSelectProps, SearchableOption } from "./SearchableSelect";

@@ -3,12 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { documentsApi } from "@/lib/api/documents.api";
 import type {
-  ValidationProfile,
   CreateValidationProfilePayload,
   UpdateValidationProfilePayload,
-  DocumentValidationResponse,
+  ReevaluateValidationPayload,
   PublishValidationToTrackerPayload,
   UpdateValidationDecisionPayload,
+  CreateWorkflowStagePayload,
+  UpdateWorkflowStagePayload,
+  ReorderWorkflowStagesPayload,
 } from "@/types/validation";
 import { queryKeys } from "@/lib/query/keys";
 
@@ -17,6 +19,7 @@ export const validationQueryKeys = {
   profileDetail: (id: string) => ["validation", "profile", id] as const,
   validationDetail: (id: string) => ["validation", "log", id] as const,
   validationLogs: (requestId?: string) => ["validation", "logs", requestId ?? "all"] as const,
+  workflowStages: (method?: string) => ["workflow", "stages", method ?? "all"] as const,
 };
 
 export function useValidationLogs(requestId?: string) {
@@ -37,7 +40,7 @@ export function useValidationProfiles(documentKind?: string, scope?: string) {
       const res = await documentsApi.getProfiles(documentKind, scope);
       return res.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -99,6 +102,15 @@ export function useDeleteValidationProfile() {
   });
 }
 
+export function useExtractCriteria() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const res = await documentsApi.extractCriteria(file);
+      return res.data;
+    },
+  });
+}
+
 export function useValidationDetail(id?: string) {
   return useQuery({
     queryKey: validationQueryKeys.validationDetail(id ?? ""),
@@ -116,6 +128,30 @@ export function useAnalyzeDocumentChecklist() {
   return useMutation({
     mutationFn: async (formData: FormData) => {
       const res = await documentsApi.analyzeChecklist(formData);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      qc.setQueryData(validationQueryKeys.validationDetail(data.id), data);
+      if (data.document_id) {
+        qc.setQueryData(validationQueryKeys.validationDetail(data.document_id), data);
+      }
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all() });
+      qc.invalidateQueries({ queryKey: ["validation", "logs"] });
+    },
+  });
+}
+
+export function useReevaluateValidation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: ReevaluateValidationPayload;
+    }) => {
+      const res = await documentsApi.reevaluateValidation(id, payload);
       return res.data;
     },
     onSuccess: (data) => {
@@ -164,8 +200,78 @@ export function usePublishValidationToTracker() {
       qc.invalidateQueries({ queryKey: queryKeys.procurement.all() });
       qc.invalidateQueries({ queryKey: queryKeys.documents.all() });
       qc.invalidateQueries({ queryKey: queryKeys.deadlines.all() });
-      qc.invalidateQueries({ queryKey: ["validation", "logs"] });
+      qc.invalidateQueries({ queryKey: ["validation"] });
     },
   });
 }
 
+// ─── ADMIN WORKFLOW STAGES HOOKS ───────────────────────────────────────────
+
+export function useWorkflowStages(procurementMethod?: string) {
+  return useQuery({
+    queryKey: validationQueryKeys.workflowStages(procurementMethod),
+    queryFn: async () => {
+      const res = await documentsApi.getWorkflowStages(procurementMethod);
+      return res.data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useCreateWorkflowStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateWorkflowStagePayload) => {
+      const res = await documentsApi.createWorkflowStage(payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workflow", "stages"] });
+    },
+  });
+}
+
+export function useUpdateWorkflowStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateWorkflowStagePayload;
+    }) => {
+      const res = await documentsApi.updateWorkflowStage(id, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workflow", "stages"] });
+    },
+  });
+}
+
+export function useReorderWorkflowStages() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: ReorderWorkflowStagesPayload) => {
+      const res = await documentsApi.reorderWorkflowStages(payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workflow", "stages"] });
+    },
+  });
+}
+
+export function useDeleteWorkflowStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await documentsApi.deleteWorkflowStage(id);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workflow", "stages"] });
+    },
+  });
+}

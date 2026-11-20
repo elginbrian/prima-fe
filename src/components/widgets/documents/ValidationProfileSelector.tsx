@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { BookOpen, ShieldCheck, Sparkles } from "lucide-react";
+import { SearchableSelect } from "@/components/ui";
 import type { ValidationProfile } from "@/types/validation";
 
 interface ValidationProfileSelectorProps {
@@ -22,6 +23,24 @@ export function ValidationProfileSelector({
     [profiles, selectedProfileId]
   );
 
+  const options = useMemo(
+    () => [
+      {
+        value: "",
+        label: "-- Kustom Mandiri (Tanpa Template Standar) --",
+        description: "Susun kriteria manual/upload file dan biarkan AI membentuk tahapan otomatis",
+        keywords: "kustom custom mandiri tanpa template",
+      },
+      ...profiles.map((p) => ({
+        value: p.id,
+        label: `${p.name} (${p.document_kind})`,
+        description: `${p.checklist_rules?.length || 0} kriteria · Ambang lulus ≥ ${p.passing_score_threshold}% · ${p.scope}`,
+        keywords: `${p.name} ${p.document_kind} ${p.scope} ${p.description || ""}`,
+      })),
+    ],
+    [profiles]
+  );
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -29,37 +48,34 @@ export function ValidationProfileSelector({
           <BookOpen size={13} className="text-[#0a4d8c]" />
           Pustaka Standar Dokumen (Template Acuan)
         </label>
-        {selectedProfile && (
+        {selectedProfile ? (
           <span className="text-[10px] font-normal text-[#0a4d8c] bg-[#e8f2fc] px-2 py-0.5 rounded-full border border-[#0a4d8c]/20 flex items-center gap-1">
             <ShieldCheck size={11} />
-            Standar Pertamina Aktif
+            Template Standar Aktif
+          </span>
+        ) : (
+          <span className="text-[10px] font-normal text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+            Mode Kustom Mandiri
           </span>
         )}
       </div>
 
-      <div className="relative">
-        <select
-          value={selectedProfileId}
-          disabled={isLoading}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (!val) {
-              onSelectProfile(null);
-            } else {
-              const found = profiles.find((p) => p.id === val) ?? null;
-              onSelectProfile(found);
-            }
-          }}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 transition-colors focus:border-[#0a4d8c] focus:outline-none disabled:opacity-60"
-        >
-          <option value="">-- Kustom Mandiri (Tanpa Template Master) --</option>
-          {profiles.map((profile) => (
-            <option key={profile.id} value={profile.id}>
-              {profile.name} ({profile.document_kind})
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchableSelect
+        options={options}
+        value={selectedProfileId}
+        disabled={isLoading}
+        allowClear={Boolean(selectedProfileId)}
+        placeholder="-- Pilih Template Standar atau Kustom Mandiri --"
+        searchPlaceholder="Cari nama template atau jenis dokumen..."
+        onChange={(val) => {
+          if (!val) {
+            onSelectProfile(null);
+          } else {
+            const found = profiles.find((p) => p.id === val) ?? null;
+            onSelectProfile(found);
+          }
+        }}
+      />
 
       {selectedProfile ? (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs space-y-1.5">
@@ -84,7 +100,7 @@ export function ValidationProfileSelector({
         </div>
       ) : (
         <p className="text-[11px] font-normal text-slate-500">
-          Pilih template standar di atas untuk mengisi daftar kriteria otomatis, atau tambahkan kriteria kustom di bawah.
+          Tanpa template, Anda dapat mengunggah file kriteria atau menambah kriteria kustom di bawah — AI juga akan menyusun tahapan pekerjaan otomatis dari isi dokumen.
         </p>
       )}
     </div>
