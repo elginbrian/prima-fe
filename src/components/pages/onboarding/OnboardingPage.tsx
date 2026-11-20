@@ -21,6 +21,7 @@ import {
   FileText,
   Sparkles,
   Zap,
+  Cpu,
   Paperclip,
 } from "lucide-react";
 import {
@@ -31,6 +32,10 @@ import {
 import { useValidationLogs, useValidationProfiles } from "@/lib/query/hooks/procurement/useValidation";
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
+import {
+  useIntegrationConfig,
+  getCustomAiStatus,
+} from "@/lib/query/hooks/settings/useIntegrations";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { createChatSession } from "@/lib/aiChatStore";
 import { useProcurement } from "@/context/ProcurementContext";
@@ -206,6 +211,10 @@ export default function OnboardingPage() {
   const { data: validationProfiles = [] } = useValidationProfiles();
   const { data: guarantees = [] } = useGuarantees();
   const { data: settings } = useSettings();
+  const { data: integrationData } = useIntegrationConfig();
+  const { isCustomChat, customModelName } = getCustomAiStatus(
+    integrationData?.config
+  );
 
   const slaWarningDays = settings?.slaWarningDays ?? 3;
   const requests = serverRequests.length > 0 ? serverRequests : state.requests;
@@ -690,7 +699,11 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => handleAskAi()}
                       className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-2.5 py-1 text-[11px] font-semibold text-white shadow-2xs transition hover:!bg-[#083b6c]"
-                      title="Mulai Diskusi AI (Mode Cekatan)"
+                      title={
+                        isCustomChat
+                          ? `Mulai Diskusi AI (Custom: ${customModelName})`
+                          : "Mulai Diskusi AI (Mode Cekatan)"
+                      }
                     >
                       <Sparkles size={12} />
                       <span className="hidden sm:inline">Diskusi AI</span>
@@ -744,8 +757,8 @@ export default function OnboardingPage() {
                             : `Analisis Lampiran dengan AI: "${attachment?.name}"`}
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[#0a4d8c]/20 bg-white px-2 py-0.5 text-[9px] font-semibold text-[#0a4d8c]">
-                          <Zap size={9} />
-                          Mode Cekatan
+                          {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
+                          {isCustomChat ? `Custom · ${customModelName}` : "Mode Cekatan"}
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[11px] text-slate-500">

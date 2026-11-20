@@ -14,6 +14,7 @@ import {
   FileSearch,
   ShieldCheck,
   Radio,
+  Cpu,
 } from "lucide-react";
 import {
   integrationsApi,
@@ -356,8 +357,9 @@ export function ChatMessageBubble({
             <span className="text-xs font-semibold text-slate-900">
               {aiData?.ai_tier_used === "mcp_takeover"
                 ? aiData.ai_model_used || "External MCP Agent"
-                : aiData?.ai_tier_used === "external"
-                ? `External AI (${aiData.ai_model_used || "Custom"})`
+                : aiData?.ai_tier_used === "custom" ||
+                  aiData?.ai_tier_used === "external"
+                ? `Custom (${aiData.ai_model_used || "External AI"})`
                 : "PRIMA AI"}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
@@ -366,14 +368,16 @@ export function ChatMessageBubble({
                   <Radio size={9} />
                   <span>Agent Takeover</span>
                 </>
+              ) : aiData?.ai_tier_used === "custom" ||
+                aiData?.ai_tier_used === "external" ? (
+                <>
+                  <Cpu size={9} />
+                  <span>Mode Custom</span>
+                </>
               ) : (
                 <>
                   <Zap size={9} />
-                  <span>
-                    {aiData?.ai_tier_used === "external"
-                      ? "External Brain"
-                      : "Mode Cekatan"}
-                  </span>
+                  <span>Mode Cekatan</span>
                 </>
               )}
             </span>

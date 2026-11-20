@@ -6,6 +6,7 @@ import {
   Sparkles,
   History,
   Zap,
+  Cpu,
   Menu,
 } from "lucide-react";
 import {
@@ -30,6 +31,10 @@ import { useSidebar } from "@/context/SidebarContext";
 import { UserProfileBean } from "@/components/layout/UserProfileBean";
 import { useDeadlines } from "@/lib/query/hooks/procurement/useProcurement";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
+import {
+  useIntegrationConfig,
+  getCustomAiStatus,
+} from "@/lib/query/hooks/settings/useIntegrations";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { getErrorMessage } from "@/lib/api/errors";
@@ -59,6 +64,10 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
   const logout = useLogout();
   const { data: serverDeadlines = [] } = useDeadlines();
   const { data: settings } = useSettings();
+  const { data: integrationData } = useIntegrationConfig();
+  const { isCustomChat, customModelName } = getCustomAiStatus(
+    integrationData?.config
+  );
   const omniAssistant = useOmniAssistant();
 
   const slaWarningDays = settings?.slaWarningDays ?? 3;
@@ -344,8 +353,8 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
                   {currentSession?.title || "Diskusi AI"}
                 </h1>
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
-                  <Zap size={9} />
-                  Mode Cekatan
+                  {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
+                  {isCustomChat ? `Custom · ${customModelName}` : "Mode Cekatan"}
                 </span>
               </div>
             </div>

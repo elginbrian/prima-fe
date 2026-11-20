@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Sparkles,
   Zap,
+  Cpu,
   Plus,
   Maximize2,
   X,
@@ -32,6 +33,10 @@ import {
 } from "@/lib/query/hooks/procurement/useProcurement";
 import { useValidationLogs } from "@/lib/query/hooks/procurement/useValidation";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
+import {
+  useIntegrationConfig,
+  getCustomAiStatus,
+} from "@/lib/query/hooks/settings/useIntegrations";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { formatRequestCode, formatRupiah } from "@/lib/utils";
@@ -82,6 +87,10 @@ export function GlobalAiChatSidebar({
   const { data: validationLogs = [] } = useValidationLogs();
   const { data: serverDeadlines = [] } = useDeadlines();
   const { data: settings } = useSettings();
+  const { data: integrationData } = useIntegrationConfig();
+  const { isCustomChat, customModelName } = getCustomAiStatus(
+    integrationData?.config
+  );
   const omniAssistant = useOmniAssistant();
 
   const slaWarningDays = settings?.slaWarningDays ?? 3;
@@ -521,8 +530,10 @@ export function GlobalAiChatSidebar({
                     <ChevronDown size={12} className="shrink-0 text-slate-400" />
                   </div>
                   <div className="flex items-center gap-1 text-[10px] font-medium text-[#0a4d8c]">
-                    <Zap size={9} />
-                    <span>Mode Cekatan</span>
+                    {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
+                    <span className="truncate">
+                      {isCustomChat ? `Custom · ${customModelName}` : "Mode Cekatan"}
+                    </span>
                   </div>
                 </div>
               </button>

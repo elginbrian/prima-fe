@@ -360,7 +360,7 @@ export default function GuaranteeUploadPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex flex-col lg:flex-row">
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-x-clip flex flex-col lg:flex-row">
         {/* Left Side: Dropzone (when no file) OR Live Document Preview (when file chosen) */}
         <div className="w-full lg:w-5/12 bg-slate-50/70 border-b lg:border-b-0 lg:border-r border-slate-200 p-5 sm:p-6 flex flex-col space-y-3.5">
           <div className="flex items-center justify-between gap-2">

@@ -85,7 +85,7 @@ export function IntegrationTab() {
   const [apiKey, setApiKey] = useState("");
   const [modelName, setModelName] = useState("gpt-4o-mini");
   const [replaceChatBrain, setReplaceChatBrain] = useState(true);
-  const [replaceAnalysisBrain, setReplaceAnalysisBrain] = useState(false);
+  const [replaceAnalysisBrain, setReplaceAnalysisBrain] = useState(true);
 
   const [tokenLabel, setTokenLabel] = useState("Antigravity & MCP Agent Key");
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
@@ -414,7 +414,19 @@ export function IntegrationTab() {
             </label>
             <SearchableSelect
               value={providerMode}
-              onChange={(val) => setProviderMode(val as ExternalProviderMode)}
+              onChange={(val) => {
+                const nextMode = val as ExternalProviderMode;
+                setProviderMode(nextMode);
+                if (
+                  nextMode === "openai_compatible" ||
+                  nextMode === "custom_webhook"
+                ) {
+                  setReplaceChatBrain(true);
+                  setReplaceAnalysisBrain(true);
+                } else if (nextMode === "mcp_takeover") {
+                  setReplaceChatBrain(true);
+                }
+              }}
               options={PROVIDER_MODE_OPTIONS}
               searchPlaceholder="Pilih mode provider AI..."
             />

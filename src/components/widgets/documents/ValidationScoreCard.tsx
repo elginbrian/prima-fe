@@ -103,7 +103,9 @@ export function ValidationScoreCard({
               >
                 <Sparkles size={10} className="text-[#0a4d8c]" />
                 <span>
-                  {AI_TIER_META[aiTierUsed || ""]?.badgeText || aiModelUsed}
+                  {aiTierUsed === "custom" || aiTierUsed === "external"
+                    ? `Mode Custom${aiModelUsed ? ` · ${aiModelUsed}` : ""}`
+                    : AI_TIER_META[aiTierUsed || ""]?.badgeText || aiModelUsed}
                 </span>
               </span>
             )}
