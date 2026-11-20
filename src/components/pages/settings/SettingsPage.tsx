@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Bell, User, Blocks } from "lucide-react";
+import { Clock, User, Blocks } from "lucide-react";
 import { useSettings, useUpdateSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useUsers } from "@/lib/query/hooks/users/useUsers";
 import { ProfileTab } from "./tabs/ProfileTab";
-import { NotificationTab } from "./tabs/NotificationTab";
-import { SystemTab } from "./tabs/SystemTab";
+import { SlaPolicyTab } from "./tabs/SlaPolicyTab";
 import { IntegrationTab } from "./tabs/IntegrationTab";
 import { SystemSettings } from "@/types";
 
@@ -53,9 +52,8 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "umum", label: "Profil & Akun", icon: User },
-    { id: "notifikasi", label: "Notifikasi", icon: Bell },
-    { id: "sistem", label: "Pengaturan Sistem", icon: Settings },
-    { id: "integrasi", label: "Integrasi", icon: Blocks },
+    { id: "sla", label: "Kebijakan SLA & Eskalasi", icon: Clock },
+    { id: "integrasi", label: "AI & Integrasi MCP", icon: Blocks },
   ];
 
   if (isLoading || !formData) {
@@ -104,15 +102,8 @@ export default function SettingsPage() {
           <div className="bg-white p-6 sm:p-8 flex flex-col min-w-0 w-full">
             <div className="flex-1 w-full">
               {activeTab === "umum" && <ProfileTab />}
-              {activeTab === "notifikasi" && (
-                <NotificationTab
-                  formData={formData}
-                  handleChange={handleChange}
-                  users={users}
-                />
-              )}
-              {activeTab === "sistem" && (
-                <SystemTab
+              {activeTab === "sla" && (
+                <SlaPolicyTab
                   formData={formData}
                   handleChange={handleChange}
                   users={users}
@@ -121,7 +112,7 @@ export default function SettingsPage() {
               {activeTab === "integrasi" && <IntegrationTab />}
             </div>
 
-            {activeTab !== "umum" && activeTab !== "integrasi" && (
+            {activeTab === "sla" && (
               <div className="mt-10 flex justify-end border-t border-slate-100 pt-6 w-full">
                 <button
                   onClick={handleSave}

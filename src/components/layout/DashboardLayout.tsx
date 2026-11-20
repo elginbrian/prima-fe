@@ -123,7 +123,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     if (path.includes("settings"))
       return {
         title: "Pengaturan Sistem",
-        subtitle: "Konfigurasi profil validasi dokumen, batas nilai persetujuan, dan parameter peringatan SLA.",
+        subtitle: "Kelola profil akun, kebijakan peringatan & eskalasi SLA, serta model AI & integrasi MCP.",
       };
 
     return { title: "Dashboard", subtitle: "Overview" };

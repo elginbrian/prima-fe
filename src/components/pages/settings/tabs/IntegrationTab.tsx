@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Zap,
   Brain,
+  ChevronDown,
 } from "lucide-react";
 import {
   useIntegrationConfig,
@@ -136,6 +137,7 @@ export function IntegrationTab() {
   );
   const [toolArgsJson, setToolArgsJson] = useState("{}");
   const [toolResultJson, setToolResultJson] = useState<string | null>(null);
+  const [showPlayground, setShowPlayground] = useState(false);
 
   useEffect(() => {
     if (integrationData?.config) {
@@ -1284,22 +1286,37 @@ export function IntegrationTab() {
         </div>
       </section>
 
-      {/* SECTION 3: LIVE MCP TOOL CATALOG & INTERACTIVE PLAYGROUND */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
-        <div className="flex items-start gap-3 border-b border-slate-100 pb-3.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e8f2fc] text-[#0a4d8c]">
-            <Terminal size={18} />
+      {/* SECTION 3: COLLAPSIBLE LIVE MCP TOOL CATALOG & INTERACTIVE PLAYGROUND */}
+      <section className="rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowPlayground((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-3 p-5 text-left transition hover:bg-slate-50/70"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e8f2fc] text-[#0a4d8c]">
+              <Terminal size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Katalog Tool MCP &amp; Live Playground ({toolsList.length} Tools)
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Opsional (Developer Tooling): uji eksekusi operasi CRUD dan analisis MCP secara langsung dari browser.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">
-              Katalog Tool MCP &amp; Live Playground
-            </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Daftar operasi CRUD dan analisis yang diekspos ke AI eksternal. Anda dapat menguji eksekusi setiap tool secara langsung di bawah ini.
-            </p>
-          </div>
-        </div>
 
+          <ChevronDown
+            size={16}
+            className={`shrink-0 text-slate-400 transition-transform ${
+              showPlayground ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {showPlayground && (
+        <div className="border-t border-slate-100 p-5 space-y-4">
         {/* Tool Chips */}
         <div className="flex flex-wrap gap-1.5">
           {toolsList.map((t) => {
@@ -1371,6 +1388,8 @@ export function IntegrationTab() {
             </div>
           </div>
         </div>
+        </div>
+        )}
       </section>
     </div>
   );
