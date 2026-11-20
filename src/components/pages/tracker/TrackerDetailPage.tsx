@@ -398,7 +398,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
 
           {/* Right: Inline Step & Status Controls */}
           {request && (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 rounded-xl bg-slate-50 p-3 border border-slate-200/80">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-5">
               <div className="w-full sm:w-56">
                 <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-slate-500">
                   Tahap Saat Ini
@@ -474,24 +474,20 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         )}
       </div>
 
-      {/* Clean 3-Tab Navigation Bar */}
-      <div className="flex overflow-x-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs hide-scrollbar">
+      {/* Consistent Underline Tab Navigation Bar */}
+      <div className="flex overflow-x-auto border-b border-slate-200 gap-6 hide-scrollbar">
         <button
           type="button"
           onClick={() => setActiveTab("timeline")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all whitespace-nowrap focus:outline-none ${
+          className={`flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none ${
             activeTab === "timeline"
-              ? "bg-[#0a4d8c] text-white shadow-2xs"
-              : "text-slate-600 hover:bg-slate-50"
+              ? "border-[#0a4d8c] text-[#0a4d8c]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
           <GitBranch size={14} />
-          <span>Tahapan & Jadwal SLA</span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-normal ${
-              activeTab === "timeline" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-            }`}
-          >
+          <span>Tahapan &amp; Jadwal SLA</span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
             {completedMilestones}/{milestones.length}
           </span>
         </button>
@@ -499,21 +495,15 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         <button
           type="button"
           onClick={() => setActiveTab("docs-guarantees")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all whitespace-nowrap focus:outline-none ${
+          className={`flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none ${
             activeTab === "docs-guarantees"
-              ? "bg-[#0a4d8c] text-white shadow-2xs"
-              : "text-slate-600 hover:bg-slate-50"
+              ? "border-[#0a4d8c] text-[#0a4d8c]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
           <ShieldCheck size={14} />
-          <span>Dokumen & Warkat Jaminan</span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-normal ${
-              activeTab === "docs-guarantees"
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 text-slate-600"
-            }`}
-          >
+          <span>Dokumen &amp; Warkat Jaminan</span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
             {docs.length + guars.length}
           </span>
         </button>
@@ -521,19 +511,15 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
         <button
           type="button"
           onClick={() => setActiveTab("audit-log")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all whitespace-nowrap focus:outline-none ${
+          className={`flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none ${
             activeTab === "audit-log"
-              ? "bg-[#0a4d8c] text-white shadow-2xs"
-              : "text-slate-600 hover:bg-slate-50"
+              ? "border-[#0a4d8c] text-[#0a4d8c]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
           <History size={14} />
-          <span>Riwayat & Log Audit</span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-normal ${
-              activeTab === "audit-log" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-            }`}
-          >
+          <span>Riwayat &amp; Log Audit</span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
             {totalAuditCount}
           </span>
         </button>

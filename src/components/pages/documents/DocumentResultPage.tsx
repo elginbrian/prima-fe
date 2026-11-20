@@ -313,16 +313,16 @@ export default function DocumentResultPage() {
             <button
               type="button"
               onClick={() => setIsPreviewOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors focus:outline-none"
             >
-              <Eye size={14} className="text-[#0a4d8c]" />
-              <span>Pratinjau Dokumen</span>
+              <Eye size={13} className="text-[#0a4d8c]" />
+              <span>Pratinjau</span>
             </button>
 
             <button
               type="button"
               onClick={handleOpenReevalModal}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors focus:outline-none"
               title="Sesuaikan bobot, kriteria, atau prompt lalu jalankan ulang AI pada berkas ini"
             >
               <RefreshCw size={13} className="text-[#0a4d8c]" />
@@ -332,20 +332,20 @@ export default function DocumentResultPage() {
             <button
               type="button"
               onClick={handleOpenDecisionModal}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors focus:outline-none"
             >
-              <Sliders size={14} className="text-[#0a4d8c]" />
-              <span>Keputusan Reviewer</span>
+              <Sliders size={13} className="text-[#0a4d8c]" />
+              <span>Keputusan</span>
             </button>
 
             <button
               type="button"
               onClick={() => window.print()}
               title="Cetak atau Simpan sebagai PDF"
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-700 rounded-lg text-xs font-medium transition-colors shadow-2xs focus:outline-none"
+              aria-label="Cetak PDF"
+              className="inline-flex items-center justify-center p-2 bg-white border border-slate-200 hover:border-[#0a4d8c] hover:text-[#0a4d8c] text-slate-600 rounded-lg transition-colors focus:outline-none"
             >
               <Printer size={14} />
-              <span className="hidden md:inline">Cetak PDF</span>
             </button>
 
             {validationData.request_id && (
@@ -358,12 +358,10 @@ export default function DocumentResultPage() {
                     )}`
                   )
                 }
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#e8f2fc] border border-[#0a4d8c]/20 hover:bg-blue-100 text-[#0a4d8c] rounded-lg text-xs font-medium transition-colors focus:outline-none"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#e8f2fc] border border-[#0a4d8c]/20 hover:bg-blue-100 text-[#0a4d8c] rounded-lg text-xs font-medium transition-colors focus:outline-none"
               >
-                <Building2 size={14} />
-                <span>
-                  Pekerjaan: {formatRequestCode(validationData.request_id)}
-                </span>
+                <Building2 size={13} />
+                <span>{formatRequestCode(validationData.request_id)}</span>
               </button>
             )}
 
@@ -371,7 +369,7 @@ export default function DocumentResultPage() {
               type="button"
               onClick={handleOpenPublishModal}
               disabled={publishMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all shadow-xs disabled:opacity-50 focus:outline-none"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all shadow-2xs disabled:opacity-50 focus:outline-none"
             >
               {publishMutation.isPending ? (
                 <>
@@ -503,11 +501,11 @@ export default function DocumentResultPage() {
           />
         )}
 
-        {/* Modal: Re-Evaluate with AI */}
+        {/* Modal: Re-Evaluate with AI (Spacious 4xl layout, single scroll) */}
         {isReevalModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
-            <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 backdrop-blur-[1px] p-4">
+            <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">
                     Evaluasi Ulang Dokumen dengan AI

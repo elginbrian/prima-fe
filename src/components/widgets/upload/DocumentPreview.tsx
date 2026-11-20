@@ -28,13 +28,6 @@ export function DocumentPreview({ file }: DocumentPreviewProps) {
           </div>
           <div className="flex-1 relative bg-slate-50">
             <iframe src={objectUrl} className="absolute inset-0 w-full h-full border-0" title="Pratinjau Dokumen" />
-            
-            <div className="absolute bottom-6 left-0 w-full flex justify-center pointer-events-none">
-              <div className="bg-blue-50 text-[#0a4d8c] text-xs font-medium px-3 py-1.5 rounded-full border border-blue-200 flex items-center gap-1.5 shadow-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0a4d8c] animate-pulse"></div>
-                Dokumen Berhasil Ditampilkan
-              </div>
-            </div>
           </div>
         </>
       ) : (

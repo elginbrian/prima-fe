@@ -120,9 +120,9 @@ export function ExtractedStagesTimeline({
         </div>
       </div>
 
-      {/* Project Meta Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-1">
+      {/* Consolidated Project Meta Strip */}
+      <div className="rounded-lg border border-slate-200 bg-slate-50/70 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
+        <div className="p-3 space-y-0.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1">
             <Layers size={11} className="text-[#0a4d8c]" />
             Judul Proyek
@@ -132,7 +132,7 @@ export function ExtractedStagesTimeline({
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-1">
+        <div className="p-3 space-y-0.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1">
             <Wallet size={11} className="text-[#0a4d8c]" />
             Estimasi Nilai / HPS
@@ -144,10 +144,10 @@ export function ExtractedStagesTimeline({
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-1">
+        <div className="p-3 space-y-0.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1">
             <Building2 size={11} className="text-[#0a4d8c]" />
-            Metode & Fungsi
+            Metode &amp; Fungsi
           </div>
           <div className="text-xs font-medium text-slate-800">
             {project.suggested_method} ·{" "}
@@ -158,13 +158,13 @@ export function ExtractedStagesTimeline({
         </div>
       </div>
 
-      {/* Stages Stepper */}
-      <div className="space-y-3 pt-1">
+      {/* Unified Stages Stepper */}
+      <div className="space-y-2.5 pt-1">
         <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
           Alur Tahapan Pekerjaan ({stages.length} Tahapan)
         </div>
 
-        <div className="space-y-2">
+        <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 bg-white overflow-hidden">
           {stages.map((stage, idx) => {
             const isDone = stage.status === "Done" || stage.auto_cleared;
             const isInProgress = stage.status === "In Progress";
@@ -172,12 +172,12 @@ export function ExtractedStagesTimeline({
             return (
               <div
                 key={idx}
-                className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all ${
+                className={`flex items-start gap-3 px-3.5 py-2.5 transition-colors ${
                   stage.auto_cleared
-                    ? "border-slate-200 bg-slate-50/70"
+                    ? "bg-slate-50/70"
                     : isInProgress
-                    ? "border-[#0a4d8c] bg-[#f4f8fd]"
-                    : "border-slate-200 bg-white"
+                    ? "bg-[#f4f8fd]"
+                    : "bg-white"
                 }`}
               >
                 <div className="pt-0.5 shrink-0">

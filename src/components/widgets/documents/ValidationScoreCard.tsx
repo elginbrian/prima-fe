@@ -52,20 +52,19 @@ export function ValidationScoreCard({
   const IconComponent = statusConfig.icon;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
         <div className="space-y-1 min-w-0">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <FileText size={13} className="text-[#0a4d8c]" />
-            Hasil Analisis Kelayakan Dokumen
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText size={16} className="text-[#0a4d8c] shrink-0" />
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 break-words">
+              {documentName}
+            </h2>
           </div>
-          <h2 className="text-lg font-semibold text-slate-900 break-words">
-            {documentName}
-          </h2>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-normal text-slate-500 pt-0.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-normal text-slate-500">
             {profileName && (
               <span>
-                Acuan Standar:{" "}
+                Acuan:{" "}
                 <span className="font-medium text-slate-700">{profileName}</span>
               </span>
             )}
@@ -74,7 +73,7 @@ export function ValidationScoreCard({
                 ID: <span className="font-mono text-slate-700">{validationId}</span>
               </span>
             )}
-            {createdAt && <span>Waktu: {formatDateIndo(createdAt)}</span>}
+            {createdAt && <span>{formatDateIndo(createdAt)}</span>}
             {fileUrl && (
               <a
                 href={fileUrl}
@@ -82,7 +81,7 @@ export function ValidationScoreCard({
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 font-medium text-[#0a4d8c] hover:underline"
               >
-                <span>Buka Berkas Asli</span>
+                <span>Berkas Asli</span>
                 <ExternalLink size={11} />
               </a>
             )}
@@ -92,32 +91,33 @@ export function ValidationScoreCard({
         {/* Status Pill */}
         <div className="flex items-center gap-3 shrink-0">
           <div
-            className={`px-3.5 py-1.5 rounded-full border flex items-center gap-1.5 font-medium text-xs ${statusConfig.bgColor}`}
+            className={`px-3 py-1 rounded-full border flex items-center gap-1.5 font-medium text-xs ${statusConfig.bgColor}`}
           >
-            <IconComponent size={15} className="shrink-0" />
+            <IconComponent size={14} className="shrink-0" />
             <span>{statusConfig.label}</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Score Box */}
-        <div className="md:col-span-1 rounded-xl border border-[#0a4d8c]/20 bg-[#f4f8fd] p-4 flex flex-col items-center justify-center text-center space-y-1">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-[#0a4d8c]">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        {/* Compact Score Block */}
+        <div className="md:col-span-3 flex items-center md:flex-col md:items-start justify-between md:justify-center gap-2 md:border-r md:border-slate-100 md:pr-4">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
             Skor Kepatuhan
           </div>
-          <div className="text-3xl font-semibold text-[#0a4d8c] tracking-tight">
-            {Math.round(score)}
-            <span className="text-base font-normal text-slate-400">/100</span>
-          </div>
-          <div className="text-[11px] text-slate-500 font-normal pt-0.5">
-            Ambang Batas:{" "}
-            <span className="font-medium text-slate-700">{threshold}%</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-semibold text-[#0a4d8c] tracking-tight">
+              {Math.round(score)}
+              <span className="text-sm font-normal text-slate-400">/100</span>
+            </span>
+            <span className="text-[11px] text-slate-500 font-normal">
+              (Min. {threshold}%)
+            </span>
           </div>
         </div>
 
-        {/* Summary Description Box */}
-        <div className="md:col-span-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 flex flex-col justify-center space-y-1.5">
+        {/* Clean Summary Block */}
+        <div className="md:col-span-9 space-y-1">
           <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
             Ringkasan Evaluasi AI
           </div>
