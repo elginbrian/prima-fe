@@ -700,7 +700,7 @@ export default function OnboardingPage() {
                       title={
                         isCustomChat
                           ? `Mulai Diskusi AI (Custom: ${chatCustomLabel} · ${chatCustomModelName})`
-                          : "Mulai Diskusi AI (Mode Cekatan)"
+                          : `Mulai Diskusi AI (Mode ${chatCustomLabel})`
                       }
                     >
                       <Sparkles size={12} />
@@ -758,7 +758,7 @@ export default function OnboardingPage() {
                           {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
                           {isCustomChat
                             ? `Custom · ${chatCustomLabel}`
-                            : "Mode Cekatan"}
+                            : `Mode ${chatCustomLabel}`}
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[11px] text-slate-500">

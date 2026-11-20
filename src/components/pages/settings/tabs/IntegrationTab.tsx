@@ -17,6 +17,8 @@ import {
   Pencil,
   Trash2,
   CheckCircle2,
+  Zap,
+  Brain,
 } from "lucide-react";
 import {
   useIntegrationConfig,
@@ -24,6 +26,8 @@ import {
   useGenerateAgentToken,
   useExecuteMcpTool,
   getSavedCustomModels,
+  getInternalModesConfig,
+  DEFAULT_INTERNAL_MODES,
 } from "@/lib/query/hooks/settings/useIntegrations";
 import { API_ORIGIN } from "@/lib/api/client";
 import { useToast } from "@/components/ui/Toast";
@@ -33,6 +37,7 @@ import type {
   CustomAiModelDto,
   CustomModelKind,
   ExternalProviderMode,
+  InternalGeminiModesMap,
 } from "@/lib/api";
 
 const PROVIDER_KIND_CARDS: {
@@ -118,6 +123,9 @@ export function IntegrationTab() {
   const [enableChat, setEnableChat] = useState(true);
   const [enableAnalysis, setEnableAnalysis] = useState(true);
   const [setAsDefaultOnSave, setSetAsDefaultOnSave] = useState(true);
+  const [internalModes, setInternalModes] = useState<InternalGeminiModesMap>(
+    DEFAULT_INTERNAL_MODES
+  );
 
   const [tokenLabel, setTokenLabel] = useState("Antigravity & MCP Agent Key");
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
@@ -135,6 +143,7 @@ export function IntegrationTab() {
       const models = getSavedCustomModels(c);
       setSavedModels(models);
       setActiveCustomModelId(c.active_custom_model_id ?? null);
+      setInternalModes(getInternalModesConfig(c));
     }
   }, [integrationData]);
 
@@ -179,6 +188,7 @@ export function IntegrationTab() {
           : "PRIMA Internal (Google Gemini)",
         active_custom_model_id: nextActiveId,
         custom_models: nextModels,
+        internal_modes: internalModes,
       });
       setSavedModels(nextModels);
       setActiveCustomModelId(nextActiveId);
@@ -194,6 +204,62 @@ export function IntegrationTab() {
       null,
       "Internal via Gemini ditetapkan sebagai mode AI default (Model Custom tetap tersimpan)."
     );
+  };
+
+  const handleToggleInternalMode = async (
+    tier: "cekatan" | "cermat" | "cerdas",
+    channel: "enable_chat" | "enable_analysis"
+  ) => {
+    const nextVal = !internalModes[tier][channel];
+    const nextModes: InternalGeminiModesMap = {
+      ...internalModes,
+      [tier]: {
+        ...internalModes[tier],
+        [channel]: nextVal,
+      },
+    };
+
+    const anyInternalLeft = (["cekatan", "cermat", "cerdas"] as const).some(
+      (k) => nextModes[k][channel]
+    );
+    const anyCustomLeft = savedModels.some((m) =>
+      channel === "enable_chat"
+        ? m.enable_chat
+        : m.provider_kind !== "external_mcp" && m.enable_analysis
+    );
+    if (!anyInternalLeft && !anyCustomLeft) {
+      toast.warning(
+        channel === "enable_chat"
+          ? "Minimal harus ada 1 model AI yang aktif untuk Chat."
+          : "Minimal harus ada 1 model AI yang aktif untuk Analisis Dokumen."
+      );
+      return;
+    }
+
+    const prevModes = internalModes;
+    setInternalModes(nextModes);
+    try {
+      const activeModel = savedModels.find((m) => m.id === activeCustomModelId);
+      await updateConfig.mutateAsync({
+        provider_mode: activeModel ? activeModel.provider_kind : "internal_gemini",
+        provider_name: activeModel
+          ? activeModel.display_name
+          : "PRIMA Internal (Google Gemini)",
+        active_custom_model_id: activeCustomModelId,
+        custom_models: savedModels,
+        internal_modes: nextModes,
+      });
+      const tierTitle =
+        tier === "cekatan" ? "Cekatan" : tier === "cermat" ? "Cermat" : "Cerdas";
+      const channelTitle =
+        channel === "enable_chat" ? "Chat" : "Analisis Dokumen";
+      toast.success(
+        `Mode ${tierTitle} ${nextVal ? "diaktifkan" : "dinonaktifkan"} untuk ${channelTitle}.`
+      );
+    } catch (err) {
+      setInternalModes(prevModes);
+      toast.error(getErrorMessage(err, "Gagal memperbarui pengaturan model internal"));
+    }
   };
 
   const handleSaveCustomModel = async () => {
@@ -626,33 +692,148 @@ export function IntegrationTab() {
 
         {/* 1B. Configurator Panel for Selected Kind */}
         {selectedKind === "internal_gemini" ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900">
-                Internal via Gemini (Bawaan PRIMA)
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1 text-xs text-slate-700">
+                <div className="font-semibold text-slate-900">
+                  Internal via Gemini (Bawaan PRIMA)
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  Atur mode mana saja yang dapat dipilih pada dropdown <strong>Chat (Diskusi AI &amp; Omni-Search)</strong> maupun <strong>Analisis Dokumen &amp; OCR</strong>.
+                </p>
               </div>
-              <p className="text-slate-600 leading-relaxed">
-                Mode default <strong>Cekatan</strong> (Chat &amp; Analisis), <strong>Cermat</strong>, dan <strong>Cerdas</strong> (Analisis) selalu dapat dipilih langsung di dropdown meskipun Anda memiliki banyak Model Custom tersimpan.
-              </p>
+              <button
+                type="button"
+                onClick={handleSetInternalGeminiDefault}
+                disabled={updateConfig.isPending || !activeCustomModelId}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#083b6c] disabled:opacity-50"
+              >
+                {activeCustomModelId ? (
+                  <>
+                    <CheckCircle2 size={13} />
+                    <span>Jadikan Internal Gemini Default</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={13} />
+                    <span>Sudah Menjadi Default</span>
+                  </>
+                )}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleSetInternalGeminiDefault}
-              disabled={updateConfig.isPending || !activeCustomModelId}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#083b6c] disabled:opacity-50"
-            >
-              {activeCustomModelId ? (
-                <>
-                  <CheckCircle2 size={13} />
-                  <span>Jadikan Internal Gemini Default</span>
-                </>
-              ) : (
-                <>
-                  <Check size={13} />
-                  <span>Sudah Menjadi Default</span>
-                </>
-              )}
-            </button>
+
+            <div className="space-y-2">
+              {(
+                [
+                  {
+                    key: "cekatan" as const,
+                    label: "Cekatan",
+                    model: "Gemini 3.x Flash-lite",
+                    desc: "Respons sangat cepat & efisien",
+                    Icon: Zap,
+                  },
+                  {
+                    key: "cermat" as const,
+                    label: "Cermat",
+                    model: "Gemini 3.x Flash",
+                    desc: "Analisis seimbang & terperinci",
+                    Icon: Sparkles,
+                  },
+                  {
+                    key: "cerdas" as const,
+                    label: "Cerdas",
+                    model: "Gemini 4 Hydrogen",
+                    desc: "Penalaran mendalam untuk kasus kompleks",
+                    Icon: Brain,
+                  },
+                ] as const
+              ).map(({ key, label, model, desc, Icon }) => {
+                const modeCfg = internalModes[key];
+                return (
+                  <div
+                    key={key}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f2fc] text-[#0a4d8c]">
+                        <Icon size={15} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-slate-900">
+                            Mode {label}
+                          </span>
+                          <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.2 font-mono text-[10px] text-slate-600">
+                            {model}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">{desc}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-5 shrink-0">
+                      {/* Switch: Enable in Chat */}
+                      <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={modeCfg.enable_chat}
+                          disabled={updateConfig.isPending}
+                          onClick={() =>
+                            handleToggleInternalMode(key, "enable_chat")
+                          }
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#0a4d8c]/30 disabled:opacity-60 ${
+                            modeCfg.enable_chat
+                              ? "bg-[#0a4d8c]"
+                              : "bg-slate-200"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-2xs transition-transform ${
+                              modeCfg.enable_chat
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </button>
+                        <span className="text-xs font-medium text-slate-700">
+                          Chat
+                        </span>
+                      </label>
+
+                      {/* Switch: Enable in Document Analysis */}
+                      <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={modeCfg.enable_analysis}
+                          disabled={updateConfig.isPending}
+                          onClick={() =>
+                            handleToggleInternalMode(key, "enable_analysis")
+                          }
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#0a4d8c]/30 disabled:opacity-60 ${
+                            modeCfg.enable_analysis
+                              ? "bg-[#0a4d8c]"
+                              : "bg-slate-200"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-2xs transition-transform ${
+                              modeCfg.enable_analysis
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </button>
+                        <span className="text-xs font-medium text-slate-700">
+                          Analisis Dokumen
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : (
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">

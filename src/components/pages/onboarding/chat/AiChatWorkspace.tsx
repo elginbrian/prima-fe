@@ -357,7 +357,9 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
                 </h1>
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
                   {isCustomChat ? <Cpu size={9} /> : <Zap size={9} />}
-                  {isCustomChat ? `Custom · ${chatCustomLabel}` : "Mode Cekatan"}
+                  {isCustomChat
+                    ? `Custom · ${chatCustomLabel}`
+                    : `Mode ${chatCustomLabel}`}
                 </span>
               </div>
             </div>

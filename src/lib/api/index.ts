@@ -41,6 +41,8 @@ export type {
   ExternalProviderMode,
   GeneratedAgentTokenDto,
   IntegrationOverviewResponseDto,
+  InternalGeminiModeConfigDto,
+  InternalGeminiModesMap,
   McpToolSchemaDto,
   TakeoverTicketDto,
 } from "./integrations.api";

@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Zap,
-  ShieldCheck,
-  BrainCircuit,
+  Sparkles,
+  Brain,
   Cpu,
   ChevronDown,
   Check,
@@ -23,25 +23,22 @@ interface AiModeDropdownProps {
 
 const DEFAULT_AI_MODES = [
   {
-    id: "cekatan",
+    id: "cekatan" as const,
     label: "Cekatan",
     description: "Gemini 3.x Flash-lite",
-    available: true,
     icon: Zap,
   },
   {
-    id: "cermat",
+    id: "cermat" as const,
     label: "Cermat",
     description: "Gemini 3.x Flash",
-    available: false,
-    icon: ShieldCheck,
+    icon: Sparkles,
   },
   {
-    id: "cerdas",
+    id: "cerdas" as const,
     label: "Cerdas",
     description: "Gemini 4 Hydrogen",
-    available: false,
-    icon: BrainCircuit,
+    icon: Brain,
   },
 ] as const;
 
@@ -54,6 +51,7 @@ export function AiModeDropdown({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const {
+    internalModes,
     chatCustomModels,
     activeMode,
     isCustom,
@@ -129,17 +127,21 @@ export function AiModeDropdown({
         }`}
         title={
           isCustom
-            ? `Mode Custom: ${label} (${modelName}`
-            : "Pilih Mode AI"
+            ? `Mode Custom: ${label} (${modelName}) — Tanpa fallback ke default`
+            : `Pilih Mode AI (Internal via Gemini: ${label})`
         }
       >
         {isCustom ? (
           <Cpu size={10} className="shrink-0" />
+        ) : activeMode === "cermat" ? (
+          <Sparkles size={10} className="shrink-0" />
+        ) : activeMode === "cerdas" ? (
+          <Brain size={10} className="shrink-0" />
         ) : (
           <Zap size={10} className="shrink-0" />
         )}
         <span className="max-w-[110px] truncate">
-          {isCustom ? (compact ? "Custom" : `${label}`) : "Cekatan"}
+          {isCustom ? (compact ? "Custom" : label) : label}
         </span>
         <ChevronDown
           size={11}
@@ -198,13 +200,15 @@ export function AiModeDropdown({
                       {filteredDefaultModes.map((m) => {
                         const Icon = m.icon;
                         const isSelected = activeMode === m.id;
-                        if (m.available) {
+                        const isEnabledForChat =
+                          internalModes[m.id]?.enable_chat ?? m.id === "cekatan";
+                        if (isEnabledForChat) {
                           return (
                             <button
                               key={m.id}
                               type="button"
                               onClick={() => {
-                                selectMode("cekatan");
+                                selectMode(m.id);
                                 setOpen(false);
                               }}
                               className={`flex w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition ${

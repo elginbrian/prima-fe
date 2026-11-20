@@ -41,6 +41,17 @@ export interface TakeoverTicketDto {
   response_payload?: OmniAssistantResponseDto | null;
 }
 
+export interface InternalGeminiModeConfigDto {
+  enable_chat: boolean;
+  enable_analysis: boolean;
+}
+
+export interface InternalGeminiModesMap {
+  cekatan: InternalGeminiModeConfigDto;
+  cermat: InternalGeminiModeConfigDto;
+  cerdas: InternalGeminiModeConfigDto;
+}
+
 export interface AiIntegrationConfigDto {
   provider_mode: ExternalProviderMode;
   provider_name: string;
@@ -52,6 +63,7 @@ export interface AiIntegrationConfigDto {
   replace_analysis_brain: boolean;
   active_custom_model_id?: string | null;
   custom_models?: CustomAiModelDto[];
+  internal_modes?: Partial<InternalGeminiModesMap>;
 }
 
 export interface McpToolSchemaDto {

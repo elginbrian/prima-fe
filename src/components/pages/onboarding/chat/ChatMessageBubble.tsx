@@ -378,7 +378,15 @@ export function ChatMessageBubble({
               ) : (
                 <>
                   <Zap size={9} />
-                  <span>Mode Cekatan</span>
+                  <span>
+                    {aiData?.ai_tier_used === "cermat"
+                      ? "Mode Cermat"
+                      : aiData?.ai_tier_used === "cerdas"
+                      ? "Mode Cerdas"
+                      : aiData?.ai_tier_used === "gemma"
+                      ? "Gemma 4 31B"
+                      : "Mode Cekatan"}
+                  </span>
                 </>
               )}
             </span>

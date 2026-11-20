@@ -7,6 +7,7 @@ import {
   type AiIntegrationConfigDto,
   type CustomAiModelDto,
   type CustomModelKind,
+  type InternalGeminiModesMap,
 } from "@/lib/api";
 import {
   getSavedChatAiMode,
@@ -14,6 +15,35 @@ import {
 } from "@/lib/aiChatStore";
 
 export const integrationsQueryKey = ["integrations", "config"] as const;
+
+export const DEFAULT_INTERNAL_MODES: InternalGeminiModesMap = {
+  cekatan: { enable_chat: true, enable_analysis: true },
+  cermat: { enable_chat: false, enable_analysis: true },
+  cerdas: { enable_chat: false, enable_analysis: true },
+};
+
+export function getInternalModesConfig(
+  config?: AiIntegrationConfigDto | null
+): InternalGeminiModesMap {
+  const src = config?.internal_modes;
+  return {
+    cekatan: {
+      enable_chat: src?.cekatan?.enable_chat ?? DEFAULT_INTERNAL_MODES.cekatan.enable_chat,
+      enable_analysis:
+        src?.cekatan?.enable_analysis ?? DEFAULT_INTERNAL_MODES.cekatan.enable_analysis,
+    },
+    cermat: {
+      enable_chat: src?.cermat?.enable_chat ?? DEFAULT_INTERNAL_MODES.cermat.enable_chat,
+      enable_analysis:
+        src?.cermat?.enable_analysis ?? DEFAULT_INTERNAL_MODES.cermat.enable_analysis,
+    },
+    cerdas: {
+      enable_chat: src?.cerdas?.enable_chat ?? DEFAULT_INTERNAL_MODES.cerdas.enable_chat,
+      enable_analysis:
+        src?.cerdas?.enable_analysis ?? DEFAULT_INTERNAL_MODES.cerdas.enable_analysis,
+    },
+  };
+}
 
 export function normalizeProviderKind(
   mode?: string | null
@@ -212,6 +242,7 @@ export function useChatAiMode() {
   const { data: integrationData } = useIntegrationConfig();
   const config = integrationData?.config;
   const chatCustomModels = getChatCustomModels(config);
+  const internalModes = getInternalModesConfig(config);
   const [storedMode, setStoredMode] = useState<string>(() =>
     getSavedChatAiMode()
   );
@@ -226,9 +257,19 @@ export function useChatAiMode() {
     };
   }, []);
 
-  let effectiveMode = "cekatan";
-  if (storedMode === "cekatan") {
-    effectiveMode = "cekatan";
+  const enabledInternalChatTiers = (
+    ["cekatan", "cermat", "cerdas"] as const
+  ).filter((tier) => internalModes[tier].enable_chat);
+  const firstFallbackInternal = enabledInternalChatTiers[0] ?? "cekatan";
+
+  let effectiveMode = firstFallbackInternal as string;
+  if (
+    (storedMode === "cekatan" ||
+      storedMode === "cermat" ||
+      storedMode === "cerdas") &&
+    internalModes[storedMode].enable_chat
+  ) {
+    effectiveMode = storedMode;
   } else if (
     storedMode.startsWith("custom:") &&
     chatCustomModels.some((m) => `custom:${m.id}` === storedMode)
@@ -239,6 +280,8 @@ export function useChatAiMode() {
     chatCustomModels.some((m) => m.id === config.active_custom_model_id)
   ) {
     effectiveMode = `custom:${config.active_custom_model_id}`;
+  } else if (enabledInternalChatTiers.length === 0 && chatCustomModels.length > 0) {
+    effectiveMode = `custom:${chatCustomModels[0].id}`;
   }
 
   const meta = resolveAiSelectionMeta(config, effectiveMode);
@@ -250,6 +293,7 @@ export function useChatAiMode() {
 
   return {
     config,
+    internalModes,
     chatCustomModels,
     activeMode: meta.selection,
     isCustom: meta.isCustom,

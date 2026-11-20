@@ -11,10 +11,12 @@ import {
   Webhook,
   Search,
   X,
+  Lock,
 } from "lucide-react";
 import {
   useIntegrationConfig,
   getAnalysisCustomModels,
+  getInternalModesConfig,
   resolveAiSelectionMeta,
 } from "@/lib/query/hooks/settings/useIntegrations";
 import type { AiTier } from "@/types/validation";
@@ -91,6 +93,7 @@ export function AiModeSelector({
   const { data: integrationData } = useIntegrationConfig();
   const config = integrationData?.config;
   const analysisCustomModels = getAnalysisCustomModels(config);
+  const internalModes = getInternalModesConfig(config);
 
   // Initialize once to active_custom_model_id if configured for analysis, while still allowing switching back to Cekatan/Cermat/Cerdas anytime
   useEffect(() => {
@@ -106,15 +109,31 @@ export function AiModeSelector({
     }
   }, [config, analysisCustomModels, value, onChange]);
 
-  // If currently selected custom model was deleted from Settings, revert to Cekatan
+  // If currently selected custom model or internal mode was disabled/deleted from Settings, revert to first enabled mode
   useEffect(() => {
-    if (config && typeof value === "string" && value.startsWith("custom:")) {
+    if (!config) return;
+    if (typeof value === "string" && value.startsWith("custom:")) {
       const id = value.slice("custom:".length);
       if (!analysisCustomModels.some((m) => m.id === id)) {
-        onChange("cekatan");
+        const firstInternal = (["cekatan", "cermat", "cerdas"] as const).find(
+          (t) => internalModes[t].enable_analysis
+        );
+        onChange(firstInternal ?? "cekatan");
+      }
+    } else if (
+      (value === "cekatan" || value === "cermat" || value === "cerdas") &&
+      !internalModes[value].enable_analysis
+    ) {
+      const firstInternal = (["cekatan", "cermat", "cerdas"] as const).find(
+        (t) => internalModes[t].enable_analysis
+      );
+      if (firstInternal) {
+        onChange(firstInternal);
+      } else if (analysisCustomModels.length > 0) {
+        onChange(`custom:${analysisCustomModels[0].id}`);
       }
     }
-  }, [config, analysisCustomModels, value, onChange]);
+  }, [config, analysisCustomModels, internalModes, value, onChange]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -269,6 +288,40 @@ export function AiModeSelector({
                     <div className="space-y-0.5">
                       {filteredDefaultOptions.map((opt) => {
                         const isSelected = selectedMeta.selection === opt.value;
+                        const tierKey = opt.value as "cekatan" | "cermat" | "cerdas";
+                        const isEnabled =
+                          internalModes[tierKey]?.enable_analysis ?? true;
+
+                        if (!isEnabled) {
+                          return (
+                            <div
+                              key={opt.value}
+                              aria-disabled="true"
+                              className="flex w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left opacity-55 cursor-not-allowed select-none"
+                            >
+                              <div className="flex items-start gap-2 min-w-0">
+                                <span className="mt-0.5 shrink-0 text-slate-400">
+                                  {getIcon(opt.value, 14)}
+                                </span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 leading-4">
+                                    <span className="text-xs font-medium text-slate-600">
+                                      {opt.label}
+                                    </span>
+                                    <span className="inline-flex items-center gap-0.5 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.2 text-[9px] font-medium text-slate-500">
+                                      <Lock size={8} />
+                                      Tidak Tersedia
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 leading-[14px]">
+                                    {opt.modelSummary}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         return (
                           <button
                             key={opt.value}

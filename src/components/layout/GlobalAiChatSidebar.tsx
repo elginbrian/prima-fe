@@ -536,7 +536,7 @@ export function GlobalAiChatSidebar({
                     <span className="truncate">
                       {isCustomChat
                         ? `Custom · ${chatCustomLabel}`
-                        : "Mode Cekatan"}
+                        : `Mode ${chatCustomLabel}`}
                     </span>
                   </div>
                 </div>
