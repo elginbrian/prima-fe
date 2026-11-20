@@ -49,6 +49,11 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     : "";
 
   const getHeaderInfo = (path: string) => {
+    if (path.includes("onboarding"))
+      return {
+        title: "Onboarding & Pencarian Terpadu",
+        subtitle: "Akses cepat pencarian seluruh dokumen, pekerjaan, hasil analisis AI, dan prioritas SLA.",
+      };
     if (path.includes("documents/templates/form"))
       return {
         title: "Formulir Template Standar Kelayakan",

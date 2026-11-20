@@ -1,4 +1,5 @@
 import {
+  Compass,
   LayoutDashboard,
   FileSearch,
   BookOpen,
@@ -30,7 +31,7 @@ interface SubNavItemDef {
 }
 
 interface MainNavItemDef {
-  id: "documents" | "overview" | "notifications" | "settings";
+  id: "onboarding" | "documents" | "overview" | "notifications" | "settings";
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
@@ -38,6 +39,12 @@ interface MainNavItemDef {
 }
 
 const MAIN_NAV_ITEMS: MainNavItemDef[] = [
+  {
+    id: "onboarding",
+    href: "/dashboard/onboarding",
+    label: "Onboarding",
+    icon: Compass,
+  },
   {
     id: "documents",
     href: "/dashboard/documents",
@@ -268,7 +275,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
           return (
             <div key={item.id}>
-              {idx === 2 && (
+              {idx === 3 && (
                 <div className="my-2 border-t border-slate-100 mx-1" />
               )}
 

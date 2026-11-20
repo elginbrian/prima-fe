@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function DashboardIndexPage() {
-  redirect("/dashboard/documents");
+  redirect("/dashboard/onboarding");
 }

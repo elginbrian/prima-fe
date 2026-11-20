@@ -27,7 +27,7 @@ export function useLogin() {
       queryClient.setQueryData(queryKeys.auth.me(), res.data.user);
 
       // Redirect to the page user was trying to access, or default
-      const redirect = searchParams.get("redirect") ?? "/dashboard/overview";
+      const redirect = searchParams.get("redirect") ?? "/dashboard/onboarding";
       router.push(redirect);
     },
   });
