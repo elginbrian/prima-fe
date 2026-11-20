@@ -1,7 +1,8 @@
 "use client";
 
-import { CheckCircle2, AlertTriangle, FileText, ExternalLink } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, ExternalLink, Sparkles, Info } from "lucide-react";
 import type { ComplianceStatus } from "@/types/validation";
+import { AI_TIER_META } from "@/components/ui/AiModeSelector";
 import { formatDateIndo } from "@/lib/utils";
 
 interface ValidationScoreCardProps {
@@ -14,6 +15,9 @@ interface ValidationScoreCardProps {
   validationId?: string;
   createdAt?: string;
   fileUrl?: string | null;
+  aiTierUsed?: string | null;
+  aiModelUsed?: string | null;
+  aiFallbackNotice?: string | null;
 }
 
 export function ValidationScoreCard({
@@ -26,8 +30,14 @@ export function ValidationScoreCard({
   validationId,
   createdAt,
   fileUrl,
+  aiTierUsed,
+  aiModelUsed,
+  aiFallbackNotice,
 }: ValidationScoreCardProps) {
-  const statusConfig = {
+  const statusMap: Record<
+    string,
+    { bgColor: string; icon: typeof CheckCircle2; label: string }
+  > = {
     "Lulus Verifikasi": {
       bgColor: "bg-slate-100 border-slate-200 text-slate-700",
       icon: CheckCircle2,
@@ -43,7 +53,19 @@ export function ValidationScoreCard({
       icon: AlertTriangle,
       label: "Perlu Perbaikan",
     },
-  }[status] ?? {
+    "Sedang Dianalisis": {
+      bgColor: "bg-[#e8f2fc] border-[#0a4d8c]/25 text-[#0a4d8c]",
+      icon: Sparkles,
+      label: "Sedang Dianalisis",
+    },
+    "Gagal Analisis": {
+      bgColor: "bg-red-50 border-red-200 text-red-700",
+      icon: AlertTriangle,
+      label: "Gagal Analisis",
+    },
+  };
+
+  const statusConfig = statusMap[status] ?? {
     bgColor: "bg-slate-100 border-slate-200 text-slate-700",
     icon: AlertTriangle,
     label: status,
@@ -74,6 +96,17 @@ export function ValidationScoreCard({
               </span>
             )}
             {createdAt && <span>{formatDateIndo(createdAt)}</span>}
+            {(aiTierUsed || aiModelUsed) && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600"
+                title={aiModelUsed ? `Model: ${aiModelUsed}` : undefined}
+              >
+                <Sparkles size={10} className="text-[#0a4d8c]" />
+                <span>
+                  {AI_TIER_META[aiTierUsed || ""]?.badgeText || aiModelUsed}
+                </span>
+              </span>
+            )}
             {fileUrl && (
               <a
                 href={fileUrl}
@@ -98,6 +131,13 @@ export function ValidationScoreCard({
           </div>
         </div>
       </div>
+
+      {aiFallbackNotice && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-xs text-amber-900">
+          <Info size={14} className="mt-0.5 shrink-0 text-amber-700" />
+          <span className="leading-relaxed">{aiFallbackNotice}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
         {/* Compact Score Block */}

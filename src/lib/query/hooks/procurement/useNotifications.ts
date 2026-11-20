@@ -18,6 +18,7 @@ function mapDtoToItem(dto: NotificationDto): NotificationItem {
     isRead: dto.is_read,
     type: dto.type as NotificationType,
     category: dto.category as NotificationCategory,
+    actionUrl: dto.action_url || undefined,
   };
 }
 

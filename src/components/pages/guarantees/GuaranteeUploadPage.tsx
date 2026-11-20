@@ -16,7 +16,8 @@ import { useProcurement } from "@/context/ProcurementContext";
 import { vendorIdFromName } from "@/lib/adapters/procurement.mutations";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, SearchableSelect } from "@/components/ui";
+import { Spinner, SearchableSelect, AiModeSelector } from "@/components/ui";
+import type { AiTier } from "@/types/validation";
 import { getErrorMessage } from "@/lib/api/errors";
 import {
   useUploadGuaranteeWithFile,
@@ -94,6 +95,7 @@ export default function GuaranteeUploadPage() {
   const [requestId, setRequestId] = useState(() => initialRequestId);
   const selectedRequest = requests.find((request) => request.id === requestId);
   const [documentType, setDocumentType] = useState<UploadDocType>("Jaminan Pelaksanaan");
+  const [aiTier, setAiTier] = useState<AiTier>("cekatan");
   const [isExtracting, setIsExtracting] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrHintMeta, setOcrHintMeta] = useState<{
@@ -132,12 +134,18 @@ export default function GuaranteeUploadPage() {
   );
 
   const runOcrExtraction = useCallback(
-    async (targetFile: File) => {
+    async (targetFile: File, tierOverride?: AiTier) => {
       setIsExtracting(true);
       setOcrError(null);
       setOcrHintMeta(null);
       try {
-        const data: any = await extractGuaranteeMutation.mutateAsync(targetFile);
+        const data: any = await extractGuaranteeMutation.mutateAsync({
+          file: targetFile,
+          aiTier: tierOverride ?? aiTier,
+        });
+        if (data?.ai_fallback_notice) {
+          toast.warning(data.ai_fallback_notice, { durationMs: 9000 });
+        }
         setFormData((prev) => ({
           ...prev,
           type: (data.type as GuaranteeItem["type"]) || prev.type,
@@ -175,7 +183,7 @@ export default function GuaranteeUploadPage() {
         setIsExtracting(false);
       }
     },
-    [extractGuaranteeMutation, toast]
+    [aiTier, extractGuaranteeMutation, toast]
   );
 
   useEffect(() => {
@@ -403,6 +411,18 @@ export default function GuaranteeUploadPage() {
           ) : (
             <div className="flex-1 flex flex-col min-h-[420px]">
               <DocumentPreview file={file} />
+            </div>
+          )}
+
+          {requiresExtraction && (
+            <div className="rounded-lg border border-slate-200/80 bg-white px-3.5 py-2.5">
+              <AiModeSelector
+                size="sm"
+                label="Mode AI OCR"
+                value={aiTier}
+                onChange={setAiTier}
+                disabled={isExtracting}
+              />
             </div>
           )}
 

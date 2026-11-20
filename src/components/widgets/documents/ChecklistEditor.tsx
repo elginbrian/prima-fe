@@ -15,6 +15,7 @@ import { useExtractCriteria } from "@/lib/query/hooks/procurement/useValidation"
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui";
 import type {
+  AiTier,
   ChecklistRuleItem,
   ExtractedCriteriaResponse,
 } from "@/types/validation";
@@ -27,6 +28,7 @@ interface ChecklistEditorProps {
   showSourceBadges?: boolean;
   hideUploadBar?: boolean;
   focusUploadFirst?: boolean;
+  aiTier?: AiTier;
   onCriteriaFileExtracted?: (meta: ExtractedCriteriaResponse) => void;
 }
 
@@ -73,6 +75,7 @@ export function ChecklistEditor({
   showSourceBadges = false,
   hideUploadBar = false,
   focusUploadFirst = false,
+  aiTier = "cekatan",
   onCriteriaFileExtracted,
 }: ChecklistEditorProps) {
   const toast = useToast();
@@ -197,7 +200,13 @@ export function ChecklistEditor({
 
     try {
       toast.info(`Mengekstrak daftar kriteria dari '${uploaded.name}' dengan AI...`);
-      const extracted = await extractMutation.mutateAsync(uploaded);
+      const extracted = await extractMutation.mutateAsync({
+        file: uploaded,
+        aiTier,
+      });
+      if (extracted.ai_fallback_notice) {
+        toast.warning(extracted.ai_fallback_notice, { durationMs: 9000 });
+      }
       const extractedRules: ChecklistRuleItem[] = (
         extracted.checklist_rules || []
       ).map((r) => ({

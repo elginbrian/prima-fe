@@ -84,6 +84,12 @@ export interface DocumentItem {
   versionNumber?: number;
   parentDocumentId?: string;
   revisionNotes?: string;
+  processingStatus?: "processing" | "completed" | "failed";
+  aiTierRequested?: string | null;
+  aiTierUsed?: string | null;
+  aiModelUsed?: string | null;
+  aiFallbackNotice?: string | null;
+  errorMessage?: string | null;
 }
 
 export type ProcurementAttachmentType = "Dokumen Pendukung Lain";

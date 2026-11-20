@@ -9,17 +9,25 @@ import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
 
 type ToastKind = "success" | "error" | "info" | "warning";
 
+export interface ToastOptions {
+  actionLabel?: string;
+  onAction?: () => void;
+  durationMs?: number;
+}
+
 interface ToastItem {
   id: number;
   kind: ToastKind;
   message: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 interface ToastApi {
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
-  warning: (message: string) => void;
+  success: (message: string, options?: ToastOptions) => void;
+  error: (message: string, options?: ToastOptions) => void;
+  info: (message: string, options?: ToastOptions) => void;
+  warning: (message: string, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -31,6 +39,13 @@ const STYLES: Record<ToastKind, string> = {
   warning: "border-amber-200 bg-amber-50 text-amber-900",
 };
 
+const ACTION_STYLES: Record<ToastKind, string> = {
+  success: "bg-emerald-700 hover:bg-emerald-800 text-white",
+  error: "bg-red-700 hover:bg-red-800 text-white",
+  info: "bg-[#0a4d8c] hover:bg-[#083b6c] text-white",
+  warning: "bg-amber-700 hover:bg-amber-800 text-white",
+};
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(1);
@@ -40,20 +55,34 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const push = useCallback(
-    (kind: ToastKind, message: string) => {
+    (kind: ToastKind, message: string, options?: ToastOptions) => {
       const id = nextId.current++;
-      setToasts((current) => [...current, { id, kind, message }]);
-      setTimeout(() => dismiss(id), kind === "error" ? 7000 : 4000);
+      setToasts((current) => [
+        ...current,
+        {
+          id,
+          kind,
+          message,
+          actionLabel: options?.actionLabel,
+          onAction: options?.onAction,
+        },
+      ]);
+      const defaultDuration = options?.actionLabel
+        ? 9000
+        : kind === "error" || kind === "warning"
+        ? 7000
+        : 4000;
+      setTimeout(() => dismiss(id), options?.durationMs ?? defaultDuration);
     },
     [dismiss]
   );
 
   const api = useMemo<ToastApi>(
     () => ({
-      success: (m) => push("success", m),
-      error: (m) => push("error", m),
-      info: (m) => push("info", m),
-      warning: (m) => push("warning", m),
+      success: (m, o) => push("success", m, o),
+      error: (m, o) => push("error", m, o),
+      info: (m, o) => push("info", m, o),
+      warning: (m, o) => push("warning", m, o),
     }),
     [push]
   );
@@ -78,7 +107,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             ) : (
               <Info size={18} className="mt-0.5 shrink-0" />
             )}
-            <span className="flex-1 break-words">{t.message}</span>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="break-words text-xs sm:text-[13px] leading-snug">
+                {t.message}
+              </div>
+              {t.actionLabel && t.onAction && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    t.onAction?.();
+                    dismiss(t.id);
+                  }}
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none ${ACTION_STYLES[t.kind]}`}
+                >
+                  {t.actionLabel}
+                </button>
+              )}
+            </div>
             <button type="button" aria-label="Tutup notifikasi" onClick={() => dismiss(t.id)} className="shrink-0 opacity-60 hover:opacity-100">
               <X size={16} />
             </button>

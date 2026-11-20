@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import {
-  ArrowLeft,
   ArrowUp,
   ArrowDown,
   BookOpen,
@@ -13,8 +12,6 @@ import {
   GitBranch,
   Plus,
   Search,
-  ShieldCheck,
-  Sliders,
   Sparkles,
   Trash2,
   X,
@@ -22,8 +19,6 @@ import {
 import { useRouter } from "next/navigation";
 import {
   useValidationProfiles,
-  useCreateValidationProfile,
-  useUpdateValidationProfile,
   useDeleteValidationProfile,
   useWorkflowStages,
   useCreateWorkflowStage,
@@ -31,51 +26,19 @@ import {
   useReorderWorkflowStages,
   useDeleteWorkflowStage,
 } from "@/lib/query/hooks/procurement/useValidation";
-import {
-  ChecklistEditor,
-  normalizeWeightsTo100,
-} from "@/components/widgets/documents/ChecklistEditor";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner, Skeleton, SearchableSelect, ModalPortal } from "@/components/ui";
 import { formatDateIndo } from "@/lib/utils";
+import {
+  DOCUMENT_KIND_OPTIONS,
+  SCOPE_OPTIONS,
+  STAGE_GROUP_OPTIONS,
+  DEFAULT_PROCUREMENT_METHODS,
+} from "./templateConstants";
 import type {
   ValidationProfile,
-  ChecklistRuleItem,
-  CreateValidationProfilePayload,
   WorkflowStage,
 } from "@/types/validation";
-
-const DOCUMENT_KIND_OPTIONS = [
-  "Kerangka Acuan Kerja",
-  "Rencana Anggaran Biaya",
-  "Jaminan Pelaksanaan",
-  "Jaminan Penawaran",
-  "Dokumen Penawaran",
-  "Kontrak & Perjanjian",
-  "Berita Acara",
-  "Umum",
-];
-
-const SCOPE_OPTIONS = [
-  { value: "GLOBAL", label: "Global Pertamina (Semua Fungsi)" },
-  { value: "IT", label: "IT Infrastructure" },
-  { value: "INFRASTRUCTURE", label: "Engineering & Konstruksi" },
-  { value: "SERVICES", label: "Jasa Umum & Operasional" },
-];
-
-const STAGE_GROUP_OPTIONS = [
-  { value: "Persiapan", label: "Persiapan" },
-  { value: "Sourcing", label: "Sourcing" },
-  { value: "Evaluasi", label: "Evaluasi" },
-  { value: "Contracting", label: "Contracting" },
-  { value: "Selesai", label: "Selesai" },
-];
-
-const DEFAULT_METHODS = [
-  "Tender Terbuka",
-  "Pemilihan Langsung",
-  "Penunjukan Langsung",
-];
 
 type ActiveTab = "templates" | "stages";
 
@@ -87,28 +50,11 @@ export default function ValidationTemplatesPage() {
 
   // ── Templates State ──
   const { data: profiles = [], isLoading } = useValidationProfiles();
-  const createMutation = useCreateValidationProfile();
-  const updateMutation = useUpdateValidationProfile();
   const deleteMutation = useDeleteValidationProfile();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [kindFilter, setKindFilter] = useState("All");
   const [scopeFilter, setScopeFilter] = useState("All");
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProfile, setEditingProfile] =
-    useState<ValidationProfile | null>(null);
-
-  const [formName, setFormName] = useState("");
-  const [formKind, setFormKind] = useState("Kerangka Acuan Kerja");
-  const [formScope, setFormScope] = useState("GLOBAL");
-  const [formDescription, setFormDescription] = useState("");
-  const [formPassingScore, setFormPassingScore] = useState(80);
-  const [formStrictMandatory, setFormStrictMandatory] = useState(true);
-  const [formTargetStage, setFormTargetStage] = useState("");
-  const [formSystemPrompt, setFormSystemPrompt] = useState("");
-  const [formRules, setFormRules] = useState<ChecklistRuleItem[]>([]);
-  const [formIsDefault, setFormIsDefault] = useState(false);
 
   // ── Workflow Stages State (Tab 2) ──
   const { data: allStages = [], isLoading: isLoadingStages } =
@@ -129,7 +75,7 @@ export default function ValidationTemplatesPage() {
   const [stageDescription, setStageDescription] = useState("");
 
   const availableMethods = useMemo(() => {
-    const set = new Set<string>(DEFAULT_METHODS);
+    const set = new Set<string>(DEFAULT_PROCUREMENT_METHODS);
     allStages.forEach((s) => {
       if (s.procurement_method) set.add(s.procurement_method);
     });
@@ -140,24 +86,6 @@ export default function ValidationTemplatesPage() {
     () => availableMethods.map((m) => ({ value: m, label: m })),
     [availableMethods]
   );
-
-  const uniqueStageOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const opts: { value: string; label: string; description?: string }[] = [
-      { value: "", label: "-- Tidak Ada Auto-Clear Tahap --" },
-    ];
-    allStages.forEach((s) => {
-      if (!seen.has(s.step_name)) {
-        seen.add(s.step_name);
-        opts.push({
-          value: s.step_name,
-          label: s.step_name,
-          description: `${s.stage_group} · ${s.procurement_method}`,
-        });
-      }
-    });
-    return opts;
-  }, [allStages]);
 
   const stagesForSelectedMethod = useMemo(() => {
     const q = stageSearch.trim().toLowerCase();
@@ -186,105 +114,6 @@ export default function ValidationTemplatesPage() {
       return matchesSearch && matchesKind && matchesScope;
     });
   }, [profiles, searchQuery, kindFilter, scopeFilter]);
-
-  const handleOpenCreate = () => {
-    setEditingProfile(null);
-    setFormName("");
-    setFormKind("Kerangka Acuan Kerja");
-    setFormScope("GLOBAL");
-    setFormDescription("");
-    setFormPassingScore(80);
-    setFormStrictMandatory(true);
-    setFormTargetStage("Penyusunan RKS & Spesifikasi Teknis");
-    setFormSystemPrompt("");
-    setFormIsDefault(false);
-    setFormRules([
-      {
-        category: "Ruang Lingkup",
-        item: "Uraian ruang lingkup kebutuhan dan spesifikasi teknis jelas serta terukur",
-        is_mandatory: true,
-        weight: 50,
-        severity_on_failure: "ERROR",
-        source: "template",
-      },
-      {
-        category: "Legalitas & Otorisasi",
-        item: "Dokumen memuat tanggal, nomor surat, dan otorisasi pejabat berwenang",
-        is_mandatory: true,
-        weight: 50,
-        severity_on_failure: "ERROR",
-        source: "template",
-      },
-    ]);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (profile: ValidationProfile) => {
-    setEditingProfile(profile);
-    setFormName(profile.name);
-    setFormKind(profile.document_kind || "Umum");
-    setFormScope(profile.scope || "GLOBAL");
-    setFormDescription(profile.description || "");
-    setFormPassingScore(profile.passing_score_threshold || 80);
-    setFormStrictMandatory(profile.strict_mandatory_enforcement ?? true);
-    setFormTargetStage(profile.target_stage_to_clear || "");
-    setFormSystemPrompt(
-      profile.custom_system_prompt || profile.prompt_template || ""
-    );
-    setFormRules(profile.checklist_rules || []);
-    setFormIsDefault(profile.is_default ?? false);
-    setIsModalOpen(true);
-  };
-
-  const handleSaveProfile = async () => {
-    if (!formName.trim()) {
-      toast.warning("Nama template standar kelayakan wajib diisi.");
-      return;
-    }
-    if (formRules.length === 0) {
-      toast.warning("Tambahkan minimal 1 butir kriteria kelayakan.");
-      return;
-    }
-
-    const normalizedRules = normalizeWeightsTo100(formRules).map((r) => ({
-      ...r,
-      source: "template" as const,
-    }));
-
-    const payload: CreateValidationProfilePayload = {
-      name: formName.trim(),
-      document_kind: formKind,
-      description: formDescription.trim() || undefined,
-      scope: formScope,
-      passing_score_threshold: formPassingScore,
-      warning_score_threshold: Math.max(50, formPassingScore - 20),
-      strict_mandatory_enforcement: formStrictMandatory,
-      target_stage_to_clear: formTargetStage || undefined,
-      custom_system_prompt: formSystemPrompt.trim() || undefined,
-      checklist_rules: normalizedRules,
-      is_default: formIsDefault,
-    };
-
-    try {
-      if (editingProfile) {
-        await updateMutation.mutateAsync({
-          id: editingProfile.id,
-          payload,
-        });
-        toast.success(
-          `Template '${payload.name}' berhasil diperbarui di database.`
-        );
-      } else {
-        await createMutation.mutateAsync(payload);
-        toast.success(
-          `Template baru '${payload.name}' berhasil disimpan ke pustaka database.`
-        );
-      }
-      setIsModalOpen(false);
-    } catch (err: any) {
-      toast.error(err?.message || "Gagal menyimpan template standar.");
-    }
-  };
 
   const handleDeleteProfile = async (profile: ValidationProfile) => {
     try {
@@ -380,56 +209,14 @@ export default function ValidationTemplatesPage() {
     }
   };
 
-  const isSaving = createMutation.isPending || updateMutation.isPending;
   const isSavingStage =
     createStageMutation.isPending || updateStageMutation.isPending;
 
   return (
     <div className="flex flex-col gap-4 pb-12">
-      {/* 1. Compact Top Toolbar (no redundant hero banner) */}
+      {/* Unified Bean Tabs + Single Primary Action Button Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard/documents")}
-          className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-[#0a4d8c] focus:outline-none"
-        >
-          <ArrowLeft size={14} />
-          Kembali ke Pemeriksaan Dokumen
-        </button>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/documents/upload")}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c] focus:outline-none"
-          >
-            <Sparkles size={14} className="text-[#0a4d8c]" />
-            <span>Uji Validasi Dokumen</span>
-          </button>
-          {activeTab === "templates" ? (
-            <button
-              type="button"
-              onClick={handleOpenCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
-            >
-              <Plus size={14} />
-              <span>Buat Template Standar</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleOpenCreateStage}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
-            >
-              <Plus size={14} />
-              <span>Tambah Tahapan Pekerjaan</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 2. Bean-style Tabs Switcher: Template Kriteria vs Kelola Tahapan Pekerjaan */}
-      <div className="inline-flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs w-fit">
+        <div className="inline-flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs w-fit">
         <button
           type="button"
           onClick={() => setActiveTab("templates")}
@@ -473,6 +260,29 @@ export default function ValidationTemplatesPage() {
             {allStages.length}
           </span>
         </button>
+        </div>
+
+        <div className="shrink-0">
+          {activeTab === "templates" ? (
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/documents/templates/form")}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
+            >
+              <Plus size={14} />
+              <span>Buat Template Standar</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleOpenCreateStage}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
+            >
+              <Plus size={14} />
+              <span>Tambah Tahapan Pekerjaan</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── TAB 1: VALIDATION TEMPLATES ── */}
@@ -540,17 +350,17 @@ export default function ValidationTemplatesPage() {
                     key={profile.id}
                     className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs flex flex-col justify-between gap-4 hover:border-slate-300 transition-all"
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
                           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f2fc] text-[#0a4d8c]">
                             <BookOpen size={15} />
                           </div>
-                          <div className="min-w-0">
-                            <h3 className="text-sm font-semibold text-slate-900 line-clamp-1">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-semibold text-slate-900 leading-snug">
                               {profile.name}
                             </h3>
-                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-normal text-slate-500">
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-normal text-slate-500">
                               <span>{profile.document_kind}</span>
                               <span>·</span>
                               <span>{profile.scope}</span>
@@ -567,17 +377,9 @@ export default function ValidationTemplatesPage() {
                           </div>
                         </div>
 
-                        <div className="shrink-0 flex items-center gap-1.5">
-                          {profile.is_default && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-medium text-[#0a4d8c]">
-                              <ShieldCheck size={10} />
-                              Default
-                            </span>
-                          )}
-                          <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                            Lulus &ge; {profile.passing_score_threshold}%
-                          </span>
-                        </div>
+                        <span className="shrink-0 inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                          Lulus &ge; {profile.passing_score_threshold}%
+                        </span>
                       </div>
 
                       {profile.description && (
@@ -624,7 +426,13 @@ export default function ValidationTemplatesPage() {
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => handleOpenEdit(profile)}
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/documents/templates/form?id=${encodeURIComponent(
+                                profile.id
+                              )}`
+                            )
+                          }
                           className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
                         >
                           <Edit3 size={12} />
@@ -670,7 +478,7 @@ export default function ValidationTemplatesPage() {
               </p>
               <button
                 type="button"
-                onClick={handleOpenCreate}
+                onClick={() => router.push("/dashboard/documents/templates/form")}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white hover:bg-[#083b6c] transition-colors"
               >
                 <Plus size={14} />
@@ -838,202 +646,6 @@ export default function ValidationTemplatesPage() {
             </div>
           )}
         </div>
-      )}
-
-      {/* Modal Create / Edit Template (Portal-rendered full-screen centered) */}
-      {isModalOpen && (
-        <ModalPortal>
-          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 backdrop-blur-[2px] p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">
-                  {editingProfile
-                    ? "Edit Template Standar Kelayakan"
-                    : "Buat Template Standar Kelayakan Baru"}
-                </h3>
-                <p className="text-xs font-normal text-slate-500 mt-0.5">
-                  Atur informasi dasar template dan daftar kriteria checklist berbobot
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 focus:outline-none"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
-              {/* Section 1: Basic Metadata */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="sm:col-span-2 lg:col-span-2">
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Nama Template Standar
-                  </label>
-                  <input
-                    type="text"
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    placeholder="Contoh: Standar Evaluasi KAK Jasa Konsultansi"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Jenis Dokumen
-                  </label>
-                  <SearchableSelect
-                    size="sm"
-                    value={formKind}
-                    onChange={setFormKind}
-                    allowCustomValue
-                    searchPlaceholder="Cari jenis dokumen..."
-                    options={DOCUMENT_KIND_OPTIONS.map((k) => ({
-                      value: k,
-                      label: k,
-                    }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Cakupan Standar
-                  </label>
-                  <SearchableSelect
-                    size="sm"
-                    value={formScope}
-                    onChange={setFormScope}
-                    searchPlaceholder="Cari cakupan..."
-                    options={SCOPE_OPTIONS}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Auto-Clear Tahap (Opsional)
-                  </label>
-                  <SearchableSelect
-                    size="sm"
-                    value={formTargetStage}
-                    onChange={setFormTargetStage}
-                    allowClear
-                    allowCustomValue
-                    searchPlaceholder="Cari tahapan..."
-                    options={uniqueStageOptions}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Deskripsi Singkat (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    placeholder="Acuan kegunaan template..."
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
-                  />
-                </div>
-
-                <div className="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-6 pt-1">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={formStrictMandatory}
-                      onChange={(e) => setFormStrictMandatory(e.target.checked)}
-                      className="rounded border-slate-300 accent-[#0a4d8c]"
-                    />
-                    <span>Wajib lulus seluruh kriteria berlabel Wajib</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={formIsDefault}
-                      onChange={(e) => setFormIsDefault(e.target.checked)}
-                      className="rounded border-slate-300 accent-[#0a4d8c]"
-                    />
-                    <span>Jadikan standar utama (Default)</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Section 2: Flattened Checklist Rules Editor */}
-              <div className="border-t border-slate-200 pt-5 space-y-3">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#0a4d8c]">
-                  <Sliders size={13} />
-                  <span>Kriteria Checklist Berbobot &amp; Ambang Skor</span>
-                </div>
-                <ChecklistEditor
-                  items={formRules}
-                  onChange={setFormRules}
-                  passingScore={formPassingScore}
-                  onPassingScoreChange={setFormPassingScore}
-                  onCriteriaFileExtracted={(meta) => {
-                    if (!formName.trim() && meta.suggested_name) {
-                      setFormName(meta.suggested_name);
-                    }
-                    if (meta.suggested_document_kind) {
-                      setFormKind(meta.suggested_document_kind);
-                    }
-                    if (!formSystemPrompt.trim() && meta.suggested_system_prompt) {
-                      setFormSystemPrompt(meta.suggested_system_prompt);
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Section 3: AI System Prompt */}
-              <div className="border-t border-slate-200 pt-5">
-                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
-                  Instruksi Sistem AI (Opsional)
-                </label>
-                <textarea
-                  value={formSystemPrompt}
-                  onChange={(e) => setFormSystemPrompt(e.target.value)}
-                  rows={2}
-                  placeholder="Contoh: Pastikan pencantuman klausul TKDN minimal 40% dan kepatuhan CSMS..."
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="px-5 py-2 bg-[#0a4d8c] hover:bg-[#083b6c] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <>
-                    <Spinner
-                      size="xs"
-                      className="border-white border-t-transparent"
-                    />
-                    <span>Menyimpan...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check size={14} />
-                    <span>Simpan Template ke Database</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-          </div>
-        </ModalPortal>
       )}
 
       {/* Modal Create / Edit Workflow Stage */}

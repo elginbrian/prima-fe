@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { documentsApi } from "@/lib/api/documents.api";
 import type {
+  AiTier,
   CreateValidationProfilePayload,
   UpdateValidationProfilePayload,
   ReevaluateValidationPayload,
@@ -30,6 +31,13 @@ export function useValidationLogs(requestId?: string) {
       return res.data;
     },
     enabled: requestId !== "",
+    refetchInterval: (query) => {
+      const rows = query.state.data;
+      if (Array.isArray(rows) && rows.some((r) => r.processing_status === "processing")) {
+        return 3500;
+      }
+      return false;
+    },
   });
 }
 
@@ -104,8 +112,10 @@ export function useDeleteValidationProfile() {
 
 export function useExtractCriteria() {
   return useMutation({
-    mutationFn: async (file: File) => {
-      const res = await documentsApi.extractCriteria(file);
+    mutationFn: async (input: File | { file: File; aiTier?: AiTier }) => {
+      const file = input instanceof File ? input : input.file;
+      const aiTier = input instanceof File ? "cekatan" : input.aiTier ?? "cekatan";
+      const res = await documentsApi.extractCriteria(file, aiTier);
       return res.data;
     },
   });
@@ -120,6 +130,8 @@ export function useValidationDetail(id?: string) {
       return res.data;
     },
     enabled: !!id,
+    refetchInterval: (query) =>
+      query.state.data?.processing_status === "processing" ? 3000 : false,
   });
 }
 

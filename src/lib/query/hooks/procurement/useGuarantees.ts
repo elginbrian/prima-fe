@@ -141,7 +141,11 @@ export function useUploadGuaranteeWithFile() {
 
 export function useExtractGuarantee() {
   return useMutation({
-    mutationFn: (file: File) => guaranteesApi.extract(file).then(res => res.data),
+    mutationFn: (input: File | { file: File; aiTier?: string }) => {
+      const file = input instanceof File ? input : input.file;
+      const aiTier = input instanceof File ? "cekatan" : input.aiTier ?? "cekatan";
+      return guaranteesApi.extract(file, aiTier).then((res) => res.data);
+    },
   });
 }
 

@@ -1,8 +1,10 @@
-import { Menu, X, UserCircle2, LogOut } from "lucide-react";
+import { Menu, X, UserCircle2, LogOut, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/ui/LogoutModal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { Spinner } from "@/components/ui/Spinner";
+import { useAiJobs } from "@/context/AiJobsContext";
 
 export function DashboardHeader({
   title,
@@ -29,6 +31,7 @@ export function DashboardHeader({
   const [logoutOpen, setLogoutOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
+  const { activeJobs } = useAiJobs();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -71,6 +74,24 @@ export function DashboardHeader({
         </h1>
         <p className="mt-0.5 text-xs font-normal text-slate-500">{subtitle}</p>
       </div>
+
+      <div className="flex items-center gap-2.5 shrink-0">
+        {activeJobs.length > 0 && (
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/documents")}
+            title={activeJobs.map((j) => j.documentName).join(", ")}
+            className="inline-flex items-center gap-2 rounded-full border border-[#0a4d8c]/25 bg-[#e8f2fc] px-3 py-1.5 text-xs font-medium text-[#0a4d8c] shadow-2xs transition hover:bg-[#dcebfa] focus:outline-none"
+          >
+            <Spinner size="xs" />
+            <Sparkles size={13} className="hidden sm:inline" />
+            <span className="max-w-[160px] truncate">
+              {activeJobs.length === 1
+                ? "1 dokumen dianalisis AI..."
+                : `${activeJobs.length} dokumen dianalisis AI...`}
+            </span>
+          </button>
+        )}
 
       <div ref={menuRef} className="relative flex items-center justify-center">
         <button
@@ -131,6 +152,7 @@ export function DashboardHeader({
             </div>
           </div>
         )}
+      </div>
       </div>
 
       <LogoutModal

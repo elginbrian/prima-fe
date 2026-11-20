@@ -1,7 +1,15 @@
-export type ComplianceStatus = "Lulus Verifikasi" | "Catatan Procurement" | "Perlu Perbaikan";
+export type ComplianceStatus =
+  | "Lulus Verifikasi"
+  | "Catatan Procurement"
+  | "Perlu Perbaikan"
+  | "Sedang Dianalisis"
+  | "Gagal Analisis";
 export type ChecklistItemStatus = "Memenuhi" | "Tidak Memenuhi" | "Perlu Perhatian";
 export type SeverityLevel = "SUCCESS" | "WARNING" | "ERROR";
 export type CriterionSource = "template" | "custom";
+export type AiTier = "cekatan" | "cermat" | "cerdas";
+export type AiTierUsed = AiTier | "gemma";
+export type ProcessingStatus = "processing" | "completed" | "failed";
 
 export interface ChecklistRuleItem {
   category: string;
@@ -18,6 +26,10 @@ export interface ExtractedCriteriaResponse {
   suggested_document_kind: string;
   suggested_system_prompt?: string | null;
   checklist_rules: ChecklistRuleItem[];
+  ai_tier_requested?: AiTier | string | null;
+  ai_tier_used?: AiTierUsed | string | null;
+  ai_model_used?: string | null;
+  ai_fallback_notice?: string | null;
 }
 
 export interface ValidationProfile {
@@ -96,12 +108,32 @@ export interface DocumentValidationResponse {
   created_at: string;
   request_id?: string | null;
   document_id?: string | null;
+  processing_status?: ProcessingStatus;
+  ai_tier_requested?: AiTier | string | null;
+  ai_tier_used?: AiTierUsed | string | null;
+  ai_model_used?: string | null;
+  ai_fallback_notice?: string | null;
+  error_message?: string | null;
 }
 
 export interface ReevaluateValidationPayload {
   checklist_rules?: ChecklistRuleItem[];
   passing_score_threshold?: number;
   custom_prompt?: string;
+  ai_tier?: AiTier;
+  async_mode?: boolean;
+}
+
+export interface ActiveValidationJob {
+  id: string;
+  document_name: string;
+  profile_name?: string | null;
+  processing_status: ProcessingStatus;
+  ai_tier_requested?: AiTier | string | null;
+  ai_tier_used?: AiTierUsed | string | null;
+  ai_model_used?: string | null;
+  ai_fallback_notice?: string | null;
+  created_at?: string | null;
 }
 
 export interface PublishValidationToTrackerPayload {
@@ -164,6 +196,12 @@ export interface ValidationLogListItem {
   passed_count: number;
   validated_by_name?: string | null;
   created_at: string;
+  processing_status?: ProcessingStatus;
+  ai_tier_requested?: AiTier | string | null;
+  ai_tier_used?: AiTierUsed | string | null;
+  ai_model_used?: string | null;
+  ai_fallback_notice?: string | null;
+  error_message?: string | null;
 }
 
 export type StageGroup = "Persiapan" | "Sourcing" | "Evaluasi" | "Contracting" | "Selesai";

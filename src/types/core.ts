@@ -34,6 +34,7 @@ export interface NotificationItem {
   isRead: boolean;
   type: NotificationType;
   category: NotificationCategory;
+  actionUrl?: string;
 }
 
 export type HistoryCategory = "Pekerjaan" | "Timeline" | "SLA" | "Dokumen" | "Jaminan";

@@ -27,7 +27,8 @@ import {
   useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, Skeleton, SearchableSelect, ModalPortal } from "@/components/ui";
+import { Spinner, Skeleton, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META } from "@/components/ui";
+import { useAiJobs } from "@/context/AiJobsContext";
 import { formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
 import { ValidationScoreCard } from "@/components/widgets/documents/ValidationScoreCard";
 import { ChecklistEvaluationList } from "@/components/widgets/documents/ChecklistEvaluationList";
@@ -35,6 +36,7 @@ import { ExtractedStagesTimeline } from "@/components/widgets/documents/Extracte
 import { ChecklistEditor } from "@/components/widgets/documents/ChecklistEditor";
 import { DocumentPreviewModal } from "@/components/widgets/modals/DocumentPreviewModal";
 import type {
+  AiTier,
   DocumentValidationResponse,
   ComplianceStatus,
   ChecklistRuleItem,
@@ -54,6 +56,7 @@ export default function DocumentResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
+  const { trackJob } = useAiJobs();
   const docId = searchParams.get("id") || "";
 
   const { data: serverValidationData, isLoading: isLoadingVal } =
@@ -126,6 +129,7 @@ export default function DocumentResultPage() {
   const [reevalRules, setReevalRules] = useState<ChecklistRuleItem[]>([]);
   const [reevalPassingScore, setReevalPassingScore] = useState<number>(80);
   const [reevalPrompt, setReevalPrompt] = useState<string>("");
+  const [reevalAiTier, setReevalAiTier] = useState<AiTier>("cekatan");
 
   // Publish / Link to Tracker modal
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -193,17 +197,33 @@ export default function DocumentResultPage() {
       return;
     }
     try {
-      toast.info("Menjalankan evaluasi ulang AI dengan kriteria & bobot terbaru...");
-      await reevaluateMutation.mutateAsync({
+      const updated = await reevaluateMutation.mutateAsync({
         id: validationData.id,
         payload: {
           checklist_rules: reevalRules,
           passing_score_threshold: reevalPassingScore,
           custom_prompt: reevalPrompt.trim() || undefined,
+          ai_tier: reevalAiTier,
+          async_mode: true,
         },
       });
-      toast.success("Evaluasi ulang AI selesai dan hasil berhasil diperbarui!");
       setIsReevalModalOpen(false);
+      if (updated.processing_status === "processing") {
+        trackJob({
+          id: updated.id,
+          documentName: updated.document_name,
+          aiTierRequested: reevalAiTier,
+        });
+        toast.info(
+          `Evaluasi ulang AI (${AI_TIER_META[reevalAiTier]?.label ?? reevalAiTier}) berjalan di latar belakang. Anda dapat berpindah halaman — notifikasi akan muncul saat selesai.`,
+          { durationMs: 6500 }
+        );
+      } else {
+        if (updated.ai_fallback_notice) {
+          toast.warning(updated.ai_fallback_notice, { durationMs: 9000 });
+        }
+        toast.success("Evaluasi ulang AI selesai dan hasil berhasil diperbarui!");
+      }
     } catch (err: any) {
       toast.error(err?.message || "Gagal menjalankan evaluasi ulang AI.");
     }
@@ -393,7 +413,62 @@ export default function DocumentResultPage() {
           </div>
         </div>
 
+        {/* Background Processing / Error State Banners */}
+        {validationData.processing_status === "processing" && (
+          <div className="rounded-xl border border-[#0a4d8c]/25 bg-[#f4f8fd] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-[#0a4d8c]/20">
+                <Spinner size="sm" />
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm font-semibold text-slate-900">
+                  Dokumen Sedang Dianalisis AI (
+                  {AI_TIER_META[validationData.ai_tier_requested || "cekatan"]?.badgeText ||
+                    "Mode Cekatan"}
+                  )
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Analisis &ldquo;{validationData.document_name}&rdquo; sedang diproses di latar belakang. Halaman ini akan otomatis diperbarui setelah selesai, atau Anda dapat berpindah ke menu lain dan menunggu notifikasi.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/documents")}
+              className="shrink-0 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
+            >
+              Kembali ke Daftar Dokumen
+            </button>
+          </div>
+        )}
+
+        {validationData.processing_status === "failed" && (
+          <div className="rounded-xl border border-red-200 bg-red-50/90 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} className="text-red-600 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <div className="text-sm font-semibold text-red-900">
+                  Analisis AI Gagal Diproses
+                </div>
+                <p className="text-xs text-red-700 leading-relaxed">
+                  {validationData.error_message ||
+                    "Terjadi kendala saat memproses dokumen dengan AI. Silakan coba jalankan evaluasi ulang."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenReevalModal}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white hover:bg-[#083b6c] transition-colors focus:outline-none"
+            >
+              <RefreshCw size={13} />
+              <span>Coba Evaluasi Ulang AI</span>
+            </button>
+          </div>
+        )}
+
         {/* 1. Unified Score, Compliance & Document Metadata Card */}
+        {validationData.processing_status !== "processing" && (
         <ValidationScoreCard
           score={validationData.overall_score}
           threshold={validationData.passing_score_threshold}
@@ -404,9 +479,14 @@ export default function DocumentResultPage() {
           validationId={validationData.id}
           createdAt={validationData.created_at}
           fileUrl={validationData.document_file_url || validationData.file_url}
+          aiTierUsed={validationData.ai_tier_used}
+          aiModelUsed={validationData.ai_model_used}
+          aiFallbackNotice={validationData.ai_fallback_notice}
         />
+        )}
 
         {/* 2. Main Content Grid */}
+        {validationData.processing_status !== "processing" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Left Column (5/12): Recommendations & Editable Extracted Stages */}
           <div className="lg:col-span-5 space-y-5">
@@ -459,6 +539,7 @@ export default function DocumentResultPage() {
             />
           </div>
         </div>
+        )}
 
         {/* Document Preview Modal */}
         {isPreviewOpen && (
@@ -525,12 +606,19 @@ export default function DocumentResultPage() {
               </div>
 
               <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                <AiModeSelector
+                  label="Mode Model AI untuk Evaluasi Ulang"
+                  value={reevalAiTier}
+                  onChange={setReevalAiTier}
+                />
+
                 <ChecklistEditor
                   items={reevalRules}
                   onChange={setReevalRules}
                   passingScore={reevalPassingScore}
                   onPassingScoreChange={setReevalPassingScore}
                   showSourceBadges
+                  aiTier={reevalAiTier}
                 />
 
                 <div>

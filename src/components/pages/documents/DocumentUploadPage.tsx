@@ -25,7 +25,8 @@ import {
   useWorkflowStages,
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
-import { Spinner, SearchableSelect, ModalPortal } from "@/components/ui";
+import { Spinner, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META } from "@/components/ui";
+import { useAiJobs } from "@/context/AiJobsContext";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
 import { ValidationProfileSelector } from "@/components/widgets/documents/ValidationProfileSelector";
 import {
@@ -33,22 +34,13 @@ import {
   normalizeWeightsTo100,
 } from "@/components/widgets/documents/ChecklistEditor";
 import { formatRequestCode } from "@/lib/utils";
-import type { ChecklistRuleItem, ValidationProfile } from "@/types/validation";
-
-const DOCUMENT_KIND_OPTIONS = [
-  "Kerangka Acuan Kerja",
-  "Rencana Anggaran Biaya",
-  "Jaminan Pelaksanaan",
-  "Jaminan Penawaran",
-  "Dokumen Penawaran",
-  "Kontrak & Perjanjian",
-  "Berita Acara",
-  "Umum",
-];
+import { DOCUMENT_KIND_OPTIONS } from "./templateConstants";
+import type { AiTier, ChecklistRuleItem, ValidationProfile } from "@/types/validation";
 
 export default function DocumentUploadPage() {
   const router = useRouter();
   const toast = useToast();
+  const { trackJob } = useAiJobs();
   const { state } = useProcurement();
   const { data: serverRequests = [] } = useProcurements();
   const requests = serverRequests.length > 0 ? serverRequests : state.requests;
@@ -67,6 +59,7 @@ export default function DocumentUploadPage() {
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
   const [criteriaMode, setCriteriaMode] = useState<"template" | "upload" | "custom">("template");
+  const [aiTier, setAiTier] = useState<AiTier>("cekatan");
   const [hasInitializedProfile, setHasInitializedProfile] = useState<boolean>(false);
   const [showCriteriaEditor, setShowCriteriaEditor] = useState<boolean>(false);
   const [showPromptBox, setShowPromptBox] = useState<boolean>(false);
@@ -280,15 +273,32 @@ export default function DocumentUploadPage() {
     if (selectedRequestId) {
       formData.append("request_id", selectedRequestId);
     }
+    formData.append("ai_tier", aiTier);
+    formData.append("async_mode", "true");
 
     try {
-      toast.info("Mengirim dokumen ke layanan validasi AI PRIMA...");
       const result = await analyzeMutation.mutateAsync(formData);
-      toast.success("Dokumen berhasil dianalisis!");
-      router.push(`/dashboard/documents/result?id=${result.id}`);
+      if (result.processing_status === "processing") {
+        trackJob({
+          id: result.id,
+          documentName: result.document_name,
+          aiTierRequested: aiTier,
+        });
+        toast.info(
+          `Analisis AI (${AI_TIER_META[aiTier]?.label ?? aiTier}) dimulai untuk '${result.document_name}'. Anda dapat berpindah halaman — notifikasi akan muncul saat selesai.`,
+          { durationMs: 6500 }
+        );
+        router.push("/dashboard/documents");
+      } else {
+        if (result.ai_fallback_notice) {
+          toast.warning(result.ai_fallback_notice, { durationMs: 9000 });
+        }
+        toast.success("Dokumen berhasil dianalisis!");
+        router.push(`/dashboard/documents/result?id=${result.id}`);
+      }
     } catch (err: any) {
       toast.error(
-        err?.message || "Gagal melakukan analisis validasi dokumen."
+        err?.message || "Gagal memulai analisis validasi dokumen."
       );
     }
   };
@@ -514,6 +524,7 @@ export default function DocumentUploadPage() {
                         onPassingScoreChange={setPassingScore}
                         showSourceBadges
                         hideUploadBar
+                        aiTier={aiTier}
                         onCriteriaFileExtracted={(meta) => {
                           if (!customPrompt.trim() && meta.suggested_system_prompt) {
                             setCustomPrompt(meta.suggested_system_prompt);
@@ -536,6 +547,7 @@ export default function DocumentUploadPage() {
                   onPassingScoreChange={setPassingScore}
                   showSourceBadges
                   focusUploadFirst
+                  aiTier={aiTier}
                   onCriteriaFileExtracted={(meta) => {
                     if (!customPrompt.trim() && meta.suggested_system_prompt) {
                       setCustomPrompt(meta.suggested_system_prompt);
@@ -567,6 +579,7 @@ export default function DocumentUploadPage() {
                   onPassingScoreChange={setPassingScore}
                   showSourceBadges
                   hideUploadBar
+                  aiTier={aiTier}
                   onCriteriaFileExtracted={(meta) => {
                     if (!customPrompt.trim() && meta.suggested_system_prompt) {
                       setCustomPrompt(meta.suggested_system_prompt);
@@ -605,7 +618,16 @@ export default function DocumentUploadPage() {
               />
             </div>
 
-            {/* Step D: Collapsible Custom Prompt / AI Instructions */}
+            {/* Step D: AI Model Mode Selector */}
+            <div className="border-t border-slate-100 pt-4">
+              <AiModeSelector
+                label="Mode Model AI"
+                value={aiTier}
+                onChange={setAiTier}
+              />
+            </div>
+
+            {/* Step E: Collapsible Custom Prompt / AI Instructions */}
             <div className="border-t border-slate-100 pt-3">
               {!showPromptBox ? (
                 <button

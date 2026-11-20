@@ -33,7 +33,7 @@ import {
   useProcurements,
 } from "@/lib/query/hooks/procurement/useProcurement";
 import { useValidationLogs } from "@/lib/query/hooks/procurement/useValidation";
-import { TableSkeleton, UserAvatar } from "@/components/ui";
+import { TableSkeleton, UserAvatar, Spinner, AI_TIER_META } from "@/components/ui";
 import { formatDateIndo, formatRequestCode } from "@/lib/utils";
 
 function getDocBadgeClass(status: DocumentItem["status"]) {
@@ -57,18 +57,35 @@ export default function DocumentsPage() {
   const documents = useMemo(() => {
     const baseDocs = serverDocs ?? [];
     const existingDocIds = new Set(baseDocs.map((d) => d.id));
-    const existingLogIds = new Set(
-      validationLogs.map((l) => l.document_id).filter(Boolean)
+    const logByDocId = new Map(
+      validationLogs
+        .filter((l) => Boolean(l.document_id))
+        .map((l) => [l.document_id!, l])
     );
+
+    const enrichedBaseDocs: DocumentItem[] = baseDocs.map((d) => {
+      const matchedLog = logByDocId.get(d.id);
+      if (!matchedLog) return d;
+      return {
+        ...d,
+        processingStatus: matchedLog.processing_status ?? "completed",
+        aiTierRequested: matchedLog.ai_tier_requested,
+        aiTierUsed: matchedLog.ai_tier_used,
+        aiModelUsed: matchedLog.ai_model_used,
+        aiFallbackNotice: matchedLog.ai_fallback_notice,
+        errorMessage: matchedLog.error_message,
+      };
+    });
 
     // Include standalone validation logs that haven't been published to `documents` table yet
     const standaloneDocs: DocumentItem[] = validationLogs
       .filter((l) => !l.document_id || !existingDocIds.has(l.document_id))
       .map((l) => {
+        const procStatus = l.processing_status ?? "completed";
         const mappedStatus: DocumentStatus =
           l.compliance_status === "Lulus Verifikasi"
             ? "Lulus Verifikasi"
-            : l.compliance_status === "Perlu Perbaikan"
+            : l.compliance_status === "Perlu Perbaikan" || procStatus === "failed"
             ? "Tindak Lanjut FPP"
             : "Catatan Procurement";
         return {
@@ -85,7 +102,11 @@ export default function DocumentsPage() {
             name: l.validated_by_name || "Administrator",
           },
           issues:
-            l.checklist_count > l.passed_count
+            procStatus === "processing"
+              ? []
+              : procStatus === "failed"
+              ? [l.error_message || "Gagal memproses analisis AI."]
+              : l.checklist_count > l.passed_count
               ? [
                   `${
                     l.checklist_count - l.passed_count
@@ -94,15 +115,25 @@ export default function DocumentsPage() {
                   )}/100)`,
                 ]
               : [],
-          nextAction: l.request_id
-            ? "Buka laporan validasi untuk detail evaluasi."
-            : "Belum ditautkan ke pekerjaan — buka laporan validasi untuk menerbitkan.",
+          nextAction:
+            procStatus === "processing"
+              ? "Sedang dianalisis oleh AI di latar belakang..."
+              : procStatus === "failed"
+              ? "Buka detail laporan untuk menjalankan Evaluasi Ulang AI."
+              : l.request_id
+              ? "Buka laporan validasi untuk detail evaluasi."
+              : "Belum ditautkan ke pekerjaan — buka laporan validasi untuk menerbitkan.",
           fileUrl: l.document_file_url || undefined,
+          processingStatus: procStatus,
+          aiTierRequested: l.ai_tier_requested,
+          aiTierUsed: l.ai_tier_used,
+          aiModelUsed: l.ai_model_used,
+          aiFallbackNotice: l.ai_fallback_notice,
+          errorMessage: l.error_message,
         };
       });
 
-    void existingLogIds;
-    return [...standaloneDocs, ...baseDocs];
+    return [...standaloneDocs, ...enrichedBaseDocs];
   }, [serverDocs, validationLogs]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -339,7 +370,14 @@ export default function DocumentsPage() {
                                 {doc.name}
                               </div>
                               <div className="mt-0.5 text-[11px] font-normal text-slate-500">
-                                {issueCount > 0
+                                {doc.processingStatus === "processing"
+                                  ? `Sedang dianalisis AI (${
+                                      AI_TIER_META[doc.aiTierRequested || "cekatan"]?.label ||
+                                      "Cekatan"
+                                    })...`
+                                  : doc.processingStatus === "failed"
+                                  ? "Analisis gagal — buka hasil untuk evaluasi ulang"
+                                  : issueCount > 0
                                   ? `${issueCount} catatan pemeriksaan`
                                   : "Tidak ada catatan temuan"}
                               </div>
@@ -417,13 +455,24 @@ export default function DocumentsPage() {
                         </td>
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-normal ${getDocBadgeClass(
-                              doc.status
-                            )}`}
-                          >
-                            {doc.status}
-                          </span>
+                          {doc.processingStatus === "processing" ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0a4d8c]/25 bg-[#e8f2fc] px-2.5 py-0.5 text-[11px] font-medium text-[#0a4d8c]">
+                              <Spinner size="xs" />
+                              <span>Sedang Dianalisis</span>
+                            </span>
+                          ) : doc.processingStatus === "failed" ? (
+                            <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-medium text-red-700">
+                              Gagal Analisis
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-normal ${getDocBadgeClass(
+                                doc.status
+                              )}`}
+                            >
+                              {doc.status}
+                            </span>
+                          )}
                         </td>
 
                         <td

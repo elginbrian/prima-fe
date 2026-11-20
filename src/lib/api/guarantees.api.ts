@@ -45,6 +45,12 @@ export interface ExtractedGuaranteeDto {
   value?: number;
   issue_date?: string;
   expiry_date?: string;
+  duration_text?: string | null;
+  project_title?: string | null;
+  ai_tier_requested?: string | null;
+  ai_tier_used?: string | null;
+  ai_model_used?: string | null;
+  ai_fallback_notice?: string | null;
 }
 
 export const guaranteesApi = {
@@ -66,9 +72,10 @@ export const guaranteesApi = {
   amend: (id: string, payload: { amendment_no: string; new_expiry_date: string; new_value?: number; amendment_reason?: string }) =>
     apiFetch<GuaranteeDto>(`/guarantees/${id}/amend`, { method: "POST", body: JSON.stringify(payload) }),
   remove: (id: string) => apiFetch<null>(`/guarantees/${id}`, { method: "DELETE" }),
-  extract: (file: File) => {
+  extract: (file: File, aiTier = "cekatan") => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("ai_tier", aiTier);
     return apiFetch<ExtractedGuaranteeDto>("/guarantees/extract", { method: "POST", body: formData });
   },
 };

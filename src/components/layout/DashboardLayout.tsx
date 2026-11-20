@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import { ProcurementProvider } from "@/context/ProcurementContext";
+import { AiJobsProvider } from "@/context/AiJobsContext";
 import { SidebarNav } from "@/components/navigation/SidebarNav";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,6 +49,11 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     : "";
 
   const getHeaderInfo = (path: string) => {
+    if (path.includes("documents/templates/form"))
+      return {
+        title: "Formulir Template Standar Kelayakan",
+        subtitle: "Susun atau ubah standar checklist berbobot serta impor kriteria otomatis dari berkas acuan.",
+      };
     if (path.includes("documents/templates"))
       return {
         title: "Pustaka Template Standar Kelayakan",
@@ -140,9 +146,11 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 export function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <ProcurementProvider>
-      <SidebarProvider>
-        <DashboardLayoutInner>{children}</DashboardLayoutInner>
-      </SidebarProvider>
+      <AiJobsProvider>
+        <SidebarProvider>
+          <DashboardLayoutInner>{children}</DashboardLayoutInner>
+        </SidebarProvider>
+      </AiJobsProvider>
     </ProcurementProvider>
   );
 }

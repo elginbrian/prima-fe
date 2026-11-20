@@ -1,5 +1,7 @@
 import { apiFetch } from "./client";
 import type {
+  AiTier,
+  ActiveValidationJob,
   ValidationProfile,
   CreateValidationProfilePayload,
   UpdateValidationProfilePayload,
@@ -76,9 +78,10 @@ export const documentsApi = {
     apiFetch<{ message: string }>(`/documents/profiles/${id}`, {
       method: "DELETE",
     }),
-  extractCriteria: (file: File) => {
+  extractCriteria: (file: File, aiTier: AiTier = "cekatan") => {
     const fd = new FormData();
     fd.append("file", file);
+    fd.append("ai_tier", aiTier);
     return apiFetch<ExtractedCriteriaResponse>("/documents/extract-criteria", {
       method: "POST",
       body: fd,
@@ -89,6 +92,8 @@ export const documentsApi = {
       method: "POST",
       body: formData,
     }),
+  getActiveValidationJobs: () =>
+    apiFetch<ActiveValidationJob[]>("/documents/validations/jobs/active"),
   reevaluateValidation: (id: string, payload: ReevaluateValidationPayload) =>
     apiFetch<DocumentValidationResponse>(`/documents/validations/${id}/re-evaluate`, {
       method: "POST",

@@ -225,26 +225,42 @@ export default function NotificationsPage() {
                     {notif.description}
                   </p>
 
-                  {notif.requestId && (
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!notif.isRead) markAsRead(notif.id);
-                          router.push(
-                            `/dashboard/overview/${encodeURIComponent(
-                              notif.requestId!
-                            )}`
-                          );
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-[#0a4d8c] hover:underline focus:outline-none"
-                      >
-                        <span>
-                          Buka Pekerjaan ({formatRequestCode(notif.requestId)})
-                        </span>
-                        <ArrowRight size={12} />
-                      </button>
+                  {(notif.actionUrl || notif.requestId) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      {notif.actionUrl && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!notif.isRead) markAsRead(notif.id);
+                            router.push(notif.actionUrl!);
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[#0a4d8c] hover:underline focus:outline-none"
+                        >
+                          <span>Lihat Hasil Analisis AI</span>
+                          <ArrowRight size={12} />
+                        </button>
+                      )}
+                      {notif.requestId && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!notif.isRead) markAsRead(notif.id);
+                            router.push(
+                              `/dashboard/overview/${encodeURIComponent(
+                                notif.requestId!
+                              )}`
+                            );
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[#0a4d8c] hover:underline focus:outline-none"
+                        >
+                          <span>
+                            Buka Pekerjaan ({formatRequestCode(notif.requestId)})
+                          </span>
+                          <ArrowRight size={12} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

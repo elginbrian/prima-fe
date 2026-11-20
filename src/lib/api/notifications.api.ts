@@ -8,6 +8,7 @@ export interface NotificationDto {
   is_read: boolean;
   type: string;
   category: string;
+  action_url?: string | null;
   created_at: string;
 }
 
