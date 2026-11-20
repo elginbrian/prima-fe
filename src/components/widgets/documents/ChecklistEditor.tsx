@@ -77,10 +77,12 @@ export function ChecklistEditor({
 
   const [newItemText, setNewItemText] = useState("");
   const [newGuidance, setNewGuidance] = useState("");
+  const [showNewGuidance, setShowNewGuidance] = useState(false);
   const [newIsMandatory, setNewIsMandatory] = useState(true);
   const [newItemWeight, setNewItemWeight] = useState<string>("");
   const [hasManualWeights, setHasManualWeights] = useState(false);
   const [uploadMergeMode, setUploadMergeMode] = useState<"replace" | "append">("replace");
+  const [expandedGuidance, setExpandedGuidance] = useState<Record<number, boolean>>({});
 
   const totalWeight = useMemo(
     () =>
@@ -125,6 +127,7 @@ export function ChecklistEditor({
 
     setNewItemText("");
     setNewGuidance("");
+    setShowNewGuidance(false);
     setNewItemWeight("");
   };
 
@@ -221,30 +224,27 @@ export function ChecklistEditor({
   };
 
   return (
-    <div className="space-y-4">
-      {/* 1. Upload Criteria File Bar */}
-      <div className="rounded-lg border border-dashed border-[#0a4d8c]/35 bg-[#f4f8fd] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-start gap-2.5 min-w-0">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#0a4d8c] border border-[#0a4d8c]/20">
-            <FileSpreadsheet size={15} />
+    <div className="space-y-3.5">
+      {/* 1. Compact Upload Criteria File Bar */}
+      <div className="rounded-lg border border-dashed border-[#0a4d8c]/35 bg-[#f4f8fd] px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-[#0a4d8c] border border-[#0a4d8c]/20">
+            <FileSpreadsheet size={14} />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-medium text-[#0a4d8c] flex items-center gap-1.5">
-              <span>Upload File Daftar Kriteria (Otomatis Ekstrak AI)</span>
+            <div className="text-xs font-medium text-[#0a4d8c] truncate">
+              Impor Kriteria Otomatis dari File (PDF / DOCX / XLSX / CSV)
             </div>
-            <p className="text-[11px] font-normal text-slate-600 mt-0.5 leading-snug">
-              Unggah file PDF, DOCX, XLSX, CSV, atau gambar matriks kriteria agar daftar kriteria & bobotnya terisi otomatis tanpa ketik manual.
-            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {items.length > 0 && (
-            <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-[10px]">
+            <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-[10px]">
               <button
                 type="button"
                 onClick={() => setUploadMergeMode("replace")}
-                className={`rounded-md px-2 py-1 font-medium transition-colors ${
+                className={`rounded px-2 py-0.5 font-medium transition-colors ${
                   uploadMergeMode === "replace"
                     ? "bg-[#0a4d8c] text-white"
                     : "text-slate-600 hover:text-slate-900"
@@ -255,7 +255,7 @@ export function ChecklistEditor({
               <button
                 type="button"
                 onClick={() => setUploadMergeMode("append")}
-                className={`rounded-md px-2 py-1 font-medium transition-colors ${
+                className={`rounded px-2 py-0.5 font-medium transition-colors ${
                   uploadMergeMode === "append"
                     ? "bg-[#0a4d8c] text-white"
                     : "text-slate-600 hover:text-slate-900"
@@ -277,7 +277,7 @@ export function ChecklistEditor({
             type="button"
             disabled={extractMutation.isPending}
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-2 text-xs font-medium text-white hover:bg-[#083b6c] transition-colors disabled:opacity-60 focus:outline-none"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#083b6c] transition-colors disabled:opacity-60 focus:outline-none"
           >
             {extractMutation.isPending ? (
               <>
@@ -286,7 +286,7 @@ export function ChecklistEditor({
               </>
             ) : (
               <>
-                <UploadCloud size={14} />
+                <UploadCloud size={13} />
                 <span>Upload Kriteria</span>
               </>
             )}
@@ -294,41 +294,38 @@ export function ChecklistEditor({
         </div>
       </div>
 
-      {/* 2. Ambang Batas Skor (Passing Threshold Slider) */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3.5 space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <Sliders size={12} className="text-[#0a4d8c]" />
-            Ambang Batas Skor Kelayakan
-          </label>
-          <span className="font-medium text-[#0a4d8c] text-xs bg-[#e8f2fc] px-2 py-0.5 rounded border border-[#0a4d8c]/20">
+      {/* 2. Compact Inline Passing Threshold Control */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-slate-50/80 px-3.5 py-2.5 border border-slate-200/80">
+        <div className="flex items-center gap-2 shrink-0">
+          <Sliders size={13} className="text-[#0a4d8c]" />
+          <span className="text-xs font-medium text-slate-700">
+            Ambang Lulus Minimal:
+          </span>
+          <span className="font-semibold text-[#0a4d8c] text-xs bg-[#e8f2fc] px-2 py-0.5 rounded border border-[#0a4d8c]/20">
             {passingScore}%
           </span>
         </div>
-        <input
-          type="range"
-          min="50"
-          max="100"
-          step="5"
-          value={passingScore}
-          onChange={(e) => onPassingScoreChange(Number(e.target.value))}
-          className="w-full accent-[#0a4d8c] cursor-pointer"
-        />
-        <div className="flex justify-between text-[10px] font-normal text-slate-400">
-          <span>50% (Fleksibel)</span>
-          <span className="font-medium text-slate-600">
-            80% (Standar Pertamina)
-          </span>
-          <span>100% (Ketat)</span>
+        <div className="flex items-center gap-2.5 flex-1 sm:max-w-xs">
+          <span className="text-[10px] text-slate-400">50%</span>
+          <input
+            type="range"
+            min="50"
+            max="100"
+            step="5"
+            value={passingScore}
+            onChange={(e) => onPassingScoreChange(Number(e.target.value))}
+            className="w-full accent-[#0a4d8c] cursor-pointer"
+          />
+          <span className="text-[10px] text-slate-400">100%</span>
         </div>
       </div>
 
-      {/* 3. Checklist Items List with Right-Hand Weight Column (%) */}
+      {/* 3. Flat Checklist Items List (No internal nested scrollbar!) */}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              Kriteria & Bobot ({items.length})
+              Butir Kriteria &amp; Bobot ({items.length})
             </label>
             {items.length > 0 && (
               <span
@@ -339,7 +336,7 @@ export function ChecklistEditor({
                 }`}
               >
                 <Percent size={10} />
-                <span>Total Bobot: {totalWeight}%</span>
+                <span>Total: {totalWeight}%</span>
               </span>
             )}
           </div>
@@ -363,7 +360,7 @@ export function ChecklistEditor({
                   title="Normalisasi proporsional agar total tepat 100%"
                 >
                   <Sparkles size={11} />
-                  <span>Normalisasi ke 100%</span>
+                  <span>Normalisasi 100%</span>
                 </button>
               )}
             </div>
@@ -372,73 +369,90 @@ export function ChecklistEditor({
 
         {items.length > 0 && !isExact100 && (
           <p className="text-[11px] font-normal text-[#0a4d8c] bg-[#f4f8fd] border border-[#0a4d8c]/20 rounded-lg px-3 py-1.5">
-            Total bobot saat ini <span className="font-medium">{totalWeight}%</span>. Anda dapat klik <span className="font-medium">Normalisasi ke 100%</span> sekarang, atau sistem akan menormalisasinya secara proporsional otomatis saat perhitungan skor AI.
+            Total bobot <span className="font-medium">{totalWeight}%</span> — akan otomatis dinormalisasi proporsional ke 100% saat analisis.
           </p>
         )}
 
         {items.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-5 text-center text-xs font-normal text-slate-500">
-            Belum ada butir kriteria. Pilih template standar, unggah file kriteria di atas, atau tambahkan kriteria kustom di bawah.
+          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-xs font-normal text-slate-500">
+            Belum ada kriteria. Unggah file kriteria di atas atau tambahkan secara manual di bawah.
           </div>
         ) : (
-          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-all"
-              >
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-normal text-slate-400">
-                      #{idx + 1}
-                    </span>
-                    {item.category && item.category !== "Umum" && (
-                      <span className="text-[10px] font-normal text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
-                        {item.category}
+          <div className="rounded-lg border border-slate-200 divide-y divide-slate-200 bg-white">
+            {items.map((item, idx) => {
+              const hasGuidance = Boolean(item.guidance && item.guidance.trim());
+              const showGuidanceField = hasGuidance || Boolean(expandedGuidance[idx]);
+
+              return (
+                <div
+                  key={idx}
+                  className="flex items-start justify-between gap-3 px-3.5 py-2.5 hover:bg-slate-50/50 transition-colors"
+                >
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] font-medium text-slate-400">
+                        {idx + 1}.
                       </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleToggleMandatory(idx)}
-                      className={`text-[10px] font-normal px-2 py-0.5 rounded-full border transition-colors focus:outline-none ${
-                        item.is_mandatory
-                          ? "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/20"
-                          : "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}
-                      title="Klik untuk mengubah status Wajib / Opsional"
-                    >
-                      {item.is_mandatory ? "Wajib" : "Opsional"}
-                    </button>
-                    {showSourceBadges && item.source && (
-                      <span
-                        className={`text-[10px] font-normal px-2 py-0.5 rounded-full border ${
-                          item.source === "template"
-                            ? "border-slate-200 bg-slate-50 text-slate-500"
-                            : "border-[#0a4d8c]/25 bg-white text-[#0a4d8c]"
+                      <span className="text-xs font-medium text-slate-800 leading-snug break-words">
+                        {item.item}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {item.category && item.category !== "Umum" && (
+                        <span className="text-[10px] font-normal text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                          {item.category}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleMandatory(idx)}
+                        className={`text-[10px] font-normal px-2 py-0.5 rounded-full border transition-colors focus:outline-none ${
+                          item.is_mandatory
+                            ? "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/20"
+                            : "bg-slate-100 text-slate-600 border-slate-200"
                         }`}
+                        title="Klik untuk ubah Wajib / Opsional"
                       >
-                        {item.source === "template" ? "Template" : "Kustom"}
-                      </span>
+                        {item.is_mandatory ? "Wajib" : "Opsional"}
+                      </button>
+                      {showSourceBadges && item.source && (
+                        <span
+                          className={`text-[10px] font-normal px-2 py-0.5 rounded-full border ${
+                            item.source === "template"
+                              ? "border-slate-200 bg-slate-50 text-slate-500"
+                              : "border-[#0a4d8c]/25 bg-white text-[#0a4d8c]"
+                          }`}
+                        >
+                          {item.source === "template" ? "Template" : "Kustom"}
+                        </span>
+                      )}
+                      {!showGuidanceField && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedGuidance((prev) => ({ ...prev, [idx]: true }))
+                          }
+                          className="text-[10px] text-slate-400 hover:text-[#0a4d8c] px-1 transition-colors focus:outline-none"
+                        >
+                          + Panduan AI
+                        </button>
+                      )}
+                    </div>
+
+                    {showGuidanceField && (
+                      <input
+                        type="text"
+                        value={item.guidance || ""}
+                        onChange={(e) => handleGuidanceChange(idx, e.target.value)}
+                        placeholder="Target pembanding opsional (mis. Maksimal 12 bulan kalender)..."
+                        className="w-full rounded border border-slate-200 bg-slate-50/70 px-2.5 py-1 text-[11px] font-normal text-slate-700 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:bg-white focus:outline-none"
+                      />
                     )}
                   </div>
-                  <p className="text-xs font-normal text-slate-800 leading-snug break-words">
-                    {item.item}
-                  </p>
-                  <input
-                    type="text"
-                    value={item.guidance || ""}
-                    onChange={(e) => handleGuidanceChange(idx, e.target.value)}
-                    placeholder="Panduan / target pembanding opsional (mis. Maksimal 12 bulan kalender)..."
-                    className="w-full rounded border border-transparent bg-slate-50/70 px-2 py-1 text-[11px] font-normal text-slate-600 placeholder:text-slate-400 hover:border-slate-200 focus:border-[#0a4d8c] focus:bg-white focus:outline-none transition-colors"
-                  />
-                </div>
 
-                {/* Right Column: Weight (%) input + Delete */}
-                <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                  <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400">
-                      Bobot
-                    </span>
+                  {/* Right Column: Weight (%) input + Delete */}
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <div className="relative flex items-center">
                       <input
                         type="number"
@@ -454,29 +468,25 @@ export function ChecklistEditor({
                         %
                       </span>
                     </div>
-                  </div>
 
-                  <button
-                    type="button"
-                    aria-label="Hapus kriteria"
-                    onClick={() => handleRemoveItem(idx)}
-                    className="mt-3 text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100 transition-colors shrink-0 focus:outline-none"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                    <button
+                      type="button"
+                      aria-label="Hapus kriteria"
+                      onClick={() => handleRemoveItem(idx)}
+                      className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100 transition-colors shrink-0 focus:outline-none"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* 4. Add New Custom Item Input */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-2">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-slate-600 flex items-center gap-1">
-          <Plus size={12} className="text-[#0a4d8c]" />
-          Tambah Kriteria Kustom
-        </div>
+      {/* 4. Compact Add New Custom Item Bar */}
+      <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-2">
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
@@ -488,8 +498,8 @@ export function ChecklistEditor({
                 handleAddItem();
               }
             }}
-            placeholder="Contoh: Jangka waktu pelaksanaan sesuai atau lebih cepat dari KAK (maks. 12 bulan)..."
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-800 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:outline-none"
+            placeholder="+ Tambah kriteria kustom baru..."
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-800 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:outline-none"
           />
           <div className="flex items-center gap-2">
             <div className="relative flex items-center">
@@ -502,7 +512,7 @@ export function ChecklistEditor({
                 onChange={(e) => setNewItemWeight(e.target.value)}
                 placeholder="Auto"
                 title="Kosongkan untuk bagi rata otomatis"
-                className="w-20 rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-6 text-right text-xs font-normal text-slate-800 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:outline-none"
+                className="w-18 rounded-lg border border-slate-200 bg-white py-1.5 pl-2 pr-5 text-right text-xs font-normal text-slate-800 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:outline-none"
               />
               <span className="pointer-events-none absolute right-2 text-[11px] text-slate-400">
                 %
@@ -512,21 +522,15 @@ export function ChecklistEditor({
               type="button"
               onClick={handleAddItem}
               disabled={!newItemText.trim()}
-              className="rounded-lg bg-[#0a4d8c] px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-[#083b6c] disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center gap-1 focus:outline-none"
+              className="rounded-lg bg-[#0a4d8c] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#083b6c] disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center gap-1 focus:outline-none"
             >
               <Plus size={13} />
               Tambah
             </button>
           </div>
         </div>
-        <input
-          type="text"
-          value={newGuidance}
-          onChange={(e) => setNewGuidance(e.target.value)}
-          placeholder="Panduan / target pembanding untuk AI (opsional, mis. 12 bulan <= 13 bulan = Memenuhi)"
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-normal text-slate-700 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:outline-none"
-        />
-        <div className="flex items-center gap-4 text-[11px] text-slate-600 pt-0.5">
+
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
               type="checkbox"
@@ -534,11 +538,26 @@ export function ChecklistEditor({
               onChange={(e) => setNewIsMandatory(e.target.checked)}
               className="rounded border-slate-300 accent-[#0a4d8c]"
             />
-            <span className="font-normal text-slate-700">
-              Tandai sebagai syarat wajib (Mandatory)
-            </span>
+            <span className="font-normal text-slate-600">Syarat Wajib</span>
           </label>
+          <button
+            type="button"
+            onClick={() => setShowNewGuidance((v) => !v)}
+            className="text-[11px] text-[#0a4d8c] hover:underline focus:outline-none"
+          >
+            {showNewGuidance ? "Sembunyikan panduan" : "+ Panduan pembanding AI"}
+          </button>
         </div>
+
+        {showNewGuidance && (
+          <input
+            type="text"
+            value={newGuidance}
+            onChange={(e) => setNewGuidance(e.target.value)}
+            placeholder="Contoh: Jadwal di dokumen <= 13 bulan dinyatakan Memenuhi penuh"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-normal text-slate-700 placeholder:text-slate-400 focus:border-[#0a4d8c] focus:outline-none"
+          />
+        )}
       </div>
     </div>
   );

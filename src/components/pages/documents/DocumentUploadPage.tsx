@@ -65,6 +65,8 @@ export default function DocumentUploadPage() {
   const [passingScore, setPassingScore] = useState<number>(80);
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
+  const [showCriteriaEditor, setShowCriteriaEditor] = useState<boolean>(true);
+  const [showPromptBox, setShowPromptBox] = useState<boolean>(false);
 
   const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
@@ -178,12 +180,15 @@ export default function DocumentUploadPage() {
       );
       setChecklistRules(normalized);
       setPassingScore(profile.passing_score_threshold || 80);
+      setShowCriteriaEditor(false);
       const prompt = profile.custom_system_prompt || profile.prompt_template;
       if (prompt) {
         setCustomPrompt(prompt);
+        setShowPromptBox(true);
       }
     } else {
       setSelectedProfileId("");
+      setShowCriteriaEditor(true);
       setChecklistRules((prev) =>
         prev.map((r) => ({ ...r, source: "custom" as const }))
       );
@@ -281,13 +286,13 @@ export default function DocumentUploadPage() {
         </button>
       </div>
 
-      {/* Main Form Layout */}
-      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex flex-col lg:flex-row flex-1">
+      {/* Main Form Layout — natural single-page scroll with sticky CTA footer */}
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex flex-col lg:flex-row">
         {/* Left Column: Upload Dropzone & Document Preview */}
-        <div className="w-full lg:w-5/12 bg-slate-50/70 border-r border-slate-200 p-6 flex flex-col space-y-4">
+        <div className="w-full lg:w-5/12 bg-slate-50/70 border-b lg:border-b-0 lg:border-r border-slate-200 p-5 sm:p-6 flex flex-col space-y-3.5">
           <div className="flex items-center justify-between">
             <h2 className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-              Berkas Dokumen Target
+              1. Berkas Dokumen Target
             </h2>
             {file && (
               <button
@@ -303,7 +308,7 @@ export default function DocumentUploadPage() {
 
           {!file ? (
             <div
-              className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center flex-1 transition-all cursor-pointer ${
+              className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center min-h-[340px] transition-all cursor-pointer ${
                 isDragging
                   ? "border-[#0a4d8c] bg-[#e8f2fc]/60"
                   : "border-slate-300 bg-white hover:border-[#0a4d8c]/60 hover:bg-slate-50"
@@ -312,14 +317,14 @@ export default function DocumentUploadPage() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <div className="w-12 h-12 bg-[#e8f2fc] text-[#0a4d8c] rounded-xl flex items-center justify-center mb-3 border border-[#0a4d8c]/20">
-                <UploadCloud size={24} />
+              <div className="w-11 h-11 bg-[#e8f2fc] text-[#0a4d8c] rounded-xl flex items-center justify-center mb-3 border border-[#0a4d8c]/20">
+                <UploadCloud size={22} />
               </div>
               <h3 className="text-sm font-medium text-slate-800 mb-1">
-                Tarik & Lepas Berkas ke Sini
+                Tarik &amp; Lepas Berkas ke Sini
               </h3>
               <p className="text-xs font-normal text-slate-500 text-center max-w-xs mb-4 leading-relaxed">
-                Mendukung berkas PDF, DOCX, XLSX, atau pindaian resmi (Maks. 25MB)
+                PDF, DOCX, XLSX, atau pindaian resmi (Maks. 25MB)
               </p>
 
               <label className="cursor-pointer bg-[#0a4d8c] hover:bg-[#083b6c] text-white px-4 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2">
@@ -333,134 +338,174 @@ export default function DocumentUploadPage() {
               </label>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col min-h-[460px]">
+            <div className="flex-1 flex flex-col min-h-[420px]">
               <DocumentPreview file={file} />
             </div>
           )}
 
-          {/* Quick Notice Info */}
-          <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-xs text-slate-600 space-y-1">
-            <div className="font-medium text-[#0a4d8c] flex items-center gap-1.5">
-              <Sparkles size={13} />
-              Verifikasi Berbobot & Ekstraksi Tahapan AI
-            </div>
-            <p className="text-[11px] font-normal leading-relaxed text-slate-500">
-              PRIMA AI mengevaluasi setiap kriteria secara terukur sesuai bobot persentase (termasuk perbandingan jadwal/nilai), menormalisasi bobot ke 100%, serta menyusun tahapan pekerjaan otomatis baik dengan maupun tanpa template.
-            </p>
+          <div className="flex items-center gap-1.5 text-[11px] font-normal text-slate-500">
+            <Sparkles size={12} className="text-[#0a4d8c] shrink-0" />
+            <span>Mendukung penilaian berbobot otomatis (normalisasi 100%) &amp; ekstraksi tahapan AI.</span>
           </div>
         </div>
 
-        {/* Right Column: Settings, Profile & Checklist Editor */}
+        {/* Right Column: Progressive Disclosure Configuration + Sticky Submit Footer */}
         <div className="w-full lg:w-7/12 flex flex-col">
-          <div className="p-6 border-b border-slate-100">
-            <h2 className="text-base font-semibold text-slate-800">
-              Konfigurasi Standar Kelayakan Dokumen
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h2 className="text-sm sm:text-base font-semibold text-slate-800">
+              2. Standar Pemeriksaan &amp; Kriteria
             </h2>
             <p className="text-xs font-normal text-slate-500 mt-0.5">
-              Pilih template standar Pertamina, unggah file daftar kriteria, atau sesuaikan bobot & kriteria kustom.
+              Pilih template standar siap pakai atau atur kriteria &amp; bobot kustom.
             </p>
           </div>
 
-          <div className="p-6 space-y-5 flex-1 overflow-y-auto max-h-[calc(100vh-260px)]">
-            {/* 1. Validation Profile Selector (Searchable) */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-              <ValidationProfileSelector
-                profiles={profiles}
-                selectedProfileId={selectedProfileId}
-                onSelectProfile={handleSelectProfile}
-                isLoading={isLoadingProfiles}
-              />
-            </div>
+          <div className="p-6 space-y-5 flex-1">
+            {/* Step A: Validation Profile Selector (clean, no outer double box) */}
+            <ValidationProfileSelector
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onSelectProfile={handleSelectProfile}
+              isLoading={isLoadingProfiles}
+            />
 
-            {/* 2. Bind to Existing Tracker Job (Optional, Searchable) */}
-            <div className="space-y-1.5">
+            {/* Step B: Bind to Existing Tracker Job (Optional, Searchable) */}
+            <div className="border-t border-slate-100 pt-4 space-y-1.5">
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <Building2 size={12} className="text-[#0a4d8c]" />
-                Tautkan ke Pekerjaan Pengadaan (Opsional)
+                Tautkan ke Pekerjaan (Opsional)
               </label>
               <SearchableSelect
                 options={requestOptions}
                 value={selectedRequestId}
                 onChange={setSelectedRequestId}
                 allowClear={Boolean(selectedRequestId)}
-                placeholder="-- Buat Pekerjaan Baru Otomatis dari Ekstraksi Dokumen --"
+                placeholder="-- Buat Pekerjaan Baru Otomatis dari Dokumen --"
                 searchPlaceholder="Ketik kode atau nama pekerjaan..."
               />
-              <p className="text-[11px] font-normal text-slate-400">
-                Jika dikosongkan, AI akan mengekstrak judul pekerjaan, nilai anggaran, dan tahapan otomatis untuk diterbitkan sebagai pekerjaan baru.
-              </p>
             </div>
 
-            {/* 3. Interactive Weighted Checklist Rules Editor */}
-            <div className="rounded-xl border border-slate-200 p-4 bg-white space-y-4">
-              <div className="border-b border-slate-100 pb-2.5 flex flex-wrap items-center justify-between gap-2">
-                <div>
+            {/* Step C: Progressive Criteria Section */}
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#0a4d8c] flex items-center gap-1.5">
                     <Sliders size={13} />
-                    Daftar Kriteria Kelayakan & Bobot (%)
+                    Kriteria Kelayakan &amp; Bobot ({checklistRules.length})
                   </h3>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    {selectedProfileId ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-normal text-slate-600">
-                        <ShieldCheck size={11} className="text-[#0a4d8c]" />
-                        {templateRuleCount} dari Template Standar
-                        {customRuleCount > 0 && (
-                          <span className="text-[#0a4d8c] font-medium">
-                            + {customRuleCount} Kriteria Kustom
-                          </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-normal text-slate-500">
-                        Mode Kriteria Kustom Mandiri (tanpa template standar)
-                      </span>
-                    )}
-                  </div>
+                  {selectedProfileId && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+                      <ShieldCheck size={10} className="text-[#0a4d8c]" />
+                      {templateRuleCount} Template
+                      {customRuleCount > 0 ? ` + ${customRuleCount} Kustom` : ""}
+                    </span>
+                  )}
                 </div>
-                {checklistRules.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsSaveTemplateModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-[#0a4d8c] hover:border-[#0a4d8c] hover:bg-[#e8f2fc]/60 transition-colors focus:outline-none"
-                  >
-                    <BookmarkPlus size={13} />
-                    <span>Simpan sebagai Template Baru</span>
-                  </button>
-                )}
+
+                <div className="flex items-center gap-2">
+                  {checklistRules.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSaveTemplateModalOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
+                    >
+                      <BookmarkPlus size={12} />
+                      <span>Simpan Template</span>
+                    </button>
+                  )}
+
+                  {selectedProfileId && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCriteriaEditor((v) => !v)}
+                      className="inline-flex items-center gap-1 rounded-md border border-[#0a4d8c]/30 bg-[#e8f2fc] px-2.5 py-1 text-[11px] font-medium text-[#0a4d8c] hover:bg-[#d8e8fa] transition-colors focus:outline-none"
+                    >
+                      {showCriteriaEditor ? "Ringkas Kriteria" : "Ubah Bobot / Kriteria"}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <ChecklistEditor
-                items={checklistRules}
-                onChange={setChecklistRules}
-                passingScore={passingScore}
-                onPassingScoreChange={setPassingScore}
-                showSourceBadges
-                onCriteriaFileExtracted={(meta) => {
-                  if (!customPrompt.trim() && meta.suggested_system_prompt) {
-                    setCustomPrompt(meta.suggested_system_prompt);
-                  }
-                }}
-              />
+              {/* Collapsed Calm Summary when using Template */}
+              {selectedProfileId && !showCriteriaEditor && checklistRules.length > 0 ? (
+                <div className="rounded-lg bg-slate-50/80 border border-slate-200/80 px-3.5 py-2.5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600">
+                    <span>
+                      Menggunakan <span className="font-medium text-slate-800">{checklistRules.length} butir standar</span> dengan ambang lulus{" "}
+                      <span className="font-medium text-[#0a4d8c]">&ge; {passingScore}%</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {checklistRules.map((r, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700 max-w-full"
+                      >
+                        <span className="truncate max-w-[200px]">{r.item}</span>
+                        <span className="font-semibold text-[#0a4d8c]">{r.weight}%</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <ChecklistEditor
+                  items={checklistRules}
+                  onChange={setChecklistRules}
+                  passingScore={passingScore}
+                  onPassingScoreChange={setPassingScore}
+                  showSourceBadges
+                  onCriteriaFileExtracted={(meta) => {
+                    if (!customPrompt.trim() && meta.suggested_system_prompt) {
+                      setCustomPrompt(meta.suggested_system_prompt);
+                      setShowPromptBox(true);
+                    }
+                  }}
+                />
+              )}
             </div>
 
-            {/* 4. Custom Prompt / AI Instructions */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <Sparkles size={12} className="text-[#0a4d8c]" />
-                Instruksi Tambahan untuk AI (Opsional)
-              </label>
-              <textarea
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Contoh: Bandingkan durasi pelaksanaan terhadap target KAK 12 bulan (lebih cepat = memenuhi) dan verifikasi rincian PPN 11%."
-                rows={3}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none resize-none"
-              />
+            {/* Step D: Collapsible Custom Prompt / AI Instructions */}
+            <div className="border-t border-slate-100 pt-3">
+              {!showPromptBox ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPromptBox(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#0a4d8c] transition-colors focus:outline-none"
+                >
+                  <Sparkles size={13} className="text-[#0a4d8c]" />
+                  <span>+ Tambah Instruksi Khusus untuk AI (Opsional)</span>
+                </button>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Sparkles size={12} className="text-[#0a4d8c]" />
+                      Instruksi Tambahan AI (Opsional)
+                    </label>
+                    {!customPrompt.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPromptBox(false)}
+                        className="text-[11px] text-slate-400 hover:text-slate-600 focus:outline-none"
+                      >
+                        Tutup
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    placeholder="Contoh: Bandingkan durasi pelaksanaan terhadap target KAK 12 bulan (lebih cepat = memenuhi)..."
+                    rows={2}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-800 placeholder-slate-400 focus:border-[#0a4d8c] focus:outline-none resize-none"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="p-5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-3 mt-auto">
+          {/* Sticky Footer Actions — always visible */}
+          <div className="sticky bottom-0 z-10 px-6 py-3.5 bg-white/95 backdrop-blur-xs border-t border-slate-200 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => router.push("/dashboard/documents")}
@@ -473,9 +518,9 @@ export default function DocumentUploadPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!file || analyzeMutation.isPending}
-              className={`px-5 py-2.5 flex items-center gap-2 rounded-lg text-xs font-medium transition-all ${
+              className={`px-5 py-2 flex items-center gap-2 rounded-lg text-xs font-medium transition-all ${
                 file && !analyzeMutation.isPending
-                  ? "bg-[#0a4d8c] hover:bg-[#083b6c] text-white cursor-pointer"
+                  ? "bg-[#0a4d8c] hover:bg-[#083b6c] text-white cursor-pointer shadow-2xs"
                   : "bg-slate-200 text-slate-400 cursor-not-allowed"
               }`}
             >

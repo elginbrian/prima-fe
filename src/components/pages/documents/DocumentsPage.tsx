@@ -211,36 +211,37 @@ export default function DocumentsPage() {
     : undefined;
 
   return (
-    <div className="flex flex-col gap-5 pb-12">
-      {/* 1. Blue Action Header Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#0a4d8c] px-6 py-6 text-white shadow-xs sm:px-8">
-        <div className="relative z-10 max-w-3xl">
-          <h2 className="max-w-2xl text-xl font-semibold tracking-tight sm:text-2xl">
-            Pastikan setiap dokumen siap sebelum proses dimulai!
-          </h2>
-          <p className="mt-2 max-w-2xl text-xs sm:text-sm font-normal leading-relaxed text-blue-100">
-            Unggah dokumen pengadaan untuk diperiksa kelayakannya dengan AI dan terbitkan langsung menjadi berkas pekerjaan baru.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/documents/upload")}
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs sm:text-sm font-medium text-[#0a4d8c] shadow-xs transition hover:bg-blue-50 focus:outline-none"
-            >
-              <UploadCloud size={15} /> Validasi Dokumen Baru
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/documents/templates")}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-xs sm:text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none"
-            >
-              <BookOpen size={15} /> Kelola Template Standar
-            </button>
+    <div className="flex flex-col gap-4 pb-12">
+      {/* 1. Compact Operational Action Bar (replaces oversized hero banner) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-2xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f2fc] text-[#0a4d8c]">
+            <FileCheck2 size={16} />
           </div>
+          <p className="text-xs text-slate-600 truncate">
+            Unggah dokumen untuk validasi checklist AI berbobot atau kelola template standar.
+          </p>
         </div>
-        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border-[32px] border-blue-300/15" />
-        <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full border-[24px] border-blue-300/10" />
-      </section>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/documents/templates")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c] focus:outline-none"
+          >
+            <BookOpen size={14} className="text-[#0a4d8c]" />
+            <span>Template & Tahapan</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/documents/upload")}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
+          >
+            <UploadCloud size={14} />
+            <span>Validasi Dokumen Baru</span>
+          </button>
+        </div>
+      </div>
 
       {/* 2. Interactive Summary & Quick Filter Cards */}
       <DocumentStats

@@ -1,6 +1,10 @@
 import {
   LayoutDashboard,
   FileSearch,
+  BookOpen,
+  ShieldCheck,
+  Clock,
+  BarChart3,
   Bell,
   LogOut,
   ChevronLeft,
@@ -17,11 +21,43 @@ import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/ui/LogoutModal";
 import { useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
 
-const navItems: any[] = [
-  { key: "documents", label: "Dokumen", icon: FileSearch },
-  { key: "overview", label: "Pekerjaan", icon: LayoutDashboard },
-  { key: "notifications", label: "Notifikasi", icon: Bell },
-  { key: "settings", label: "Pengaturan", icon: Settings },
+interface NavItemDef {
+  id: string;
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  lens?: string;
+}
+
+interface NavGroupDef {
+  title: string;
+  items: NavItemDef[];
+}
+
+const NAV_GROUPS: NavGroupDef[] = [
+  {
+    title: "Dokumen & Standar",
+    items: [
+      { id: "documents", href: "/dashboard/documents", label: "Pemeriksaan Dokumen", icon: FileSearch },
+      { id: "templates", href: "/dashboard/documents/templates", label: "Template & Tahapan", icon: BookOpen },
+    ],
+  },
+  {
+    title: "Pekerjaan & Jaminan",
+    items: [
+      { id: "overview-jobs", href: "/dashboard/overview", label: "Daftar Pekerjaan", icon: LayoutDashboard, lens: "jobs" },
+      { id: "overview-guarantees", href: "/dashboard/overview?lens=guarantees", label: "Warkat Jaminan", icon: ShieldCheck, lens: "guarantees" },
+      { id: "overview-sla", href: "/dashboard/overview?lens=sla-actions", label: "SLA & Tindak Lanjut", icon: Clock, lens: "sla-actions" },
+      { id: "overview-analytics", href: "/dashboard/overview?lens=analytics", label: "Analitik & Performa", icon: BarChart3, lens: "analytics" },
+    ],
+  },
+  {
+    title: "Sistem",
+    items: [
+      { id: "notifications", href: "/dashboard/notifications", label: "Notifikasi", icon: Bell },
+      { id: "settings", href: "/dashboard/settings", label: "Pengaturan", icon: Settings },
+    ],
+  },
 ];
 
 interface SidebarNavProps {
@@ -35,11 +71,39 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
   const pathname = usePathname();
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [currentLens, setCurrentLens] = useState<string>("jobs");
   const defaultLogout = useLogout();
   const handleLogout = onLogout ?? defaultLogout;
   
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const pendingActionsCount = actions.filter(a => a.status === "Pending").length;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncLensFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lens = params.get("lens") || "jobs";
+      setCurrentLens(lens);
+    };
+
+    const handleLensEvent = (evt: Event) => {
+      const custom = evt as CustomEvent<string>;
+      if (custom.detail) {
+        setCurrentLens(custom.detail);
+      } else {
+        syncLensFromUrl();
+      }
+    };
+
+    syncLensFromUrl();
+    window.addEventListener("prima-lens-change", handleLensEvent);
+    window.addEventListener("popstate", syncLensFromUrl);
+    return () => {
+      window.removeEventListener("prima-lens-change", handleLensEvent);
+      window.removeEventListener("popstate", syncLensFromUrl);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -58,7 +122,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const containerClasses = cn(
     "fixed left-0 top-0 h-screen bg-white border-r border-slate-200 z-40 transition-all duration-300 ease-in-out flex flex-col",
-    effectiveCollapsed ? "lg:w-20" : "lg:w-52",
+    effectiveCollapsed ? "lg:w-20" : "lg:w-56",
     "w-[280px]",
     mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
     "lg:translate-x-0 lg:static lg:shadow-none"
@@ -66,22 +130,40 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
   const navItemClasses = (active: boolean) =>
     cn(
-      "flex w-full items-center gap-3 rounded-[12px] border-none px-3 py-3 text-left text-sm font-medium transition-all duration-200 relative focus:outline-none",
+      "flex w-full items-center gap-2.5 rounded-xl border-none px-3 py-2.5 text-left text-[13px] font-medium transition-all duration-150 relative focus:outline-none",
       active
-        ? "bg-[#eaf3ff] text-[#0a4d8c] shadow-xs"
+        ? "bg-[#eaf3ff] text-[#0a4d8c] shadow-2xs"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-      effectiveCollapsed ? "lg:justify-center lg:px-2" : "lg:justify-start lg:px-4"
+      effectiveCollapsed ? "lg:justify-center lg:px-2" : "lg:justify-start lg:px-3"
     );
 
-  const childItemClasses = () =>
-    cn(
-      "flex w-full items-center gap-2 rounded-[12px] px-3 py-2 text-sm text-slate-700 hover:bg-slate-100",
-      effectiveCollapsed ? "justify-center px-2" : "pl-8"
-    );
+  const isNavItemActive = (item: NavItemDef): boolean => {
+    if (!pathname) return false;
+    if (item.id === "templates") {
+      return pathname.startsWith("/dashboard/documents/templates");
+    }
+    if (item.id === "documents") {
+      return (
+        pathname.startsWith("/dashboard/documents") &&
+        !pathname.startsWith("/dashboard/documents/templates")
+      );
+    }
+    if (item.lens) {
+      if (pathname.startsWith("/dashboard/overview/guarantees")) {
+        return item.lens === "guarantees";
+      }
+      if (!pathname.startsWith("/dashboard/overview")) return false;
+      if (/^\/dashboard\/overview\/[^/]+/.test(pathname)) {
+        return item.lens === "jobs";
+      }
+      return currentLens === item.lens;
+    }
+    return pathname.startsWith(item.href);
+  };
 
   return (
     <aside className={containerClasses}>
-      <div className="flex h-20 lg:h-23 items-center justify-center border-b border-slate-200 px-4 relative">
+      <div className="flex h-20 lg:h-[84px] items-center justify-center border-b border-slate-200 px-4 relative shrink-0">
         <div
           className={`flex items-center ${effectiveCollapsed ? "justify-center" : "w-full justify-center"}`}
           aria-label="Pertamina Procurement logo"
@@ -113,64 +195,71 @@ export function SidebarNav({ onLogout }: SidebarNavProps = {}) {
 
       <nav
         className={cn(
-          "flex flex-1 flex-col gap-2 py-4 overflow-y-auto",
+          "flex flex-1 flex-col gap-4 py-4 overflow-y-auto",
           effectiveCollapsed ? "px-2 hide-scrollbar" : "px-3"
         )}
         aria-label="Sidebar navigation"
       >
-        {navItems.map((item) => {
-          const Icon = item.icon ?? LayoutDashboard;
-          const isActive = pathname?.startsWith(`/dashboard/${item.key}`);
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title} className="space-y-1">
+            {!effectiveCollapsed ? (
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                {group.title}
+              </div>
+            ) : (
+              <div className="mx-3 my-1 border-t border-slate-100 first:hidden" />
+            )}
 
-          return (
-            <div key={item.key}>
-              <Link
-                href={`/dashboard/${item.key}`}
-                className={navItemClasses(isActive || false)}
-                onClick={() => setMobileOpen(false)}
-                aria-expanded={item.children ? false : undefined}
-                aria-current={isActive ? "page" : undefined}
-                title={effectiveCollapsed ? item.label : undefined}
-              >
-                <Icon size={18} className="transition-colors shrink-0" />
-                {!effectiveCollapsed && (
-                  <span className="ml-2 transition-all duration-200 flex-1 flex items-center justify-between">
-                    {item.label}
-                    {item.key === "notifications" && unreadCount > 0 && (
-                      <span className="bg-[#0a4d8c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                    {item.key === "overview" && pendingActionsCount > 0 && (
-                      <span
-                        title={`${pendingActionsCount} tindakan menunggu`}
-                        className="bg-[#0a4d8c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                      >
-                        {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
-                      </span>
-                    )}
-                  </span>
-                )}
-                {effectiveCollapsed && item.key === "notifications" && unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full"></span>
-                )}
-                {effectiveCollapsed && item.key === "overview" && pendingActionsCount > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full"></span>
-                )}
-              </Link>
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = isNavItemActive(item);
+              const showUnread = item.id === "notifications" && unreadCount > 0;
+              const showPendingSla = item.id === "overview-sla" && pendingActionsCount > 0;
 
-              {!effectiveCollapsed && item.children && (
-                <div className="mt-1 flex flex-col gap-1 px-1">
-                  {item.children.map((child: any) => (
-                    <Link key={child.key} href={`/dashboard/${child.key}`} className={childItemClasses()} onClick={() => setMobileOpen(false)}>
-                      <span className="text-[13px]">{child.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={navItemClasses(isActive)}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    if (item.lens && typeof window !== "undefined") {
+                      setCurrentLens(item.lens);
+                      window.dispatchEvent(
+                        new CustomEvent("prima-lens-change", { detail: item.lens })
+                      );
+                    }
+                  }}
+                  aria-current={isActive ? "page" : undefined}
+                  title={effectiveCollapsed ? item.label : undefined}
+                >
+                  <Icon size={17} className="transition-colors shrink-0" />
+                  {!effectiveCollapsed && (
+                    <span className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                      <span className="truncate">{item.label}</span>
+                      {showUnread && (
+                        <span className="bg-[#0a4d8c] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                      {showPendingSla && (
+                        <span
+                          title={`${pendingActionsCount} tindakan menunggu`}
+                          className="bg-[#0a4d8c] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                        >
+                          {pendingActionsCount > 99 ? "99+" : pendingActionsCount}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {effectiveCollapsed && (showUnread || showPendingSla) && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-[#0a4d8c] rounded-full" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="mt-auto border-t border-slate-200 px-3 py-4">

@@ -78,23 +78,54 @@ export default function TrackerPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const reqIdParam = params.get("requestId");
-      if (reqIdParam) {
-        router.replace(`/dashboard/overview/${encodeURIComponent(reqIdParam)}`);
-        return;
-      }
-      const lensParam = params.get("lens");
-      if (
-        lensParam === "guarantees" ||
-        lensParam === "sla-actions" ||
-        lensParam === "analytics" ||
-        lensParam === "jobs"
-      ) {
-        setActiveLens(lensParam);
-      }
+      const syncFromUrl = () => {
+        const params = new URLSearchParams(window.location.search);
+        const reqIdParam = params.get("requestId");
+        if (reqIdParam) {
+          router.replace(`/dashboard/overview/${encodeURIComponent(reqIdParam)}`);
+          return;
+        }
+        const lensParam = params.get("lens");
+        if (
+          lensParam === "guarantees" ||
+          lensParam === "sla-actions" ||
+          lensParam === "analytics" ||
+          lensParam === "jobs"
+        ) {
+          setActiveLens(lensParam);
+        } else {
+          setActiveLens("jobs");
+        }
+      };
+
+      const handleLensEvent = (evt: Event) => {
+        const custom = evt as CustomEvent<WorkspaceLens>;
+        if (custom.detail) {
+          setActiveLens(custom.detail);
+        }
+      };
+
+      syncFromUrl();
+      window.addEventListener("prima-lens-change", handleLensEvent);
+      window.addEventListener("popstate", syncFromUrl);
+      return () => {
+        window.removeEventListener("prima-lens-change", handleLensEvent);
+        window.removeEventListener("popstate", syncFromUrl);
+      };
     }
   }, [router]);
+
+  const handleSelectLens = (lens: WorkspaceLens) => {
+    setActiveLens(lens);
+    if (typeof window !== "undefined") {
+      const nextUrl =
+        lens === "jobs"
+          ? "/dashboard/overview"
+          : `/dashboard/overview?lens=${encodeURIComponent(lens)}`;
+      window.history.replaceState(null, "", nextUrl);
+      window.dispatchEvent(new CustomEvent("prima-lens-change", { detail: lens }));
+    }
+  };
 
   const openRequestDetail = (requestId: string) => {
     router.push(`/dashboard/overview/${encodeURIComponent(requestId)}`);
@@ -239,182 +270,110 @@ export default function TrackerPage() {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* BLUE ACTION HEADER BANNER */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#0a4d8c] px-6 py-6 text-white shadow-xs sm:px-8">
-        <div className="relative z-10 max-w-3xl">
-          <h2 className="max-w-2xl text-xl font-semibold tracking-tight sm:text-2xl">
-            Kendalikan setiap tahapan dari satu ruang kerja!
-          </h2>
-          <p className="mt-2 max-w-2xl text-xs sm:text-sm font-normal leading-relaxed text-blue-100">
-            Daftarkan paket pekerjaan baru, unggah warkat jaminan bank, dan pantau pemenuhan tenggat waktu di setiap tahap pengadaan.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs sm:text-sm font-medium text-[#0a4d8c] shadow-xs transition hover:bg-blue-50 focus:outline-none"
-            >
-              <Plus size={15} /> Pekerjaan Baru
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/overview/guarantees/upload")}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-xs sm:text-sm font-medium text-white transition hover:bg-white/20 backdrop-blur-xs focus:outline-none"
-            >
-              <Upload size={15} /> Unggah Warkat Jaminan
-            </button>
-          </div>
-        </div>
-        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border-[32px] border-blue-300/15" />
-        <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full border-[24px] border-blue-300/10" />
-      </section>
-
-      {/* SINGLE UNIFIED NAVIGATION & SUMMARY BAR (4 Interactive Stat-Tabs) */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Tab 1: Daftar Pekerjaan */}
-        <button
-          type="button"
-          onClick={() => setActiveLens("jobs")}
-          className={`flex items-start justify-between rounded-xl border p-4 text-left transition-all focus:outline-none ${
-            activeLens === "jobs"
-              ? "border-[#0a4d8c] bg-white ring-2 ring-blue-100/80 shadow-xs"
-              : "border-slate-200 bg-white hover:border-slate-300"
-          }`}
-        >
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              Daftar Pekerjaan
-            </div>
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-2xl font-semibold text-slate-800">{requests.length}</span>
-              <span className="text-xs font-normal text-[#0a4d8c]">{onGoingCount} Berjalan</span>
-            </div>
-            <div className="mt-1 text-[11px] text-slate-400">
-              {onHoldCount} Ditunda · {cancelledCount} Batal
-            </div>
-          </div>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
+      {/* SLEEK UNIFIED MODULE TABS & PRIMARY ACTIONS BAR */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200 pb-0">
+        <div className="flex items-center gap-5 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => handleSelectLens("jobs")}
+            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
               activeLens === "jobs"
-                ? "bg-[#0a4d8c] text-white border-[#0a4d8c]"
-                : "bg-slate-50 text-slate-500 border-slate-200"
+                ? "border-[#0a4d8c] text-[#0a4d8c]"
+                : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
-            <Briefcase size={16} />
-          </div>
-        </button>
+            <Briefcase size={15} />
+            <span>Daftar Pekerjaan</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+              {requests.length}
+            </span>
+          </button>
 
-        {/* Tab 2: Warkat Jaminan */}
-        <button
-          type="button"
-          onClick={() => setActiveLens("guarantees")}
-          className={`flex items-start justify-between rounded-xl border p-4 text-left transition-all focus:outline-none ${
-            activeLens === "guarantees"
-              ? "border-[#0a4d8c] bg-white ring-2 ring-blue-100/80 shadow-xs"
-              : "border-slate-200 bg-white hover:border-slate-300"
-          }`}
-        >
-          <div className="min-w-0">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              Warkat Jaminan
-            </div>
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-2xl font-semibold text-slate-800">{guaranteesData.length}</span>
-              <span className="truncate text-xs font-normal text-slate-600">
-                {formatRupiah(totalGuaranteesValue)}
-              </span>
-            </div>
-            <div className="mt-1 text-[11px] text-slate-400">
-              {warningGuaranteesCount > 0 ? (
-                <span className="text-[#0a4d8c] font-normal">
-                  {warningGuaranteesCount} mendekati jatuh tempo
-                </span>
-              ) : (
-                <span>Seluruh warkat aktif</span>
-              )}
-            </div>
-          </div>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
+          <button
+            type="button"
+            onClick={() => handleSelectLens("guarantees")}
+            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
               activeLens === "guarantees"
-                ? "bg-[#0a4d8c] text-white border-[#0a4d8c]"
-                : "bg-slate-50 text-slate-500 border-slate-200"
+                ? "border-[#0a4d8c] text-[#0a4d8c]"
+                : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
-            <ShieldCheck size={16} />
-          </div>
-        </button>
+            <ShieldCheck size={15} />
+            <span>Warkat Jaminan</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+              {guaranteesData.length}
+            </span>
+            {warningGuaranteesCount > 0 && (
+              <span
+                title={`${warningGuaranteesCount} warkat mendekati jatuh tempo`}
+                className="rounded-full bg-[#e8f2fc] border border-[#0a4d8c]/20 px-1.5 py-0.5 text-[10px] font-medium text-[#0a4d8c]"
+              >
+                {warningGuaranteesCount}!
+              </span>
+            )}
+          </button>
 
-        {/* Tab 3: SLA & Tindak Lanjut */}
-        <button
-          type="button"
-          onClick={() => setActiveLens("sla-actions")}
-          className={`flex items-start justify-between rounded-xl border p-4 text-left transition-all focus:outline-none ${
-            activeLens === "sla-actions"
-              ? "border-[#0a4d8c] bg-white ring-2 ring-blue-100/80 shadow-xs"
-              : "border-slate-200 bg-white hover:border-slate-300"
-          }`}
-        >
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              SLA & Tindak Lanjut
-            </div>
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-2xl font-semibold text-slate-800">{pendingActionsCount}</span>
-              <span className="text-xs font-normal text-slate-600">Tindak Lanjut</span>
-            </div>
-            <div className="mt-1 text-[11px] text-slate-400">
-              {overdueOrRiskSlaCount > 0 ? (
-                <span className="text-[#0a4d8c] font-normal">
-                  {overdueOrRiskSlaCount} SLA perlu perhatian
-                </span>
-              ) : (
-                <span>{deadlines.length} jadwal SLA tercatat</span>
-              )}
-            </div>
-          </div>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
+          <button
+            type="button"
+            onClick={() => handleSelectLens("sla-actions")}
+            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
               activeLens === "sla-actions"
-                ? "bg-[#0a4d8c] text-white border-[#0a4d8c]"
-                : "bg-slate-50 text-slate-500 border-slate-200"
+                ? "border-[#0a4d8c] text-[#0a4d8c]"
+                : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
-            <Clock size={16} />
-          </div>
-        </button>
+            <Clock size={15} />
+            <span>SLA &amp; Tindak Lanjut</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+              {pendingActionsCount}
+            </span>
+            {overdueOrRiskSlaCount > 0 && (
+              <span
+                title={`${overdueOrRiskSlaCount} SLA perlu perhatian`}
+                className="rounded-full bg-[#e8f2fc] border border-[#0a4d8c]/20 px-1.5 py-0.5 text-[10px] font-medium text-[#0a4d8c]"
+              >
+                {overdueOrRiskSlaCount}!
+              </span>
+            )}
+          </button>
 
-        {/* Tab 4: Analitik & Evaluasi */}
-        <button
-          type="button"
-          onClick={() => setActiveLens("analytics")}
-          className={`flex items-start justify-between rounded-xl border p-4 text-left transition-all focus:outline-none ${
-            activeLens === "analytics"
-              ? "border-[#0a4d8c] bg-white ring-2 ring-blue-100/80 shadow-xs"
-              : "border-slate-200 bg-white hover:border-slate-300"
-          }`}
-        >
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              Analitik & Evaluasi
-            </div>
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-sm font-medium text-slate-800">Performa & Bottleneck</span>
-            </div>
-            <div className="mt-1.5 text-[11px] text-slate-400">
-              Ringkasan durasi tahapan & SLA
-            </div>
-          </div>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
+          <button
+            type="button"
+            onClick={() => handleSelectLens("analytics")}
+            className={`inline-flex items-center gap-2 border-b-2 pb-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors focus:outline-none ${
               activeLens === "analytics"
-                ? "bg-[#0a4d8c] text-white border-[#0a4d8c]"
-                : "bg-slate-50 text-slate-500 border-slate-200"
+                ? "border-[#0a4d8c] text-[#0a4d8c]"
+                : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
-            <BarChart3 size={16} />
-          </div>
-        </button>
+            <BarChart3 size={15} />
+            <span>Analitik &amp; Performa</span>
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 pb-2.5 shrink-0">
+          {activeLens === "guarantees" && totalGuaranteesValue > 0 && (
+            <span className="hidden xl:inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600">
+              Total Warkat: {formatRupiah(totalGuaranteesValue)}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/overview/guarantees/upload")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c] focus:outline-none"
+          >
+            <Upload size={14} className="text-[#0a4d8c]" />
+            <span>Unggah Warkat Jaminan</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
+          >
+            <Plus size={14} />
+            <span>Pekerjaan Baru</span>
+          </button>
+        </div>
       </div>
 
       {/* VIEW 1: DAFTAR PEKERJAAN (FULL-WIDTH TABLE OR CLEAN KANBAN) */}

@@ -385,58 +385,48 @@ export default function ValidationTemplatesPage() {
     createStageMutation.isPending || updateStageMutation.isPending;
 
   return (
-    <div className="flex flex-col gap-5 pb-12">
-      {/* Top Breadcrumb */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 pb-12">
+      {/* 1. Compact Top Toolbar (no redundant hero banner) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => router.push("/dashboard/documents")}
-          className="inline-flex w-fit items-center gap-2 text-xs font-medium text-slate-500 transition-colors hover:text-[#0a4d8c] focus:outline-none"
+          className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-[#0a4d8c] focus:outline-none"
         >
-          <ArrowLeft size={15} />
+          <ArrowLeft size={14} />
           Kembali ke Pemeriksaan Dokumen
         </button>
-      </div>
 
-      {/* 1. Blue Action Header Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#0a4d8c] px-6 py-6 text-white shadow-xs sm:px-8">
-        <div className="relative z-10 max-w-3xl">
-          <h2 className="max-w-2xl text-xl font-semibold tracking-tight sm:text-2xl">
-            Kelola Template Kriteria & Tahapan Pekerjaan
-          </h2>
-          <p className="mt-2 max-w-2xl text-xs sm:text-sm font-normal leading-relaxed text-blue-100">
-            Atur standar kriteria checklist berbobot (termasuk unggah file kriteria otomatis) serta kelola urutan master tahapan pengadaan untuk seluruh metode.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            {activeTab === "templates" ? (
-              <button
-                type="button"
-                onClick={handleOpenCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs sm:text-sm font-medium text-[#0a4d8c] shadow-xs transition hover:bg-blue-50 focus:outline-none"
-              >
-                <Plus size={15} /> Buat Template Standar Baru
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleOpenCreateStage}
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs sm:text-sm font-medium text-[#0a4d8c] shadow-xs transition hover:bg-blue-50 focus:outline-none"
-              >
-                <Plus size={15} /> Tambah Tahapan Pekerjaan
-              </button>
-            )}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/documents/upload")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 transition hover:border-[#0a4d8c] hover:text-[#0a4d8c] focus:outline-none"
+          >
+            <Sparkles size={14} className="text-[#0a4d8c]" />
+            <span>Uji Validasi Dokumen</span>
+          </button>
+          {activeTab === "templates" ? (
             <button
               type="button"
-              onClick={() => router.push("/dashboard/documents/upload")}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-xs sm:text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none"
+              onClick={handleOpenCreate}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
             >
-              <Sparkles size={15} /> Uji Validasi Dokumen
+              <Plus size={14} />
+              <span>Buat Template Standar</span>
             </button>
-          </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleOpenCreateStage}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-medium text-white shadow-2xs transition hover:bg-[#083b6c] focus:outline-none"
+            >
+              <Plus size={14} />
+              <span>Tambah Tahapan Pekerjaan</span>
+            </button>
+          )}
         </div>
-        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border-[32px] border-blue-300/15" />
-        <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full border-[24px] border-blue-300/10" />
-      </section>
+      </div>
 
       {/* 2. Tabs Switcher: Template Kriteria vs Kelola Tahapan Pekerjaan */}
       <div className="border-b border-slate-200 flex items-center gap-6 px-1">
@@ -536,36 +526,43 @@ export default function ValidationTemplatesPage() {
                 return (
                   <div
                     key={profile.id}
-                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 transition-all"
+                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs flex flex-col justify-between gap-4 hover:border-slate-300 transition-all"
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 min-w-0">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f2fc] text-[#0a4d8c]">
-                            <BookOpen size={16} />
+                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f2fc] text-[#0a4d8c]">
+                            <BookOpen size={15} />
                           </div>
                           <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-sm font-semibold text-slate-900">
-                                {profile.name}
-                              </h3>
-                              {profile.is_default && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-normal text-[#0a4d8c]">
-                                  <ShieldCheck size={10} />
-                                  Standar Utama
-                                </span>
+                            <h3 className="text-sm font-semibold text-slate-900 line-clamp-1">
+                              {profile.name}
+                            </h3>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-normal text-slate-500">
+                              <span>{profile.document_kind}</span>
+                              <span>·</span>
+                              <span>{profile.scope}</span>
+                              {profile.target_stage_to_clear && (
+                                <>
+                                  <span>·</span>
+                                  <span className="text-[#0a4d8c] inline-flex items-center gap-1">
+                                    <Sparkles size={10} />
+                                    {profile.target_stage_to_clear}
+                                  </span>
+                                </>
                               )}
-                            </div>
-                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] font-normal text-slate-500">
-                              <span>Jenis: {profile.document_kind}</span>
-                              <span>•</span>
-                              <span>Cakupan: {profile.scope}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="shrink-0 text-right">
-                          <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-[#0a4d8c]">
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {profile.is_default && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-medium text-[#0a4d8c]">
+                              <ShieldCheck size={10} />
+                              Default
+                            </span>
+                          )}
+                          <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700">
                             Lulus &ge; {profile.passing_score_threshold}%
                           </span>
                         </div>
@@ -577,17 +574,9 @@ export default function ValidationTemplatesPage() {
                         </p>
                       )}
 
-                      <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3 space-y-2">
-                        <div className="flex items-center justify-between text-[11px] text-slate-500">
-                          <span className="font-medium text-slate-700">
-                            {ruleCount} Kriteria Berbobot ({mandatoryCount} Wajib)
-                          </span>
-                          {profile.target_stage_to_clear && (
-                            <span className="text-[#0a4d8c] flex items-center gap-1">
-                              <Sparkles size={11} />
-                              Auto-clear: {profile.target_stage_to_clear}
-                            </span>
-                          )}
+                      <div className="border-t border-slate-100 pt-2.5 space-y-1.5">
+                        <div className="text-[11px] font-medium text-slate-500">
+                          {ruleCount} Kriteria Berbobot ({mandatoryCount} Wajib)
                         </div>
                         <ul className="space-y-1 text-xs font-normal text-slate-600">
                           {(profile.checklist_rules || [])
@@ -597,18 +586,18 @@ export default function ValidationTemplatesPage() {
                                 key={idx}
                                 className="flex items-center justify-between gap-2"
                               >
-                                <div className="flex items-start gap-2 min-w-0">
-                                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#0a4d8c] shrink-0" />
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#0a4d8c]/70 shrink-0" />
                                   <span className="truncate">{rule.item}</span>
                                 </div>
-                                <span className="shrink-0 text-[10px] font-medium text-[#0a4d8c] bg-white border border-slate-200 rounded px-1.5 py-0.5">
+                                <span className="shrink-0 text-[11px] font-medium text-slate-500">
                                   {rule.weight ?? 0}%
                                 </span>
                               </li>
                             ))}
                           {ruleCount > 3 && (
                             <li className="text-[11px] text-slate-400 pl-3.5">
-                              +{ruleCount - 3} kriteria lainnya...
+                              +{ruleCount - 3} kriteria lainnya
                             </li>
                           )}
                         </ul>
@@ -839,19 +828,19 @@ export default function ValidationTemplatesPage() {
         </div>
       )}
 
-      {/* Modal Create / Edit Template */}
+      {/* Modal Create / Edit Template (Spacious 4xl workspace, single smooth scroll) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 backdrop-blur-[1px] p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-sm font-semibold text-slate-800">
+                <h3 className="text-sm font-semibold text-slate-900">
                   {editingProfile
                     ? "Edit Template Standar Kelayakan"
                     : "Buat Template Standar Kelayakan Baru"}
                 </h3>
                 <p className="text-xs font-normal text-slate-500 mt-0.5">
-                  Konfigurasi aturan checklist berbobot, unggah file kriteria otomatis, dan parameter AI
+                  Atur informasi dasar template dan daftar kriteria checklist berbobot
                 </p>
               </div>
               <button
@@ -863,9 +852,10 @@ export default function ValidationTemplatesPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Section 1: Basic Metadata */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 lg:col-span-2">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
                     Nama Template Standar
                   </label>
@@ -887,7 +877,7 @@ export default function ValidationTemplatesPage() {
                     value={formKind}
                     onChange={setFormKind}
                     allowCustomValue
-                    searchPlaceholder="Cari atau ketik jenis dokumen..."
+                    searchPlaceholder="Cari jenis dokumen..."
                     options={DOCUMENT_KIND_OPTIONS.map((k) => ({
                       value: k,
                       label: k,
@@ -908,22 +898,9 @@ export default function ValidationTemplatesPage() {
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Deskripsi & Acuan Pedoman
-                  </label>
-                  <input
-                    type="text"
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    placeholder="Deskripsi singkat kegunaan standar validasi ini..."
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
-                  />
-                </div>
-
                 <div>
                   <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                    Tahap Pekerjaan yang Di-Auto-Clear (Opsional)
+                    Auto-Clear Tahap (Opsional)
                   </label>
                   <SearchableSelect
                     size="sm"
@@ -931,12 +908,25 @@ export default function ValidationTemplatesPage() {
                     onChange={setFormTargetStage}
                     allowClear
                     allowCustomValue
-                    searchPlaceholder="Cari tahapan pekerjaan..."
+                    searchPlaceholder="Cari tahapan..."
                     options={uniqueStageOptions}
                   />
                 </div>
 
-                <div className="flex flex-col justify-end gap-2">
+                <div>
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                    Deskripsi Singkat (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    placeholder="Acuan kegunaan template..."
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 focus:border-[#0a4d8c] focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-6 pt-1">
                   <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
                     <input
                       type="checkbox"
@@ -953,16 +943,16 @@ export default function ValidationTemplatesPage() {
                       onChange={(e) => setFormIsDefault(e.target.checked)}
                       className="rounded border-slate-300 accent-[#0a4d8c]"
                     />
-                    <span>Jadikan sebagai standar utama (Default)</span>
+                    <span>Jadikan standar utama (Default)</span>
                   </label>
                 </div>
               </div>
 
-              {/* Checklist Rules Editor (with File Criteria Upload + Percentage Weights) */}
-              <div className="rounded-xl border border-slate-200 p-4 bg-white space-y-3">
-                <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-[#0a4d8c]">
+              {/* Section 2: Flattened Checklist Rules Editor */}
+              <div className="border-t border-slate-200 pt-5 space-y-3">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#0a4d8c]">
                   <Sliders size={13} />
-                  <span>Daftar Kriteria Checklist Berbobot & Ambang Skor</span>
+                  <span>Kriteria Checklist Berbobot &amp; Ambang Skor</span>
                 </div>
                 <ChecklistEditor
                   items={formRules}
@@ -983,10 +973,10 @@ export default function ValidationTemplatesPage() {
                 />
               </div>
 
-              {/* Custom System Prompt */}
-              <div>
-                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1">
-                  Instruksi Sistem AI (Prompt Pedoman Pemeriksaan)
+              {/* Section 3: AI System Prompt */}
+              <div className="border-t border-slate-200 pt-5">
+                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                  Instruksi Sistem AI (Opsional)
                 </label>
                 <textarea
                   value={formSystemPrompt}
@@ -998,7 +988,7 @@ export default function ValidationTemplatesPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}

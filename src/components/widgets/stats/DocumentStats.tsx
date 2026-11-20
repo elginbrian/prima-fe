@@ -56,7 +56,7 @@ export function DocumentStats({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
       {cards.map((card) => {
         const Icon = card.icon;
         const isActive = activeFilter === card.id;
@@ -65,44 +65,40 @@ export function DocumentStats({
             key={card.id}
             type="button"
             onClick={() => onSelectFilter?.(card.id)}
-            className={`group relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all focus:outline-none ${
+            title={`Filter: ${card.label} — ${card.subtext}`}
+            className={`group flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all focus:outline-none ${
               isActive
-                ? "border-[#0a4d8c] bg-[#f4f8fd] shadow-xs"
+                ? "border-[#0a4d8c] bg-[#f4f8fd] shadow-2xs"
                 : "border-slate-200 bg-white hover:border-[#0a4d8c]/40 hover:bg-slate-50/40"
             }`}
           >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div
-                  className={`text-[11px] font-medium uppercase tracking-wider ${
-                    isActive ? "text-[#0a4d8c]" : "text-slate-500"
-                  }`}
-                >
-                  {card.label}
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-2">
-                  <span className="text-2xl font-semibold text-slate-900">
-                    {card.value}
-                  </span>
-                  {card.pct !== undefined && (
-                    <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-600">
-                      {card.pct.toFixed(0)}%
-                    </span>
-                  )}
-                </div>
-              </div>
+            <div className="min-w-0">
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-[#0a4d8c] text-white"
-                    : "bg-slate-100 text-slate-500 group-hover:bg-[#e8f2fc] group-hover:text-[#0a4d8c]"
+                className={`text-[10px] font-medium uppercase tracking-wider truncate ${
+                  isActive ? "text-[#0a4d8c]" : "text-slate-500"
                 }`}
               >
-                <Icon size={17} />
+                {card.label}
+              </div>
+              <div className="mt-0.5 flex items-baseline gap-2">
+                <span className="text-xl font-semibold text-slate-900">
+                  {card.value}
+                </span>
+                {card.pct !== undefined && (
+                  <span className="rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-normal text-slate-600 leading-none">
+                    {card.pct.toFixed(0)}%
+                  </span>
+                )}
               </div>
             </div>
-            <div className="mt-2 border-t border-slate-100 pt-2 text-[11px] font-normal text-slate-500">
-              {card.subtext}
+            <div
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                isActive
+                  ? "bg-[#0a4d8c] text-white"
+                  : "bg-slate-100 text-slate-500 group-hover:bg-[#e8f2fc] group-hover:text-[#0a4d8c]"
+              }`}
+            >
+              <Icon size={15} />
             </div>
           </button>
         );
