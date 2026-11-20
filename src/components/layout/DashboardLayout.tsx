@@ -6,6 +6,7 @@ import { ProcurementProvider } from "@/context/ProcurementContext";
 import { AiJobsProvider } from "@/context/AiJobsContext";
 import { SidebarNav } from "@/components/navigation/SidebarNav";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { GlobalAiChatSidebar } from "@/components/layout/GlobalAiChatSidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCurrentUser, useLogout } from "@/lib/query/hooks/auth/useCurrentUser";
@@ -19,10 +20,25 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
+  const [aiSidebarOpen, setAiSidebarOpen] = useState(false);
   
   useEffect(() => { 
     setMounted(true); 
   }, []);
+
+  // Keyboard shortcut Ctrl+J to toggle the Global AI Chat Sidebar outside /dashboard/onboarding
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+        if (!(pathname || "").startsWith("/dashboard/onboarding")) {
+          e.preventDefault();
+          setAiSidebarOpen((prev) => !prev);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [pathname]);
 
   useEffect(() => {
     if (mounted && !isLoading && !currentUser) {
@@ -109,6 +125,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   };
 
   const isOnboarding = (pathname || "").startsWith("/dashboard/onboarding");
+  const isOnboardingChat = (pathname || "").startsWith("/dashboard/onboarding/chat");
   const header = getHeaderInfo(pathname || "");
 
   return (
@@ -125,20 +142,25 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <SidebarNav onLogout={logout} />
 
       <div className="relative flex min-w-0 flex-1 flex-col transition-all duration-300">
-        <div>
-          <DashboardHeader
-            title={header.title}
-            subtitle={header.subtitle}
-            userLabel={userLabel}
-            userName={currentUser?.name ?? "—"}
-            userRole={currentUser?.role ?? "—"}
-            userAvatarUrl={currentUser?.avatar_url}
-            onOpenSidebar={() => setMobileOpen(true)}
-            onCloseSidebar={() => setMobileOpen(false)}
-            onLogout={logout}
-            transparent={isOnboarding}
-          />
-        </div>
+        {!isOnboardingChat && (
+          <div>
+            <DashboardHeader
+              title={header.title}
+              subtitle={header.subtitle}
+              userLabel={userLabel}
+              userName={currentUser?.name ?? "—"}
+              userRole={currentUser?.role ?? "—"}
+              userAvatarUrl={currentUser?.avatar_url}
+              onOpenSidebar={() => setMobileOpen(true)}
+              onCloseSidebar={() => setMobileOpen(false)}
+              onLogout={logout}
+              transparent={isOnboarding}
+              showAiAssistantToggle={!isOnboarding}
+              isAiAssistantOpen={aiSidebarOpen}
+              onToggleAiAssistant={() => setAiSidebarOpen((prev) => !prev)}
+            />
+          </div>
+        )}
 
         <main
           className={cn(
@@ -153,6 +175,13 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
+
+      {!isOnboarding && (
+        <GlobalAiChatSidebar
+          isOpen={aiSidebarOpen}
+          onClose={() => setAiSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 }
