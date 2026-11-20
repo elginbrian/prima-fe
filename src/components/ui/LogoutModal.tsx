@@ -71,7 +71,7 @@ export function LogoutModal({ isOpen, onCancel, onConfirm }: LogoutModalProps) {
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-red-200 transition hover:bg-red-700 active:scale-[0.97]"
+            className="flex-1 rounded-xl bg-[#0a4d8c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#083b6c] active:scale-[0.97]"
           >
             Ya, Keluar
           </button>

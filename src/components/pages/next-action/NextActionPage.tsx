@@ -88,16 +88,16 @@ export default function NextActionPage() {
 
       {/* Managerial Escalation Alert Banner */}
       {escalatedCount > 0 && (
-        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/90 p-4 text-xs shadow-sm">
+        <div className="flex items-center justify-between rounded-xl border border-red-200 bg-red-50/90 p-4 text-xs shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-700">
               <ShieldAlert size={20} />
             </div>
             <div>
-              <p className="font-semibold text-rose-900">
+              <p className="font-semibold text-red-900">
                 Perhatian: Terdapat {escalatedCount} Tindak Lanjut dalam Status Eskalasi Manajerial
               </p>
-              <p className="text-rose-700">
+              <p className="text-red-700">
                 Batas toleransi SLA terlampaui. Tugas-tugas ini memerlukan persetujuan arahan dan pengisian Rencana Mitigasi & Percepatan SLA.
               </p>
             </div>
@@ -105,7 +105,7 @@ export default function NextActionPage() {
           <button
             type="button"
             onClick={() => setPriorityFilter(priorityFilter === "High" ? "All" : "High")}
-            className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 font-medium text-white shadow hover:bg-rose-700 transition-colors"
+            className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 font-medium text-white shadow hover:bg-red-700 transition-colors"
           >
             {priorityFilter === "High" ? "Tampilkan Semua" : "Filter Eskalasi Prioritas"}
           </button>

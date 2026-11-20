@@ -29,11 +29,11 @@ export function ManagerOverrideModal({
         onClick={onCancel}
       >
       <div
-        className="w-full max-w-lg rounded-2xl border border-rose-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg rounded-2xl border border-red-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-rose-100 p-2.5 text-rose-600">
+          <div className="rounded-xl bg-red-100 p-2.5 text-red-600">
             <ShieldAlert size={24} />
           </div>
           <div className="min-w-0 flex-1">
@@ -48,13 +48,13 @@ export function ManagerOverrideModal({
         </div>
 
         {gatekeeperData?.blockers && gatekeeperData.blockers.length > 0 && (
-          <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50/60 p-3.5 space-y-2 max-h-48 overflow-y-auto">
-            <div className="text-[11px] font-bold text-rose-800 uppercase tracking-wider">
+          <div className="mt-4 rounded-xl border border-red-100 bg-red-50/60 p-3.5 space-y-2 max-h-48 overflow-y-auto">
+            <div className="text-[11px] font-bold text-red-800 uppercase tracking-wider">
               Kendala Aktif:
             </div>
             {gatekeeperData.blockers.map((b, i) => (
               <div key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
-                <span className="text-rose-500 font-bold">•</span>
+                <span className="text-red-600 font-bold">•</span>
                 <span>
                   <strong>{b.title}</strong>: {b.description}
                 </span>
@@ -65,7 +65,7 @@ export function ManagerOverrideModal({
 
         <div className="mt-4">
           <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-            Alasan Otorisasi / Override <span className="text-rose-500">*</span>
+            Alasan Otorisasi / Override <span className="text-[#0a4d8c]">*</span>
           </label>
           <textarea
             rows={3}
@@ -88,7 +88,7 @@ export function ManagerOverrideModal({
             type="button"
             disabled={isOverriding || !overrideReason.trim()}
             onClick={onConfirm}
-            className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
           >
             {isOverriding && <Spinner size="xs" color="white" />}
             <span>{isOverriding ? "Menyimpan..." : "Konfirmasi Override & Lanjutkan"}</span>

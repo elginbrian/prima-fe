@@ -272,7 +272,7 @@ export function DocumentPreviewModal({
               </div>
             ) : error ? (
               <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">
-                <AlertCircle size={36} className="mx-auto mb-3 text-amber-500" />
+                <AlertCircle size={36} className="mx-auto mb-3 text-[#0a4d8c]" />
                 <h3 className="text-base font-bold text-slate-800">Tidak Dapat Menampilkan Pratinjau</h3>
                 <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                   {error || "Dokumen belum memiliki berkas terunggah di cloud storage."}

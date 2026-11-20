@@ -26,40 +26,40 @@
 
     --grey-text: #6a7282;
 
-    --golden-background: #fef9c2;
+    --golden-background: #f1f5f9;
     --silver-background: #f3f4f6;
-    --bronze-background: #ffedd4;
+    --bronze-background: #eff6ff;
     --runner-background: #eff6ff;
-    --golden-foreground: #a65f00;
+    --golden-foreground: #0a4d8c;
     --silver-foreground: #364153;
-    --bronze-foreground: #ca3500;
+    --bronze-foreground: #475569;
     --runner-foreground: #1447e6;
 
     --secondary-text: #4a5565;
 
     --grey-text: #6a7282;
 
-    --category-asn: #8b5cf6;
-    --category-bumn: #10b981;
-    --category-polri: #6366f1;
+    --category-asn: #0a4d8c;
+    --category-bumn: #64748b;
+    --category-polri: #1d4ed8;
     --category-tni: #3b82f6;
-    --category-prapurna: #217B5E;
-    --category-pensiunan: #1B50CC;
-    --category-lainnya: #0049EA;
+    --category-prapurna: #475569;
+    --category-pensiunan: #0a4d8c;
+    --category-lainnya: #64748b;
     --blue-light: #e7edf4;
 
-    --success: #00a63e;
-    --warning: #d08700;
+    --success: #0a4d8c;
+    --warning: #64748b;
     --info: #155dfc;
-    --alert: #e7000b;
-    --notice: #f47025;
+    --alert: #dc2626;
+    --notice: #0a4d8c;
 
-    --bg-success: #f0fdf4;
-    --bg-warning: #fefce8;
+    --bg-success: #eff6ff;
+    --bg-warning: #f1f5f9;
     --bg-info: #eff6ff;
     --bg-alert: #fef2f2;
-    --bg-notice: #fff7ed;
-    --bg-approve: #b9f8cf;
+    --bg-notice: #f1f5f9;
+    --bg-approve: #dbeafe;
     --bg-reject: #ffe2e2;
 
     --sidebar-background: #ffffff;
@@ -98,30 +98,30 @@
 
     --grey-text: #6a7282;
 
-    --golden-background: #fef9c2;
+    --golden-background: #f1f5f9;
     --silver-background: #f3f4f6;
-    --bronze-background: #ffedd4;
+    --bronze-background: #eff6ff;
     --runner-background: #eff6ff;
-    --golden-foreground: #a65f00;
+    --golden-foreground: #0a4d8c;
     --silver-foreground: #364153;
-    --bronze-foreground: #ca3500;
+    --bronze-foreground: #475569;
     --runner-foreground: #1447e6;
 
-    --category-asn: #8b5cf6;
-    --category-bumn: #10b981;
-    --category-polri: #6366f1;
+    --category-asn: #3b82f6;
+    --category-bumn: #94a3b8;
+    --category-polri: #1d4ed8;
     --category-tni: #3b82f6;
-    --category-prapurna: #217B5E;
-    --category-pensiunan: #1B50CC;
-    --category-lainnya: #0049EA;
+    --category-prapurna: #475569;
+    --category-pensiunan: #0a4d8c;
+    --category-lainnya: #64748b;
     --blue-light: #e7edf4;
 
-    --success: #22c55e;
-    --warning: #eab308;
+    --success: #3b82f6;
+    --warning: #94a3b8;
     --info: #3b82f6;
     --alert: #ef4444;
-    --notice: #fb923c;
-    --text-success: #008236;
+    --notice: #60a5fa;
+    --text-success: #0a4d8c;
     --text-rejected: #c10007;
 
     --sidebar-background: #1a1a1a;

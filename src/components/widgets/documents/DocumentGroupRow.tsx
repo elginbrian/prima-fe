@@ -7,9 +7,9 @@ import { DocumentPreviewModal } from "../modals/DocumentPreviewModal";
 import { formatDateIndo } from "@/lib/utils";
 
 function statusClass(status: DocumentItem["status"]) {
-  if (status === "Lulus Verifikasi") return "bg-blue-50 text-[#0a4d8c] border-blue-200";
+  if (status === "Lulus Verifikasi") return "bg-slate-100 text-slate-700 border-slate-200";
   if (status === "Tindak Lanjut FPP") return "bg-red-50 text-red-700 border-red-200";
-  return "bg-amber-50 text-amber-700 border-amber-200";
+  return "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/20";
 }
 
 export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) {
@@ -46,7 +46,7 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
                     request.operationalStatus === "On Going"
                       ? "border-blue-200 bg-blue-50 text-[#0a4d8c]"
                       : request.operationalStatus === "On Hold"
-                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      ? "border-slate-200 bg-slate-100 text-slate-700"
                       : "border-red-200 bg-red-50 text-red-700"
                   }`}
                 >
@@ -63,11 +63,11 @@ export function DocumentGroupRow({ request, documents }: DocumentGroupRowProps) 
         <td className="px-4 py-4 text-sm text-slate-600">{request.pic.name}</td>
         <td className="px-4 py-4">
           <div className="flex flex-wrap gap-1.5">
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[#0a4d8c]">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
               {readyCount} lulus
             </span>
             {attentionCount > 0 && (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+              <span className="rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2 py-0.5 text-[11px] font-semibold text-[#0a4d8c]">
                 {attentionCount} perlu review
               </span>
             )}

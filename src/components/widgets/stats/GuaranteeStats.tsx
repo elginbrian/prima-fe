@@ -11,7 +11,7 @@ export function GuaranteeStats({ totalCount, aktifCount, mendekatiCount, expired
           <div className="text-[11px] text-slate-400 mt-1 font-medium">Tercatat dalam sistem</div>
         </div>
         <div className="w-14 h-14 rounded-full relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.06)]" style={{
-          background: `conic-gradient(#10b981 0% ${aktifPct}%, #0a4d8c ${aktifPct}% ${aktifPct + mendekatiPct}%, #ef4444 ${aktifPct + mendekatiPct}% 100%)`
+          background: `conic-gradient(#0a4d8c 0% ${aktifPct}%, #94a3b8 ${aktifPct}% ${aktifPct + mendekatiPct}%, #ef4444 ${aktifPct + mendekatiPct}% 100%)`
         }}>
           <div className="absolute inset-2 bg-white rounded-full"></div>
         </div>
@@ -39,12 +39,12 @@ export function GuaranteeStats({ totalCount, aktifCount, mendekatiCount, expired
         <div className="flex justify-between items-start">
           <div>
             <div className="text-[13px] font-medium text-slate-500 mb-1 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
               Mendekati Jatuh Tempo
             </div>
             <div className="text-2xl font-bold text-slate-800 mt-2">{mendekatiCount}</div>
           </div>
-          <div className="bg-amber-50 text-amber-700 text-xs font-medium px-2.5 py-0.5 rounded-full border border-amber-100">
+          <div className="bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-0.5 rounded-full border border-slate-200">
             {mendekatiPct.toFixed(0)}%
           </div>
         </div>

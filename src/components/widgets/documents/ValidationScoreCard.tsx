@@ -133,8 +133,8 @@ export function ValidationScoreCard({
       </div>
 
       {aiFallbackNotice && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-xs text-amber-900">
-          <Info size={14} className="mt-0.5 shrink-0 text-amber-700" />
+        <div className="flex items-start gap-2 rounded-lg border border-[#0a4d8c]/25 bg-[#f4f8fd] px-3.5 py-2.5 text-xs text-[#0a4d8c]">
+          <Info size={14} className="mt-0.5 shrink-0 text-[#0a4d8c]" />
           <span className="leading-relaxed">{aiFallbackNotice}</span>
         </div>
       )}

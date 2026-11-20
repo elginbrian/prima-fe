@@ -41,7 +41,7 @@ export function JobActionsPanel({ requestId, compact = false }: JobActionsPanelP
             Hal yang perlu diselesaikan terkait dokumen, masa berlaku jaminan, atau target waktu tahapan.
           </p>
         </div>
-        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 border border-amber-200">
+        <span className="rounded-full bg-[#e8f2fc] px-2.5 py-1 text-[11px] font-bold text-[#0a4d8c] border border-[#0a4d8c]/20">
           {jobActions.length} perlu tindak lanjut
         </span>
       </div>

@@ -607,7 +607,7 @@ export function AddRequestModal({
             <div className="grid grid-cols-2 gap-6 mb-2">
               <div className="col-span-2">
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Judul Pengadaan <span className="text-red-500">*</span>
+                  Judul Pengadaan <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <input
                   required
@@ -619,7 +619,7 @@ export function AddRequestModal({
 
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Nomor FPP <span className="text-red-500">*</span>
+                  Nomor FPP <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <input
                   required
@@ -631,7 +631,7 @@ export function AddRequestModal({
 
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  PIC Procurement <span className="text-red-500">*</span>
+                  PIC Procurement <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <SearchableSelect
                   value={selectedPicId}
@@ -644,7 +644,7 @@ export function AddRequestModal({
 
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Nilai Pengadaan <span className="text-red-500">*</span>
+                  Nilai Pengadaan <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <input
                   required
@@ -656,7 +656,7 @@ export function AddRequestModal({
 
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Fungsi / Departemen <span className="text-red-500">*</span>
+                  Fungsi / Departemen <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <SearchableSelect
                   value={selectedDepartmentId}
@@ -671,7 +671,7 @@ export function AddRequestModal({
 
               <div className="col-span-2 sm:col-span-1">
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Metode Pengadaan <span className="text-red-500">*</span>
+                  Metode Pengadaan <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <SearchableSelect
                   value={selectedMethod}
@@ -683,7 +683,7 @@ export function AddRequestModal({
 
               <div className="col-span-2 sm:col-span-1">
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Tingkat Prioritas <span className="text-red-500">*</span>
+                  Tingkat Prioritas <span className="text-[#0a4d8c]">*</span>
                 </label>
                 <SearchableSelect
                   value={selectedPriority}

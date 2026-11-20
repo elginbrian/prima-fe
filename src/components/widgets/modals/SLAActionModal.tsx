@@ -18,16 +18,16 @@ interface SLAActionModalProps {
 }
 
 const STATUS_MAP = {
-  "On Track": { label: "On Track", color: "bg-blue-50 text-[#0a4d8c] border-blue-200", icon: <CheckCircle2 size={14} /> },
-  "At Risk": { label: "At Risk", color: "bg-amber-50 text-amber-700 border-amber-200", icon: <AlertTriangle size={14} /> },
+  "On Track": { label: "On Track", color: "bg-slate-100 text-slate-700 border-slate-200", icon: <CheckCircle2 size={14} /> },
+  "At Risk": { label: "At Risk", color: "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/20", icon: <AlertTriangle size={14} /> },
   "Overdue": { label: "Overdue", color: "bg-red-50 text-red-700 border-red-200", icon: <AlertTriangle size={14} /> },
   "Selesai": { label: "Selesai", color: "bg-slate-100 text-slate-700 border-slate-200", icon: <CheckCircle2 size={14} /> },
 };
 
 const URGENCY_MAP = {
   "Critical": "bg-red-100 text-red-800 border-red-300",
-  "High": "bg-orange-50 text-orange-700 border-orange-200",
-  "Medium": "bg-amber-50 text-amber-700 border-amber-200",
+  "High": "bg-red-50 text-red-700 border-red-200",
+  "Medium": "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/20",
   "Low": "bg-slate-50 text-slate-600 border-slate-200",
 };
 
@@ -116,10 +116,10 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`flex items-start justify-between px-6 py-5 gap-4 border-b border-slate-100 ${deadline.status === "Overdue" ? "bg-red-50" : deadline.status === "At Risk" ? "bg-amber-50" : "bg-white"}`}>
+        <div className={`flex items-start justify-between px-6 py-5 gap-4 border-b border-slate-100 ${deadline.status === "Overdue" ? "bg-red-50" : deadline.status === "At Risk" ? "bg-[#f4f8fd]" : "bg-white"}`}>
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Clock size={15} className={deadline.status === "Overdue" ? "text-red-500" : deadline.status === "At Risk" ? "text-amber-600" : "text-slate-400"} />
+              <Clock size={15} className={deadline.status === "Overdue" ? "text-red-500" : deadline.status === "At Risk" ? "text-[#0a4d8c]" : "text-slate-400"} />
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">SLA / Deadline Pekerjaan</span>
             </div>
             <h2 className="text-base font-bold text-slate-800 truncate">{deadline.taskName}</h2>
@@ -148,7 +148,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               {deadline.urgencyLevel}
             </span>
             {deadline.isEscalated && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border bg-rose-100 text-rose-800 border-rose-300">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border bg-red-100 text-red-800 border-red-300">
                 <ShieldAlert size={13} /> DIESKALASI KE MANAJER
               </span>
             )}
@@ -188,12 +188,12 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
 
           {/* Managerial Escalation & Recovery Plan Section */}
           {deadline.isEscalated && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 space-y-3">
+            <div className="rounded-xl border border-red-200 bg-red-50/70 p-4 space-y-3">
               <div className="flex items-start gap-2">
-                <ShieldAlert size={18} className="text-rose-600 shrink-0 mt-0.5" />
+                <ShieldAlert size={18} className="text-red-600 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <div className="font-bold text-rose-900">Eskalasi Manajerial Aktif</div>
-                  <div className="text-rose-700">
+                  <div className="font-bold text-red-900">Eskalasi Manajerial Aktif</div>
+                  <div className="text-red-700">
                     Dialihkan ke <span className="font-semibold">{deadline.escalatedTo || "Manager Pengadaan"}</span>
                     {deadline.escalatedAt && ` pada ${formatDateIndo(deadline.escalatedAt)}`}.
                   </div>
@@ -201,8 +201,8 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               </div>
 
               {/* Action Recovery Plan Form */}
-              <div className="mt-2 space-y-2 border-t border-rose-200/80 pt-3">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-rose-800">
+              <div className="mt-2 space-y-2 border-t border-red-200/80 pt-3">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-red-800">
                   Rencana Mitigasi & Percepatan SLA
                 </span>
                 <textarea
@@ -210,20 +210,20 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                   onChange={(e) => setRecoveryPlanText(e.target.value)}
                   placeholder="Jelaskan langkah mitigasi, penambahan tim, atau strategi percepatan..."
                   rows={2}
-                  className="w-full rounded-lg border border-rose-200 bg-white p-2.5 text-xs text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
+                  className="w-full rounded-lg border border-red-200 bg-white p-2.5 text-xs text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
                 />
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
                     value={recoveryTargetDate}
                     onChange={(e) => setRecoveryTargetDate(e.target.value)}
-                    className="flex-1 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
+                    className="flex-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleSaveRecoveryPlan}
                     disabled={isSubmittingRecovery}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
                     {isSubmittingRecovery ? (
                       <>
@@ -244,13 +244,13 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
 
           {/* Manual Escalation Form Modal inline */}
           {showEscalateForm && !deadline.isEscalated && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 space-y-3">
+            <div className="rounded-xl border border-[#0a4d8c]/25 bg-[#f4f8fd] p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <ShieldAlert size={16} className="text-amber-700 shrink-0" />
-                <span className="text-xs font-bold text-amber-900">Eskalasi Manual ke Manajer</span>
+                <ShieldAlert size={16} className="text-[#0a4d8c] shrink-0" />
+                <span className="text-xs font-bold text-[#0a4d8c]">Eskalasi Manual ke Manajer</span>
               </div>
               <div className="block text-xs">
-                <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-amber-800">Tujuan Eskalasi</span>
+                <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600">Tujuan Eskalasi</span>
                 <SearchableSelect
                   size="sm"
                   value={escalateTo}
@@ -265,20 +265,20 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                 />
               </div>
               <label className="block text-xs">
-                <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-amber-800">Alasan Eskalasi</span>
+                <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-600">Alasan Eskalasi</span>
                 <textarea
                   value={escalateReason}
                   onChange={(e) => setEscalateReason(e.target.value)}
                   placeholder="Tuliskan kendala teknis atau alasan keterlambatan..."
                   rows={2}
-                  className="w-full rounded-lg border border-amber-200 bg-white p-2.5 text-xs text-slate-700 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-xs text-slate-700 focus:border-[#0a4d8c] focus:outline-none"
                 />
               </label>
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setShowEscalateForm(false)}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-amber-100/60"
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200/60"
                 >
                   Batal
                 </button>
@@ -286,7 +286,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
                   type="button"
                   onClick={handleManagerEscalation}
                   disabled={escalateDeadline.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow hover:bg-amber-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3.5 py-1.5 text-xs font-bold text-white shadow hover:bg-[#083b6c] disabled:opacity-50"
                 >
                   {escalateDeadline.isPending ? (
                     <>
@@ -335,7 +335,7 @@ export function SLAActionModal({ deadline, onClose }: SLAActionModalProps) {
               <button
                 type="button"
                 onClick={() => setShowEscalateForm(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100"
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 transition-colors hover:bg-red-100"
               >
                 <ShieldAlert size={14} />
                 Eskalasi ke Manajer

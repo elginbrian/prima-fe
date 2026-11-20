@@ -13,7 +13,7 @@ export function TrackerStatsPanel({
   const onGoingPercent = totalItemsCount ? (onGoingCount / totalItemsCount) * 100 : 0;
   const onHoldPercent = totalItemsCount ? (onHoldCount / totalItemsCount) * 100 : 0;
   const donutBackground = totalItemsCount
-    ? `conic-gradient(#10b981 0% ${onGoingPercent}%, #f59e0b ${onGoingPercent}% ${onGoingPercent + onHoldPercent}%, #ef4444 ${onGoingPercent + onHoldPercent}% 100%)`
+    ? `conic-gradient(#0a4d8c 0% ${onGoingPercent}%, #94a3b8 ${onGoingPercent}% ${onGoingPercent + onHoldPercent}%, #ef4444 ${onGoingPercent + onHoldPercent}% 100%)`
     : "conic-gradient(#e2e8f0 0% 100%)";
   return (
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm w-full">
@@ -42,8 +42,8 @@ export function TrackerStatsPanel({
         {/* Breakdown */}
         <div className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
           {[
-            { label: "Berjalan (On Going)", count: onGoingCount, color: "bg-emerald-500" },
-            { label: "Ditunda (On Hold)", count: onHoldCount, color: "bg-amber-500" },
+            { label: "Berjalan (On Going)", count: onGoingCount, color: "bg-[#0a4d8c]" },
+            { label: "Ditunda (On Hold)", count: onHoldCount, color: "bg-slate-400" },
             { label: "Dibatalkan", count: cancelledCount, color: "bg-red-500" },
           ].map(({ label, count, color }) => (
             <div key={label} className="flex items-center justify-between text-[12px]">

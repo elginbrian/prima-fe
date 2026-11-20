@@ -250,7 +250,7 @@ export function TrackerDetailModal({
                 </div>
               )}
               {request && (
-                <span className="font-bold text-emerald-700">{formatRupiah(request.amount)}</span>
+                <span className="font-bold text-[#0a4d8c]">{formatRupiah(request.amount)}</span>
               )}
             </div>
           </div>
@@ -309,7 +309,7 @@ export function TrackerDetailModal({
             <ListTodo size={14} />
             <span>Tindakan & Mitigasi</span>
             {jobActionsCount > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+              <span className="rounded-full bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-bold text-[#0a4d8c]">
                 {jobActionsCount}
               </span>
             )}

@@ -33,17 +33,17 @@ interface ToastApi {
 const ToastContext = createContext<ToastApi | null>(null);
 
 const STYLES: Record<ToastKind, string> = {
-  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  success: "border-[#0a4d8c]/25 bg-[#e8f2fc] text-[#0a4d8c]",
   error: "border-red-200 bg-red-50 text-red-800",
-  info: "border-blue-200 bg-blue-50 text-blue-800",
-  warning: "border-amber-200 bg-amber-50 text-amber-900",
+  info: "border-slate-200 bg-white text-slate-800",
+  warning: "border-[#0a4d8c]/30 bg-slate-50 text-[#0a4d8c]",
 };
 
 const ACTION_STYLES: Record<ToastKind, string> = {
-  success: "bg-emerald-700 hover:bg-emerald-800 text-white",
+  success: "bg-[#0a4d8c] hover:bg-[#083b6c] text-white",
   error: "bg-red-700 hover:bg-red-800 text-white",
   info: "bg-[#0a4d8c] hover:bg-[#083b6c] text-white",
-  warning: "bg-amber-700 hover:bg-amber-800 text-white",
+  warning: "bg-[#0a4d8c] hover:bg-[#083b6c] text-white",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

@@ -31,11 +31,11 @@ export function StatusReasonPanel({ status, reasonDraft, setReasonDraft, onSave 
         </button>
       </div>
       {status === "On Hold" && (
-        <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900">
-          <PauseCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-[#0a4d8c]/25 bg-[#f4f8fd] p-3 text-xs text-slate-800">
+          <PauseCircle size={16} className="text-[#0a4d8c] shrink-0 mt-0.5" />
           <div className="min-w-0">
-            <span className="font-bold">Perhitungan SLA Sedang Dijeda (Paused):</span>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-amber-800">
+            <span className="font-bold text-[#0a4d8c]">Perhitungan SLA Sedang Dijeda (Paused):</span>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
               Pengadaan berstatus <strong>On Hold</strong>. Jam kerja dan penalti batas waktu SLA dibekukan sementara.
               Saat status kembali diaktifkan ke <strong>On Going</strong>, seluruh target batas waktu (SLA) aktif akan diperpanjang secara otomatis sesuai durasi penundaan.
             </p>

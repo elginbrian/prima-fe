@@ -55,7 +55,7 @@ export function HandoverPicModal({
         <div className="mt-4 space-y-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Pilih PIC Baru <span className="text-red-500">*</span>
+              Pilih PIC Baru <span className="text-[#0a4d8c]">*</span>
             </label>
             <SearchableSelect
               size="sm"
@@ -76,7 +76,7 @@ export function HandoverPicModal({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Catatan Serah Terima (Handover Notes) <span className="text-red-500">*</span>
+              Catatan Serah Terima (Handover Notes) <span className="text-[#0a4d8c]">*</span>
             </label>
             <textarea
               rows={3}

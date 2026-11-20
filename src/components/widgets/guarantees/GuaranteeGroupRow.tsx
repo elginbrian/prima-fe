@@ -22,8 +22,8 @@ import { GuaranteeLifecycleModal } from "../modals/GuaranteeLifecycleModal";
 function statusClass(status: GuaranteeItem["status"]) {
   if (status === "Aktif") return "bg-blue-50 text-[#0a4d8c] border-blue-200";
   if (status === "Expired") return "bg-red-50 text-red-700 border-red-200";
-  if (status === "Mendekati Expiry") return "bg-amber-50 text-amber-700 border-amber-200";
-  if (status === "Klaim Diajukan") return "bg-rose-50 text-rose-700 border-rose-300 font-bold";
+  if (status === "Mendekati Expiry") return "bg-slate-100 text-slate-700 border-slate-300";
+  if (status === "Klaim Diajukan") return "bg-red-50 text-red-700 border-red-300 font-bold";
   if (status === "Dikembalikan") return "bg-slate-100 text-slate-700 border-slate-300";
   return "bg-blue-50 text-[#0a4d8c] border-blue-200";
 }
@@ -84,7 +84,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit, onOpenRequestDe
           <div className="flex items-center gap-3">
             <div className="flex flex-wrap gap-1.5">
               {claimCount > 0 && (
-                <span className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                <span className="rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700">
                   {claimCount} klaim diajukan
                 </span>
               )}
@@ -94,7 +94,7 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit, onOpenRequestDe
                 </span>
               )}
               {attentionCount > 0 && (
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
                   {attentionCount} mendekati
                 </span>
               )}
@@ -184,8 +184,8 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit, onOpenRequestDe
                           {formatRupiah(guarantee.value)}
                         </div>
                         {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
-                          <span className="mt-0.5 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-800 flex items-center gap-1 shadow-2xs">
-                            <AlertTriangle size={11} className="text-amber-600 shrink-0" />
+                          <span className="mt-0.5 rounded-full border border-[#0a4d8c]/25 bg-[#e8f2fc] px-2 py-0.5 text-[9px] font-bold text-[#0a4d8c] flex items-center gap-1 shadow-2xs">
+                            <AlertTriangle size={11} className="text-[#0a4d8c] shrink-0" />
                             <span>{guarantee.thresholdWarning || "Nilai < 5% Pagu"}</span>
                           </span>
                         )}
@@ -259,11 +259,11 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit, onOpenRequestDe
                         </div>
 
                         {(guarantee.isThresholdCompliant === false || guarantee.thresholdWarning) && (
-                          <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50/90 p-2.5 text-xs text-amber-900 shadow-2xs">
-                            <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+                          <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-[#0a4d8c]/25 bg-[#f4f8fd] p-2.5 text-xs text-slate-800 shadow-2xs">
+                            <AlertTriangle size={15} className="text-[#0a4d8c] shrink-0 mt-0.5" />
                             <div>
-                              <div className="font-bold">Ketentuan Nilai Minimum Jaminan:</div>
-                              <div className="text-[11px] text-amber-800 mt-0.5">
+                              <div className="font-bold text-[#0a4d8c]">Ketentuan Nilai Minimum Jaminan:</div>
+                              <div className="text-[11px] text-slate-600 mt-0.5">
                                 {guarantee.thresholdWarning || `Nilai jaminan ini di bawah batas ketentuan regulasi (minimal 5% pagu pengadaan: ${formatRupiah(guarantee.minRequiredValue)}).`}
                               </div>
                             </div>
@@ -323,9 +323,9 @@ export function GuaranteeGroupRow({ request, guarantees, onEdit, onOpenRequestDe
                           <button
                             type="button"
                             onClick={() => setLifecycleGuarantee({ guarantee, action: "claim" })}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors"
                           >
-                            <ShieldAlert size={13} className="text-rose-600" />
+                            <ShieldAlert size={13} className="text-red-600" />
                             Klaim Jaminan
                           </button>
                         </div>

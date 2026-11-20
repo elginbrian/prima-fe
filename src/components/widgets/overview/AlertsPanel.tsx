@@ -26,7 +26,7 @@ export function AlertsPanel() {
           >
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium text-slate-800">{alert.title}</p>
-              <span className={`mt-1 h-2.5 w-2.5 rounded-full ${alert.tone === "amber" ? "bg-amber-400" : "bg-rose-400"}`} />
+              <span className={`mt-1 h-2.5 w-2.5 rounded-full ${alert.tone === "amber" ? "bg-[#0a4d8c]" : "bg-red-500"}`} />
             </div>
             <p className="mt-1 text-xs text-slate-500">{alert.detail}</p>
           </div>

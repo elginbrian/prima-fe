@@ -11,7 +11,7 @@ export function ActionStats({ totalCount, highCount, mediumCount, lowCount, high
           <div className="text-[11px] text-slate-400 mt-1 font-medium">Tugas yang belum selesai</div>
         </div>
         <div className="w-14 h-14 rounded-full relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.06)]" style={{
-          background: `conic-gradient(#ef4444 0% ${highPct}%, #0a4d8c ${highPct}% ${highPct + mediumPct}%, #10b981 ${highPct + mediumPct}% 100%)`
+          background: `conic-gradient(#ef4444 0% ${highPct}%, #0a4d8c ${highPct}% ${highPct + mediumPct}%, #94a3b8 ${highPct + mediumPct}% 100%)`
         }}>
           <div className="absolute inset-2 bg-white rounded-full"></div>
         </div>

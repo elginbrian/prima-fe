@@ -19,8 +19,8 @@ interface DocumentActionModalProps {
 }
 
 const STATUS_LABELS: { value: DocumentStatus; label: string; icon: React.ReactNode; color: string }[] = [
-  { value: "Lulus Verifikasi", label: "Lulus Verifikasi", icon: <CheckCircle2 size={14} />, color: "bg-blue-50 text-[#0a4d8c] border-blue-200 hover:bg-blue-100" },
-  { value: "Catatan Procurement", label: "Catatan Procurement", icon: <AlertCircle size={14} />, color: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
+  { value: "Lulus Verifikasi", label: "Lulus Verifikasi", icon: <CheckCircle2 size={14} />, color: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/70" },
+  { value: "Catatan Procurement", label: "Catatan Procurement", icon: <AlertCircle size={14} />, color: "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/20 hover:bg-blue-100" },
   { value: "Tindak Lanjut FPP", label: "Tindak Lanjut FPP", icon: <XCircle size={14} />, color: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" },
 ];
 
@@ -135,7 +135,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
             <button
               type="button"
               onClick={() => setActiveTab("revision")}
-              className={`border-b-2 px-3 py-2 transition-colors ${activeTab === "revision" ? "border-amber-600 text-amber-700" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+              className={`border-b-2 px-3 py-2 transition-colors ${activeTab === "revision" ? "border-[#0a4d8c] text-[#0a4d8c]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
             >
               + Ajukan Revisi (v{(doc.versionNumber ?? 1) + 1})
             </button>
@@ -228,7 +228,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
                     </div>
                   )}
                   {rev.issues && rev.issues.length > 0 && (
-                    <div className="text-rose-700">
+                    <div className="text-red-700">
                       <span className="font-bold">Catatan Verifikator: </span>
                       {rev.issues.join("; ")}
                     </div>
@@ -240,7 +240,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
 
           {activeTab === "revision" && (
             <div className="space-y-4">
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+              <div className="rounded-lg bg-[#f4f8fd] border border-[#0a4d8c]/20 p-3 text-xs text-slate-700">
                 Anda sedang mengajukan <strong>Revisi v{(doc.versionNumber ?? 1) + 1}</strong> untuk menggantikan berkas sebelumnya yang berstatus <em>{doc.status}</em>.
               </div>
               <label className="block text-xs">
@@ -267,7 +267,7 @@ export function DocumentActionModal({ doc, onClose }: DocumentActionModalProps) 
                 type="button"
                 onClick={handleCreateRevision}
                 disabled={isSubmittingRevision || !revisionNotes.trim()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 py-2.5 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0a4d8c] py-2.5 text-xs font-bold text-white shadow hover:bg-[#083b6c] transition-colors disabled:opacity-50"
               >
                 {isSubmittingRevision ? (
                   <>
