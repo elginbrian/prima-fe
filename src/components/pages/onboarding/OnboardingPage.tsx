@@ -20,6 +20,7 @@ import {
   CornerDownLeft,
   FileText,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import {
   useProcurements,
@@ -30,10 +31,14 @@ import { useValidationLogs, useValidationProfiles } from "@/lib/query/hooks/proc
 import { useGuarantees } from "@/lib/query/hooks/procurement/useGuarantees";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
+import { useOmniAssistant } from "@/lib/query/hooks/ai/useOmniAssistant";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { formatDateIndo, formatRequestCode, formatRupiah } from "@/lib/utils";
+import { getErrorMessage } from "@/lib/api/errors";
 import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
+import { OmniAiAssistantPanel } from "./OmniAiAssistantPanel";
+import type { OmniAssistantResponseDto } from "@/lib/api";
 import type { DeadlineItem, UrgencyLevel } from "@/types";
 
 type OmniCategory =
@@ -201,8 +206,14 @@ export default function OnboardingPage() {
 
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [selectedSlaModal, setSelectedSlaModal] = useState<DeadlineItem | null>(null);
+
+  const omniAssistant = useOmniAssistant();
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiQueryText, setAiQueryText] = useState("");
+  const [aiResponse, setAiResponse] = useState<OmniAssistantResponseDto | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -463,8 +474,34 @@ export default function OnboardingPage() {
   }, [query, allSearchItems]);
 
   useEffect(() => {
-    setActiveIndex(0);
+    setActiveIndex(-1);
   }, [query]);
+
+  const handleAskAi = async (customQuery?: string) => {
+    const q = (customQuery ?? query).trim();
+    if (!q) return;
+
+    setIsFocused(false);
+    setAiPanelOpen(true);
+    setAiQueryText(q);
+    setAiResponse(null);
+    setAiError(null);
+
+    try {
+      const res = await omniAssistant.mutateAsync(q);
+      setAiResponse(res);
+      if (
+        res.command &&
+        res.command.auto_execute &&
+        res.command.type === "NAVIGATE" &&
+        res.command.params?.url
+      ) {
+        router.push(String(res.command.params.url));
+      }
+    } catch (err) {
+      setAiError(getErrorMessage(err, "Gagal menghubungi PRIMA Omni-Assistant"));
+    }
+  };
 
   const handleSelectResult = (item: OmniSearchResult) => {
     setIsFocused(false);
@@ -483,21 +520,32 @@ export default function OnboardingPage() {
       inputRef.current?.blur();
       return;
     }
-    if (!filteredResults.length) return;
+
+    const totalCount = filteredResults.length;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev + 1) % filteredResults.length);
+      if (totalCount === 0) {
+        setActiveIndex(-1);
+        return;
+      }
+      setActiveIndex((prev) => (prev + 1 >= totalCount ? -1 : prev + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((prev) =>
-        prev - 1 < 0 ? filteredResults.length - 1 : prev - 1
-      );
+      if (totalCount === 0) {
+        setActiveIndex(-1);
+        return;
+      }
+      setActiveIndex((prev) => (prev - 1 < -1 ? totalCount - 1 : prev - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const target = filteredResults[activeIndex];
-      if (target) {
-        handleSelectResult(target);
+      if (activeIndex === -1 || totalCount === 0) {
+        handleAskAi();
+      } else {
+        const target = filteredResults[activeIndex];
+        if (target) {
+          handleSelectResult(target);
+        }
       }
     }
   };
@@ -575,32 +623,93 @@ export default function OnboardingPage() {
                 setIsFocused(true);
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Ketik nama dokumen, pekerjaan, skor AI, warkat, atau nama fitur..."
+              placeholder="Cari dokumen, pekerjaan, SLA, atau ketik pertanyaan & perintah untuk AI..."
               className="w-full bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
-              aria-label="Cari di seluruh PRIMA"
+              aria-label="Cari atau tanya AI di seluruh PRIMA"
             />
             {query ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  inputRef.current?.focus();
-                }}
-                className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                aria-label="Bersihkan pencarian"
-              >
-                <X size={15} />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleAskAi()}
+                  disabled={omniAssistant.isPending}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0a4d8c] px-2.5 py-1 text-[11px] font-semibold text-white shadow-2xs transition hover:!bg-[#083b6c] disabled:opacity-60"
+                  title="Tanya atau perintahkan AI (Mode Cekatan)"
+                >
+                  <Sparkles size={12} />
+                  <span className="hidden sm:inline">Tanya AI</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setAiPanelOpen(false);
+                    inputRef.current?.focus();
+                  }}
+                  className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  aria-label="Bersihkan pencarian"
+                >
+                  <X size={15} />
+                </button>
+              </div>
             ) : (
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shrink-0">
-                Ctrl K
-              </kbd>
+              <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[#0a4d8c]/20 bg-[#e8f2fc] px-1.5 py-0.5 text-[10px] font-semibold text-[#0a4d8c]">
+                  <Zap size={10} />
+                  AI Cekatan
+                </span>
+                <kbd className="inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                  Ctrl K
+                </kbd>
+              </div>
             )}
           </div>
 
           {/* Omni-Search Results Dropdown */}
           {showDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-2 max-h-[420px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl scrollbar-thin">
+            <div className="absolute left-0 right-0 top-full mt-2 max-h-[440px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl scrollbar-thin">
+              {/* Top Generative AI Option (Always available at index -1) */}
+              <div className="mb-1.5 pb-1.5 border-b border-slate-100">
+                <button
+                  type="button"
+                  onMouseEnter={() => setActiveIndex(-1)}
+                  onClick={() => handleAskAi()}
+                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                    activeIndex === -1
+                      ? "bg-[#e8f2fc] text-[#0a4d8c]"
+                      : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0a4d8c] text-white">
+                      <Sparkles size={14} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-xs font-semibold text-slate-900">
+                          Tanya atau Perintahkan AI: &ldquo;{query}&rdquo;
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[#0a4d8c]/20 bg-white px-2 py-0.5 text-[9px] font-semibold text-[#0a4d8c]">
+                          <Zap size={9} />
+                          Mode Cekatan
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                        Jawab pertanyaan dari data real-time PRIMA atau jalankan perintah langsung
+                      </p>
+                    </div>
+                  </div>
+                  <CornerDownLeft
+                    size={13}
+                    className={`shrink-0 transition-opacity ${
+                      activeIndex === -1
+                        ? "opacity-100 text-[#0a4d8c]"
+                        : "opacity-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
               {groupedSections.length > 0 ? (
                 <div className="space-y-2.5">
                   {groupedSections.map(([category, entries]) => (
@@ -661,19 +770,35 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               ) : (
-                <div className="py-8 px-4 text-center">
-                  <FileText size={24} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-xs font-medium text-slate-700">
-                    Tidak ditemukan hasil untuk &ldquo;{query}&rdquo;
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-slate-400">
-                    Coba kata kunci lain seperti nama dokumen, kode REQ/VAL, vendor, atau nama fitur.
+                <div className="py-3 px-3 text-center">
+                  <p className="text-[11px] text-slate-500">
+                    Tidak ada kecocokan kata kunci langsung — tekan <strong className="font-semibold text-[#0a4d8c]">Enter</strong> untuk memproses dengan AI Mode Cekatan.
                   </p>
                 </div>
               )}
             </div>
           )}
         </div>
+
+        {/* Inline Generative AI Answer & Command Execution Panel */}
+        {aiPanelOpen && (
+          <OmniAiAssistantPanel
+            query={aiQueryText}
+            response={aiResponse}
+            isLoading={omniAssistant.isPending}
+            error={aiError}
+            onClose={() => setAiPanelOpen(false)}
+            onSelectFollowup={(followup) => {
+              setQuery(followup);
+              handleAskAi(followup);
+            }}
+            onOpenSlaModal={(deadlineId) => {
+              const found = enrichedDeadlines.find((d) => d.id === deadlineId);
+              if (found) setSelectedSlaModal(found);
+            }}
+            deadlines={enrichedDeadlines}
+          />
+        )}
 
         {/* 4 Side-by-Side Quick Action Buttons */}
         <div className="mt-4 grid w-full max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

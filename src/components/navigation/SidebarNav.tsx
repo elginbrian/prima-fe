@@ -42,7 +42,7 @@ const MAIN_NAV_ITEMS: MainNavItemDef[] = [
   {
     id: "onboarding",
     href: "/dashboard/onboarding",
-    label: "Onboarding",
+    label: "Beranda",
     icon: Compass,
   },
   {

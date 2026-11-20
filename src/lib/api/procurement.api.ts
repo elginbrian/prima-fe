@@ -89,6 +89,7 @@ export interface AssignPicPayload {
 
 export interface MoveStagePaylod {
   stage: string;
+  notes?: string;
 }
 
 export interface MoveStepPayload {

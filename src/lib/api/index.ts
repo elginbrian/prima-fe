@@ -32,3 +32,11 @@ export type { GuaranteeDto, PresignedPost, ExtractedGuaranteeDto } from "./guara
 export type { DeadlineDto, EvaluateSlaResponseDto } from "./deadlines.api";
 
 export { usersApi } from "./users.api";
+export { aiAssistantApi } from "./ai.api";
+export type {
+  OmniAssistantResponseDto,
+  OmniCommandDto,
+  OmniCommandType,
+  OmniIntentKind,
+  OmniReferencedItemDto,
+} from "./ai.api";
