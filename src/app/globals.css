@@ -202,12 +202,13 @@ body {
 
 .auth-input {
   width: 100%;
-  border: 1px solid #d9e0e8;
-  border-radius: 0.75rem;
-  background: #fff;
-  padding: 0.8rem 0.9rem 0.8rem 2.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 0.575rem 0.75rem 0.575rem 2.35rem;
   color: #0f172a;
-  font-size: 0.95rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -218,7 +219,7 @@ body {
 
 .auth-input:focus {
   border-color: #0a4d8c;
-  box-shadow: 0 0 0 3px rgba(10, 77, 140, 0.12);
+  box-shadow: 0 0 0 2px rgba(10, 77, 140, 0.12);
 }
 
 button,

@@ -16,7 +16,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (payload: RegisterPayload) => authApi.register(payload),
     onSuccess: () => {
-      router.push("/login");
+      router.push("/login?registered=1");
     },
   });
 }
