@@ -25,6 +25,8 @@ interface ChecklistEditorProps {
   passingScore: number;
   onPassingScoreChange: (score: number) => void;
   showSourceBadges?: boolean;
+  hideUploadBar?: boolean;
+  focusUploadFirst?: boolean;
   onCriteriaFileExtracted?: (meta: ExtractedCriteriaResponse) => void;
 }
 
@@ -69,6 +71,8 @@ export function ChecklistEditor({
   passingScore,
   onPassingScoreChange,
   showSourceBadges = false,
+  hideUploadBar = false,
+  focusUploadFirst = false,
   onCriteriaFileExtracted,
 }: ChecklistEditorProps) {
   const toast = useToast();
@@ -223,78 +227,89 @@ export function ChecklistEditor({
     }
   };
 
+  const showThresholdAndItems = !focusUploadFirst || items.length > 0;
+
   return (
     <div className="space-y-3.5">
       {/* 1. Compact Upload Criteria File Bar */}
-      <div className="rounded-lg border border-dashed border-[#0a4d8c]/35 bg-[#f4f8fd] px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-[#0a4d8c] border border-[#0a4d8c]/20">
-            <FileSpreadsheet size={14} />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-medium text-[#0a4d8c] truncate">
-              Impor Kriteria Otomatis dari File (PDF / DOCX / XLSX / CSV)
+      {!hideUploadBar && (
+        <div className="rounded-lg border border-dashed border-[#0a4d8c]/35 bg-[#f4f8fd] px-3.5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-[#0a4d8c] border border-[#0a4d8c]/20">
+              <FileSpreadsheet size={14} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-medium text-[#0a4d8c] truncate">
+                Impor Kriteria Otomatis dari File (PDF / DOCX / XLSX / CSV)
+              </div>
+              {focusUploadFirst && items.length === 0 && (
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  AI akan mengekstrak seluruh butir kriteria &amp; persentase bobotnya ke daftar di bawah.
+                </p>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {items.length > 0 && (
-            <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-[10px]">
-              <button
-                type="button"
-                onClick={() => setUploadMergeMode("replace")}
-                className={`rounded px-2 py-0.5 font-medium transition-colors ${
-                  uploadMergeMode === "replace"
-                    ? "bg-[#0a4d8c] text-white"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Ganti
-              </button>
-              <button
-                type="button"
-                onClick={() => setUploadMergeMode("append")}
-                className={`rounded px-2 py-0.5 font-medium transition-colors ${
-                  uploadMergeMode === "append"
-                    ? "bg-[#0a4d8c] text-white"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Tambah
-              </button>
-            </div>
-          )}
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg"
-            onChange={handleUploadCriteriaFile}
-            className="hidden"
-          />
-          <button
-            type="button"
-            disabled={extractMutation.isPending}
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#083b6c] transition-colors disabled:opacity-60 focus:outline-none"
-          >
-            {extractMutation.isPending ? (
-              <>
-                <Spinner size="xs" className="border-white border-t-transparent" />
-                <span>Mengekstrak...</span>
-              </>
-            ) : (
-              <>
-                <UploadCloud size={13} />
-                <span>Upload Kriteria</span>
-              </>
+          <div className="flex items-center gap-2 shrink-0">
+            {items.length > 0 && (
+              <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setUploadMergeMode("replace")}
+                  className={`rounded px-2 py-0.5 font-medium transition-colors ${
+                    uploadMergeMode === "replace"
+                      ? "bg-[#0a4d8c] text-white"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Ganti
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMergeMode("append")}
+                  className={`rounded px-2 py-0.5 font-medium transition-colors ${
+                    uploadMergeMode === "append"
+                      ? "bg-[#0a4d8c] text-white"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Tambah
+                </button>
+              </div>
             )}
-          </button>
-        </div>
-      </div>
 
-      {/* 2. Compact Inline Passing Threshold Control */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg"
+              onChange={handleUploadCriteriaFile}
+              className="hidden"
+            />
+            <button
+              type="button"
+              disabled={extractMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#083b6c] transition-colors disabled:opacity-60 focus:outline-none"
+            >
+              {extractMutation.isPending ? (
+                <>
+                  <Spinner size="xs" className="border-white border-t-transparent" />
+                  <span>Mengekstrak...</span>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={13} />
+                  <span>Upload Kriteria</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showThresholdAndItems && (
+        <>
+          {/* 2. Compact Inline Passing Threshold Control */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-slate-50/80 px-3.5 py-2.5 border border-slate-200/80">
         <div className="flex items-center gap-2 shrink-0">
           <Sliders size={13} className="text-[#0a4d8c]" />
@@ -559,6 +574,8 @@ export function ChecklistEditor({
           />
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

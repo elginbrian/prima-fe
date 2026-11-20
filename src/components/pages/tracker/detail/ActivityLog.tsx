@@ -67,7 +67,7 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
                   }
                 : act.action === "MOVE_STAGE"
                 ? {
-                    label: `Stage: ${act.new_state}`,
+                    label: `Tahap: ${act.new_state}`,
                     bg: "bg-slate-100 text-slate-700 border-slate-200",
                     dot: "bg-slate-400",
                   }
@@ -100,7 +100,7 @@ export function ActivityLog({ activities, history, isLoading }: ActivityLogProps
                   </time>
                 </div>
                 {act.notes && (
-                  <p className="mt-1.5 text-xs text-slate-600 bg-slate-50/70 p-2.5 rounded-lg border border-slate-100">
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">
                     {act.notes}
                   </p>
                 )}

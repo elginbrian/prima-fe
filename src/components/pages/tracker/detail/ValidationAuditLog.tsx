@@ -21,8 +21,22 @@ interface ValidationAuditLogProps {
 export function ValidationAuditLog({ requestId, router }: ValidationAuditLogProps) {
   const { data: logs = [], isLoading } = useValidationLogs(requestId);
 
+  if (!isLoading && logs.length === 0) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+        <div className="flex items-center gap-2">
+          <Sparkles size={14} className="text-[#0a4d8c] shrink-0" />
+          <span>
+            <strong className="font-medium text-slate-700">Riwayat Pemeriksaan Dokumen AI (0):</strong>{" "}
+            Belum ada pemeriksaan AI tercatat pada pekerjaan ini.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
         <div>
           <h4 className="text-sm font-medium text-slate-800 flex items-center gap-2">

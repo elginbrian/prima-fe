@@ -26,12 +26,26 @@ interface RelatedGuaranteesProps {
   router: AppRouterInstance;
 }
 
-function statusBadgeClass(status: GuaranteeItem["status"]) {
-  if (status === "Aktif") return "bg-slate-100 text-slate-700 border-slate-200";
-  if (status === "Expired" || status === "Mendekati Expiry" || status === "Klaim Diajukan") {
-    return "bg-blue-50 text-[#0a4d8c] border-blue-200";
+function statusBadgeClass(status: string) {
+  const s = status.toLowerCase();
+  if (s === "aktif" || s === "active") {
+    return "bg-slate-100 text-slate-600 border-slate-200";
+  }
+  if (s === "expired" || s === "kedaluwarsa" || s === "klaim diajukan") {
+    return "bg-[#0a4d8c] text-white border-[#0a4d8c] font-medium";
+  }
+  if (s.includes("mendekati")) {
+    return "bg-[#e8f2fc] text-[#0a4d8c] border-[#0a4d8c]/25 font-medium";
   }
   return "bg-slate-50 text-slate-500 border-slate-200";
+}
+
+function normalizeGuaranteeStatusLabel(status: string) {
+  const s = status.toLowerCase();
+  if (s === "active" || s === "aktif") return "Aktif";
+  if (s === "expired" || s === "kedaluwarsa") return "Kedaluwarsa";
+  if (s === "mendekati expiry") return "Mendekati Jatuh Tempo";
+  return status;
 }
 
 export function RelatedGuarantees({
@@ -48,8 +62,36 @@ export function RelatedGuarantees({
     action: "amend" | "release" | "claim";
   } | null>(null);
 
+  if (guars.length === 0) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3">
+        <div className="flex items-center gap-2.5 text-xs text-slate-600">
+          <ShieldCheck size={15} className="text-[#0a4d8c] shrink-0" />
+          <span>
+            <strong className="font-medium text-slate-800">Warkat Jaminan (0):</strong>{" "}
+            Belum ada warkat jaminan bank/asuransi yang terhubung.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            router.push(
+              selectedRequestId
+                ? `/dashboard/overview/guarantees/upload?requestId=${selectedRequestId}`
+                : "/dashboard/overview/guarantees/upload"
+            )
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#093e6f] transition-colors shrink-0"
+        >
+          <Upload size={13} />
+          <span>Unggah Warkat Jaminan</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
+    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3.5">
         <div>
           <div className="flex items-center gap-2 text-slate-800 font-medium text-sm">
@@ -101,9 +143,12 @@ export function RelatedGuarantees({
                         {g.referenceNo} · {g.type}
                       </span>
                       {(g.isThresholdCompliant === false || g.thresholdWarning) && (
-                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-normal text-[#0a4d8c] inline-flex items-center gap-1">
+                        <span
+                          title={g.thresholdWarning || "Nilai jaminan < 5% nilai kontrak"}
+                          className="rounded-full border border-[#0a4d8c]/25 bg-[#e8f2fc] px-2 py-0.5 text-[10px] font-medium text-[#0a4d8c] inline-flex items-center gap-1 shrink-0"
+                        >
                           <AlertTriangle size={10} />
-                          <span>{g.thresholdWarning || "Nilai < 5% Pagu"}</span>
+                          <span>&lt; 5% Pagu</span>
                         </span>
                       )}
                     </div>
@@ -112,17 +157,13 @@ export function RelatedGuarantees({
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2.5">
-                    <span className="text-xs font-normal text-slate-700">{formatRupiah(g.value)}</span>
+                    <span className="text-xs font-medium text-slate-700">{formatRupiah(g.value)}</span>
                     <span
-                      className={`text-[10px] font-normal px-2.5 py-0.5 rounded-full border ${statusBadgeClass(
+                      className={`text-[10px] px-2.5 py-0.5 rounded-full border ${statusBadgeClass(
                         g.status
                       )}`}
                     >
-                      {g.status === "Mendekati Expiry"
-                        ? "Mendekati Jatuh Tempo"
-                        : g.status === "Expired"
-                        ? "Kedaluwarsa"
-                        : g.status}
+                      {normalizeGuaranteeStatusLabel(g.status)}
                     </span>
                     {isExpanded ? (
                       <ChevronDown size={15} className="text-slate-400" />

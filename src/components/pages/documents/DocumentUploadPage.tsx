@@ -13,6 +13,7 @@ import {
   BookmarkPlus,
   Check,
   ShieldCheck,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProcurement } from "@/context/ProcurementContext";
@@ -65,7 +66,9 @@ export default function DocumentUploadPage() {
   const [passingScore, setPassingScore] = useState<number>(80);
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
-  const [showCriteriaEditor, setShowCriteriaEditor] = useState<boolean>(true);
+  const [criteriaMode, setCriteriaMode] = useState<"template" | "upload" | "custom">("template");
+  const [hasInitializedProfile, setHasInitializedProfile] = useState<boolean>(false);
+  const [showCriteriaEditor, setShowCriteriaEditor] = useState<boolean>(false);
   const [showPromptBox, setShowPromptBox] = useState<boolean>(false);
 
   const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
@@ -117,21 +120,34 @@ export default function DocumentUploadPage() {
   ).length;
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const reqId = params.get("requestId");
-      if (reqId) {
-        setSelectedRequestId(reqId);
-      }
-      const profId = params.get("profileId");
-      if (profId && profiles.length > 0 && !selectedProfileId) {
-        const found = profiles.find((p) => p.id === profId);
-        if (found) {
-          handleSelectProfile(found);
-        }
-      }
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const reqId = params.get("requestId");
+    if (reqId) {
+      setSelectedRequestId(reqId);
     }
-  }, [profiles]);
+
+    if (profiles.length > 0 && !hasInitializedProfile) {
+      const profId = params.get("profileId");
+      const targetProfile =
+        (profId ? profiles.find((p) => p.id === profId) : null) ||
+        profiles.find((p) => p.is_default) ||
+        profiles[0];
+
+      if (targetProfile) {
+        handleSelectProfile(targetProfile);
+        setCriteriaMode("template");
+      } else {
+        setCriteriaMode("custom");
+        setShowCriteriaEditor(true);
+      }
+      setHasInitializedProfile(true);
+    } else if (!isLoadingProfiles && profiles.length === 0 && !hasInitializedProfile) {
+      setCriteriaMode("custom");
+      setShowCriteriaEditor(true);
+      setHasInitializedProfile(true);
+    }
+  }, [profiles, isLoadingProfiles, hasInitializedProfile]);
 
   const handleSaveAsNewTemplate = async () => {
     if (!newTemplateName.trim()) {
@@ -192,6 +208,30 @@ export default function DocumentUploadPage() {
       setChecklistRules((prev) =>
         prev.map((r) => ({ ...r, source: "custom" as const }))
       );
+    }
+  };
+
+  const handleSwitchCriteriaMode = (mode: "template" | "upload" | "custom") => {
+    setCriteriaMode(mode);
+    if (mode === "template") {
+      const target =
+        profiles.find((p) => p.id === selectedProfileId) ||
+        profiles.find((p) => p.is_default) ||
+        profiles[0] ||
+        null;
+      if (target) {
+        handleSelectProfile(target);
+      }
+    } else {
+      setSelectedProfileId("");
+      setShowCriteriaEditor(true);
+      if (mode === "upload") {
+        setChecklistRules([]);
+      } else {
+        setChecklistRules((prev) =>
+          prev.map((r) => ({ ...r, source: "custom" as const }))
+        );
+      }
     }
   };
 
@@ -286,8 +326,8 @@ export default function DocumentUploadPage() {
         </button>
       </div>
 
-      {/* Main Form Layout — natural single-page scroll with sticky CTA footer */}
-      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex flex-col lg:flex-row">
+      {/* Main Form Layout — overflow-x-clip keeps sticky CTA footer active inside <main> scroll */}
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-x-clip flex flex-col lg:flex-row">
         {/* Left Column: Upload Dropzone & Document Preview */}
         <div className="w-full lg:w-5/12 bg-slate-50/70 border-b lg:border-b-0 lg:border-r border-slate-200 p-5 sm:p-6 flex flex-col space-y-3.5">
           <div className="flex items-center justify-between">
@@ -308,7 +348,7 @@ export default function DocumentUploadPage() {
 
           {!file ? (
             <div
-              className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center min-h-[340px] transition-all cursor-pointer ${
+              className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center flex-1 min-h-[260px] transition-all cursor-pointer ${
                 isDragging
                   ? "border-[#0a4d8c] bg-[#e8f2fc]/60"
                   : "border-slate-300 bg-white hover:border-[#0a4d8c]/60 hover:bg-slate-50"
@@ -345,31 +385,211 @@ export default function DocumentUploadPage() {
 
           <div className="flex items-center gap-1.5 text-[11px] font-normal text-slate-500">
             <Sparkles size={12} className="text-[#0a4d8c] shrink-0" />
-            <span>Mendukung penilaian berbobot otomatis (normalisasi 100%) &amp; ekstraksi tahapan AI.</span>
+            <span>Penilaian berbobot otomatis (normalisasi 100%) &amp; ekstraksi tahapan AI.</span>
           </div>
         </div>
 
-        {/* Right Column: Progressive Disclosure Configuration + Sticky Submit Footer */}
+        {/* Right Column: Clean 3-Mode Selector + Sticky Submit Footer */}
         <div className="w-full lg:w-7/12 flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100">
             <h2 className="text-sm sm:text-base font-semibold text-slate-800">
               2. Standar Pemeriksaan &amp; Kriteria
             </h2>
             <p className="text-xs font-normal text-slate-500 mt-0.5">
-              Pilih template standar siap pakai atau atur kriteria &amp; bobot kustom.
+              Pilih satu metode penilaian di bawah, lalu jalankan pemeriksaan AI.
             </p>
           </div>
 
           <div className="p-6 space-y-5 flex-1">
-            {/* Step A: Validation Profile Selector (clean, no outer double box) */}
-            <ValidationProfileSelector
-              profiles={profiles}
-              selectedProfileId={selectedProfileId}
-              onSelectProfile={handleSelectProfile}
-              isLoading={isLoadingProfiles}
-            />
+            {/* Step A: Clear 3-Mode Bean Switcher */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 block">
+                Cara Menentukan Kriteria
+              </label>
+              <div className="inline-flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/70 p-1.5 w-full sm:w-fit">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchCriteriaMode("template")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all focus:outline-none ${
+                    criteriaMode === "template"
+                      ? "bg-[#0a4d8c] text-white shadow-xs"
+                      : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
+                  }`}
+                >
+                  <BookOpen size={13} />
+                  <span>Template Standar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchCriteriaMode("upload")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all focus:outline-none ${
+                    criteriaMode === "upload"
+                      ? "bg-[#0a4d8c] text-white shadow-xs"
+                      : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
+                  }`}
+                >
+                  <FileSpreadsheet size={13} />
+                  <span>Upload File Kriteria</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchCriteriaMode("custom")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all focus:outline-none ${
+                    criteriaMode === "custom"
+                      ? "bg-[#0a4d8c] text-white shadow-xs"
+                      : "text-slate-600 hover:bg-[#eaf3ff] hover:text-[#0a4d8c]"
+                  }`}
+                >
+                  <Sliders size={13} />
+                  <span>Input Kustom</span>
+                </button>
+              </div>
+            </div>
 
-            {/* Step B: Bind to Existing Tracker Job (Optional, Searchable) */}
+            {/* Step B: Mode-Specific Focused Criteria Input */}
+            {criteriaMode === "template" && (
+              <div className="space-y-4">
+                <ValidationProfileSelector
+                  profiles={profiles}
+                  selectedProfileId={selectedProfileId}
+                  onSelectProfile={(prof) => {
+                    if (!prof) {
+                      handleSwitchCriteriaMode("custom");
+                    } else {
+                      handleSelectProfile(prof);
+                    }
+                  }}
+                  isLoading={isLoadingProfiles}
+                />
+
+                {selectedProfileId && (
+                  <div className="space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                        <ShieldCheck size={13} className="text-[#0a4d8c]" />
+                        <span>
+                          {templateRuleCount} Kriteria Standar
+                          {customRuleCount > 0 ? ` + ${customRuleCount} Kustom` : ""} · Lulus &ge; {passingScore}%
+                        </span>
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        {checklistRules.length > 0 && showCriteriaEditor && (
+                          <button
+                            type="button"
+                            onClick={() => setIsSaveTemplateModalOpen(true)}
+                            className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
+                          >
+                            <BookmarkPlus size={12} />
+                            <span>Simpan Template</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowCriteriaEditor((v) => !v)}
+                          className="inline-flex items-center gap-1 rounded-md border border-[#0a4d8c]/30 bg-[#e8f2fc] px-2.5 py-1 text-[11px] font-medium text-[#0a4d8c] hover:bg-[#d8e8fa] transition-colors focus:outline-none"
+                        >
+                          {showCriteriaEditor ? "Ringkas Kriteria" : "Sesuaikan Bobot / Kriteria"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {!showCriteriaEditor ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {checklistRules.map((r, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] text-slate-700 max-w-full"
+                          >
+                            <span className="truncate max-w-[220px]">{r.item}</span>
+                            <span className="font-semibold text-[#0a4d8c]">{r.weight}%</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <ChecklistEditor
+                        items={checklistRules}
+                        onChange={setChecklistRules}
+                        passingScore={passingScore}
+                        onPassingScoreChange={setPassingScore}
+                        showSourceBadges
+                        hideUploadBar
+                        onCriteriaFileExtracted={(meta) => {
+                          if (!customPrompt.trim() && meta.suggested_system_prompt) {
+                            setCustomPrompt(meta.suggested_system_prompt);
+                            setShowPromptBox(true);
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {criteriaMode === "upload" && (
+              <div className="space-y-3">
+                <ChecklistEditor
+                  items={checklistRules}
+                  onChange={setChecklistRules}
+                  passingScore={passingScore}
+                  onPassingScoreChange={setPassingScore}
+                  showSourceBadges
+                  focusUploadFirst
+                  onCriteriaFileExtracted={(meta) => {
+                    if (!customPrompt.trim() && meta.suggested_system_prompt) {
+                      setCustomPrompt(meta.suggested_system_prompt);
+                      setShowPromptBox(true);
+                    }
+                  }}
+                />
+                {checklistRules.length > 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsSaveTemplateModalOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
+                    >
+                      <BookmarkPlus size={12} />
+                      <span>Simpan sebagai Template Standar Baru</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {criteriaMode === "custom" && (
+              <div className="space-y-3">
+                <ChecklistEditor
+                  items={checklistRules}
+                  onChange={setChecklistRules}
+                  passingScore={passingScore}
+                  onPassingScoreChange={setPassingScore}
+                  showSourceBadges
+                  hideUploadBar
+                  onCriteriaFileExtracted={(meta) => {
+                    if (!customPrompt.trim() && meta.suggested_system_prompt) {
+                      setCustomPrompt(meta.suggested_system_prompt);
+                      setShowPromptBox(true);
+                    }
+                  }}
+                />
+                {checklistRules.length > 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsSaveTemplateModalOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
+                    >
+                      <BookmarkPlus size={12} />
+                      <span>Simpan sebagai Template Standar Baru</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step C: Bind to Existing Tracker Job (Optional, Searchable) */}
             <div className="border-t border-slate-100 pt-4 space-y-1.5">
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <Building2 size={12} className="text-[#0a4d8c]" />
@@ -383,85 +603,6 @@ export default function DocumentUploadPage() {
                 placeholder="-- Buat Pekerjaan Baru Otomatis dari Dokumen --"
                 searchPlaceholder="Ketik kode atau nama pekerjaan..."
               />
-            </div>
-
-            {/* Step C: Progressive Criteria Section */}
-            <div className="border-t border-slate-100 pt-4 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#0a4d8c] flex items-center gap-1.5">
-                    <Sliders size={13} />
-                    Kriteria Kelayakan &amp; Bobot ({checklistRules.length})
-                  </h3>
-                  {selectedProfileId && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
-                      <ShieldCheck size={10} className="text-[#0a4d8c]" />
-                      {templateRuleCount} Template
-                      {customRuleCount > 0 ? ` + ${customRuleCount} Kustom` : ""}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {checklistRules.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsSaveTemplateModalOpen(true)}
-                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#0a4d8c] hover:text-[#0a4d8c] transition-colors focus:outline-none"
-                    >
-                      <BookmarkPlus size={12} />
-                      <span>Simpan Template</span>
-                    </button>
-                  )}
-
-                  {selectedProfileId && (
-                    <button
-                      type="button"
-                      onClick={() => setShowCriteriaEditor((v) => !v)}
-                      className="inline-flex items-center gap-1 rounded-md border border-[#0a4d8c]/30 bg-[#e8f2fc] px-2.5 py-1 text-[11px] font-medium text-[#0a4d8c] hover:bg-[#d8e8fa] transition-colors focus:outline-none"
-                    >
-                      {showCriteriaEditor ? "Ringkas Kriteria" : "Ubah Bobot / Kriteria"}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Collapsed Calm Summary when using Template */}
-              {selectedProfileId && !showCriteriaEditor && checklistRules.length > 0 ? (
-                <div className="rounded-lg bg-slate-50/80 border border-slate-200/80 px-3.5 py-2.5 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] text-slate-600">
-                    <span>
-                      Menggunakan <span className="font-medium text-slate-800">{checklistRules.length} butir standar</span> dengan ambang lulus{" "}
-                      <span className="font-medium text-[#0a4d8c]">&ge; {passingScore}%</span>
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {checklistRules.map((r, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700 max-w-full"
-                      >
-                        <span className="truncate max-w-[200px]">{r.item}</span>
-                        <span className="font-semibold text-[#0a4d8c]">{r.weight}%</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <ChecklistEditor
-                  items={checklistRules}
-                  onChange={setChecklistRules}
-                  passingScore={passingScore}
-                  onPassingScoreChange={setPassingScore}
-                  showSourceBadges
-                  onCriteriaFileExtracted={(meta) => {
-                    if (!customPrompt.trim() && meta.suggested_system_prompt) {
-                      setCustomPrompt(meta.suggested_system_prompt);
-                      setShowPromptBox(true);
-                    }
-                  }}
-                />
-              )}
             </div>
 
             {/* Step D: Collapsible Custom Prompt / AI Instructions */}
@@ -504,8 +645,8 @@ export default function DocumentUploadPage() {
             </div>
           </div>
 
-          {/* Sticky Footer Actions — always visible */}
-          <div className="sticky bottom-0 z-10 px-6 py-3.5 bg-white/95 backdrop-blur-xs border-t border-slate-200 flex items-center justify-between gap-3">
+          {/* True Sticky Footer Actions (works with overflow-x-clip!) */}
+          <div className="sticky bottom-0 z-10 px-6 py-3.5 bg-white/95 backdrop-blur-xs border-t border-slate-200 flex items-center justify-between gap-3 rounded-br-xl">
             <button
               type="button"
               onClick={() => router.push("/dashboard/documents")}

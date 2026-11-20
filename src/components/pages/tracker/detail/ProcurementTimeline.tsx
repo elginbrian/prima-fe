@@ -19,6 +19,7 @@ import { formatDateIndo } from "@/lib/utils";
 
 interface ProcurementTimelineProps {
   stage?: string;
+  currentStep?: string;
   milestones: ProcurementMilestone[];
   slas: (DeadlineItem & { daysRemaining?: number })[];
   gatekeeperData?: GatekeeperCheckDto | null;
@@ -32,6 +33,7 @@ interface ProcurementTimelineProps {
 
 export function ProcurementTimeline({
   stage,
+  currentStep,
   milestones,
   slas,
   gatekeeperData,
@@ -50,19 +52,12 @@ export function ProcurementTimeline({
   }, [gatekeeperData]);
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
         <div>
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-slate-800">Urutan Tahapan & Jadwal SLA</h4>
-            {stage && (
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-normal text-slate-600 border border-slate-200">
-                {stage}
-              </span>
-            )}
-          </div>
+          <h4 className="text-sm font-medium text-slate-800">Urutan Tahapan &amp; Jadwal SLA</h4>
           <p className="mt-0.5 text-xs text-slate-500">
-            Alur berurutan dari tahap awal hingga selesai beserta target waktu (SLA) di setiap tahapan.
+            Alur berurutan dari tahap awal hingga selesai beserta target waktu (SLA) per tahapan.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -87,11 +82,19 @@ export function ProcurementTimeline({
         </div>
       </div>
 
-      <div className="relative mt-5 space-y-2.5">
+      <div className="relative mt-4 space-y-2.5">
         <div className="absolute bottom-5 left-[15px] top-5 w-px bg-slate-200" />
         {milestones.map((milestone, index) => {
-          const isDone = milestone.status === "Done";
-          const isCurrent = milestone.status === "In Progress";
+          const normStatus = String(milestone.status || "").toLowerCase();
+          const isDone =
+            normStatus === "done" ||
+            normStatus === "completed" ||
+            normStatus === "selesai" ||
+            (Boolean(milestone.date) && stage === "Selesai");
+          const isCurrent =
+            !isDone &&
+            (milestone.status === "In Progress" ||
+              (Boolean(currentStep) && milestone.step === currentStep));
           const milestoneSlas = slas.filter(
             (sla) => sla.milestone?.trim().toLowerCase() === milestone.step?.trim().toLowerCase()
           );
@@ -102,7 +105,7 @@ export function ProcurementTimeline({
               milestone.documentId);
 
           return (
-            <div key={milestone.id} className="relative flex gap-3.5 py-1">
+            <div key={milestone.id} className="relative flex gap-3.5 py-0.5">
               <div
                 className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-[11px] font-medium ${
                   isDone
@@ -116,12 +119,12 @@ export function ProcurementTimeline({
               </div>
 
               <div
-                className={`min-w-0 flex-1 rounded-xl border px-4 py-3 transition-all ${
+                className={`min-w-0 flex-1 rounded-xl border px-3.5 py-2.5 transition-all ${
                   isCurrent
                     ? "border-[#0a4d8c]/30 bg-blue-50/30"
                     : isDone
                     ? "border-slate-200 bg-slate-50/40"
-                    : "border-slate-100 bg-white"
+                    : "border-slate-200/80 bg-white"
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -161,7 +164,7 @@ export function ProcurementTimeline({
                           ? "bg-slate-100 text-slate-600 border border-slate-200"
                           : isCurrent
                           ? "bg-[#0a4d8c] text-white"
-                          : "bg-slate-50 text-slate-400 border border-slate-100"
+                          : "bg-slate-50 text-slate-400 border border-slate-200/70"
                       }`}
                     >
                       {isDone ? "Selesai" : isCurrent ? "Tahap Aktif" : "Berikutnya"}
@@ -170,14 +173,14 @@ export function ProcurementTimeline({
                 </div>
 
                 {milestone.notes && (
-                  <p className="mt-1.5 text-xs text-slate-600 bg-white rounded-lg border border-slate-200/70 px-3 py-1.5 leading-relaxed">
+                  <p className="mt-1.5 border-l-2 border-slate-200 pl-2.5 text-xs text-slate-600 leading-relaxed">
                     {milestone.notes}
                   </p>
                 )}
 
                 {/* Inline Prerequisite / Document Notice on Current Step */}
                 {isCurrent && gatekeeperNotes.length > 0 && (
-                  <div className="mt-2.5 rounded-lg border border-blue-200/80 bg-white px-3 py-2 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="mt-2 rounded-lg border border-blue-200/80 bg-white px-3 py-2 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-start gap-2 min-w-0">
                       <AlertCircle size={14} className="text-[#0a4d8c] shrink-0 mt-0.5" />
                       <div className="min-w-0">
@@ -224,7 +227,7 @@ export function ProcurementTimeline({
                 )}
 
                 {milestoneSlas.length > 0 && (
-                  <div className="mt-2.5 space-y-2">
+                  <div className="mt-2 rounded-lg border border-slate-200/80 divide-y divide-slate-100 bg-white overflow-hidden">
                     {milestoneSlas.map((s) => {
                       const targetStr = s.targetDate ? formatDateIndo(s.targetDate) : "-";
                       const startStr = s.startDate ? formatDateIndo(s.startDate) : "";
@@ -239,10 +242,7 @@ export function ProcurementTimeline({
                         timing.daysRemaining < 0;
 
                       return (
-                        <div
-                          key={s.id}
-                          className="overflow-hidden rounded-lg border border-slate-200 bg-white"
-                        >
+                        <div key={s.id}>
                           <button
                             type="button"
                             onClick={() =>

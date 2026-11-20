@@ -168,8 +168,21 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
   );
 
   const totalAuditCount = (activitiesData?.length ?? 0) + validationLogs.length;
-  const completedMilestones = milestones.filter((m) => m.status === "Done").length;
-  const currentMilestoneIndex = milestones.findIndex((m) => m.status === "In Progress");
+  const isMilestoneDone = (status?: string, date?: string | null) => {
+    const norm = String(status || "").toLowerCase();
+    return (
+      norm === "done" ||
+      norm === "completed" ||
+      norm === "selesai" ||
+      (Boolean(date) && request?.stage === "Selesai")
+    );
+  };
+  const completedMilestones = milestones.filter((m) =>
+    isMilestoneDone(m.status, m.date)
+  ).length;
+  const currentMilestoneIndex = milestones.findIndex(
+    (m) => !isMilestoneDone(m.status, m.date) && (m.status === "In Progress" || m.step === request?.currentStep)
+  );
   const progressPct = milestones.length
     ? Math.round(
         ((completedMilestones + (currentMilestoneIndex >= 0 ? 0.5 : 0)) / milestones.length) * 100
@@ -335,7 +348,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
       </div>
 
       {/* Unified Compact Job Summary & Control Header Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
           {/* Left: Project Identity & Metadata */}
           <div className="min-w-0 flex-1">
@@ -547,6 +560,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
       {activeTab === "timeline" && (
         <ProcurementTimeline
           stage={request?.stage}
+          currentStep={request?.currentStep}
           milestones={milestones}
           slas={slas}
           gatekeeperData={gatekeeperData}

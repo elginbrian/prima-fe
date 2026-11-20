@@ -23,8 +23,36 @@ export function RelatedDocuments({
   const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
   const [actionDoc, setActionDoc] = useState<DocumentItem | null>(null);
 
+  if (docs.length === 0) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3">
+        <div className="flex items-center gap-2.5 text-xs text-slate-600">
+          <FileText size={15} className="text-[#0a4d8c] shrink-0" />
+          <span>
+            <strong className="font-medium text-slate-800">Dokumen Pengadaan (0):</strong>{" "}
+            Belum ada berkas yang tertaut pada pekerjaan ini.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            router.push(
+              selectedRequestId
+                ? `/dashboard/documents/upload?requestId=${selectedRequestId}`
+                : "/dashboard/documents/upload"
+            )
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#093e6f] transition-colors shrink-0"
+        >
+          <Plus size={13} />
+          <span>Unggah &amp; Periksa Dokumen</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
+    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3.5">
         <div>
           <div className="flex items-center gap-2 text-slate-800 font-medium text-sm">
