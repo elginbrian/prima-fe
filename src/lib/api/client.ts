@@ -6,6 +6,31 @@
  */
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v1";
+export const API_ORIGIN = BASE_URL.replace(/\/api\/v1\/?$/, "");
+
+/**
+ * Resolve a storage URL returned by backend:
+ * - Preserves full http(s), blob, or data URLs (e.g. S3 presigned URLs)
+ * - Prefixes backend-relative paths (/uploads/..., /api/v1/...) with API_ORIGIN
+ * - Returns undefined for bare non-URL S3 object keys so broken relative links aren't rendered
+ */
+export function resolveStorageUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("data:")
+  ) {
+    return trimmed;
+  }
+  if (trimmed.startsWith("/")) {
+    return `${API_ORIGIN}${trimmed}`;
+  }
+  return undefined;
+}
 
 export interface ApiEnvelope<T = unknown> {
   success: boolean;

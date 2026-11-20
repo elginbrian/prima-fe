@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { guaranteesApi } from "@/lib/api/procurement.api";
 import { GuaranteeDto } from "@/lib/api/procurement.api";
+import { resolveStorageUrl } from "@/lib/api/client";
 import { GuaranteeItem, GuaranteeStatus, GuaranteeType, GuaranteeIssuerType } from "@/types";
 
 export const guaranteesKeys = {
@@ -28,7 +29,7 @@ export function mapGuaranteeDtoToItem(dto: GuaranteeDto): GuaranteeItem {
     pic: { id: dto.pic_id, name: dto.pic_name },
     status: dto.status as GuaranteeStatus,
     nextAction: dto.next_action,
-    fileUrl: dto.file_url_signed || dto.file_url,
+    fileUrl: resolveStorageUrl(dto.file_url_signed || dto.file_url),
     claimLetterNo: dto.claim_letter_no,
     claimReason: dto.claim_reason,
     claimAmount: dto.claim_amount,
@@ -96,7 +97,12 @@ export function useUploadGuaranteeWithFile() {
           const ext = file.name.split(".").pop()?.toLowerCase();
           if (ext === "pdf") contentType = "application/pdf";
           else if (ext === "png") contentType = "image/png";
+          else if (ext === "webp") contentType = "image/webp";
           else if (ext === "jpg" || ext === "jpeg") contentType = "image/jpeg";
+          else if (ext === "docx") {
+            contentType =
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+          } else if (ext === "doc") contentType = "application/msword";
           else contentType = "application/pdf";
         } else if (contentType === "image/jpg") {
           contentType = "image/jpeg";
@@ -105,15 +111,17 @@ export function useUploadGuaranteeWithFile() {
         // 2. Get upload URL
         const urlRes = await guaranteesApi.getUploadUrl(guaranteeId, contentType);
         const { presigned_post, object_key } = urlRes.data;
+        const uploadTargetUrl =
+          resolveStorageUrl(presigned_post.url) || presigned_post.url;
 
-        // 3. Upload to S3
+        // 3. Upload to S3 (or resolved backend fallback endpoint)
         const formData = new FormData();
         Object.entries(presigned_post.fields).forEach(([key, value]) => {
           formData.append(key, value);
         });
         formData.append("file", file);
 
-        const uploadResponse = await fetch(presigned_post.url, {
+        const uploadResponse = await fetch(uploadTargetUrl, {
           method: "POST",
           body: formData,
         });

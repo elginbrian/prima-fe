@@ -92,6 +92,7 @@ export interface DocumentValidationResponse {
   id: string;
   document_name: string;
   document_file_url?: string | null;
+  file_url_signed?: string | null;
   file_url?: string | null;
   mime_type?: string | null;
   profile_id?: string | null;

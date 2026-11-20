@@ -28,6 +28,7 @@ import {
 } from "@/lib/query/hooks/procurement/useValidation";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner, Skeleton, SearchableSelect, ModalPortal, AiModeSelector, AI_TIER_META } from "@/components/ui";
+import { resolveStorageUrl } from "@/lib/api/client";
 import { useAiJobs } from "@/context/AiJobsContext";
 import { formatDateIndo, formatRupiah, formatRequestCode } from "@/lib/utils";
 import { ValidationScoreCard } from "@/components/widgets/documents/ValidationScoreCard";
@@ -478,7 +479,11 @@ export default function DocumentResultPage() {
           profileName={validationData.profile_name}
           validationId={validationData.id}
           createdAt={validationData.created_at}
-          fileUrl={validationData.document_file_url || validationData.file_url}
+          fileUrl={resolveStorageUrl(
+            validationData.file_url_signed ||
+              validationData.document_file_url ||
+              validationData.file_url
+          )}
           aiTierUsed={validationData.ai_tier_used}
           aiModelUsed={validationData.ai_model_used}
           aiFallbackNotice={validationData.ai_fallback_notice}
@@ -547,11 +552,11 @@ export default function DocumentResultPage() {
             title={validationData.document_name}
             fileId={validationData.document_id || validationData.id}
             fileType="document"
-            directUrl={
-              validationData.document_file_url ||
-              validationData.file_url ||
-              undefined
-            }
+            directUrl={resolveStorageUrl(
+              validationData.file_url_signed ||
+                validationData.document_file_url ||
+                validationData.file_url
+            )}
             fileName={validationData.document_name}
             metadata={[
               { label: "ID Validasi", value: validationData.id },

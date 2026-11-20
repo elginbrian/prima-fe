@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { documentsApi, guaranteesApi } from "@/lib/api/procurement.api";
+import { resolveStorageUrl } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 
 export interface DocumentPreviewMetadataItem {
@@ -42,9 +43,10 @@ export function DocumentPreviewModal({
   metadata = [],
   onClose,
 }: DocumentPreviewModalProps) {
+  const initialResolved = resolveStorageUrl(directUrl);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(directUrl || null);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(initialResolved || null);
   const [resolvedFileName, setResolvedFileName] = useState<string>(fileName || title);
   const [zoom, setZoom] = useState<number>(100);
   const [rotation, setRotation] = useState<number>(0);
@@ -62,16 +64,17 @@ export function DocumentPreviewModal({
   // Fetch presigned URL if fileId is provided
   useEffect(() => {
     let isMounted = true;
+    const safeDirectUrl = resolveStorageUrl(directUrl);
     async function loadViewUrl() {
-      if (directUrl && (!fileId || fileType === "url")) {
-        setResolvedUrl(directUrl);
+      if (safeDirectUrl && (!fileId || fileType === "url")) {
+        setResolvedUrl(safeDirectUrl);
         setLoading(false);
         return;
       }
 
       if (!fileId) {
-        if (directUrl) {
-          setResolvedUrl(directUrl);
+        if (safeDirectUrl) {
+          setResolvedUrl(safeDirectUrl);
         } else {
           setError("ID atau tautan dokumen tidak ditemukan.");
         }
@@ -86,21 +89,23 @@ export function DocumentPreviewModal({
         if (fileType === "document") {
           const res = await documentsApi.getViewUrl(fileId);
           if (isMounted) {
-            setResolvedUrl(res.data.view_url);
+            const viewUrl = resolveStorageUrl(res.data.view_url) || res.data.view_url;
+            setResolvedUrl(viewUrl);
             if (res.data.file_name) setResolvedFileName(res.data.file_name);
           }
         } else if (fileType === "guarantee") {
           const res = await guaranteesApi.getViewUrl(fileId);
           if (isMounted) {
-            setResolvedUrl(res.data.view_url);
+            const viewUrl = resolveStorageUrl(res.data.view_url) || res.data.view_url;
+            setResolvedUrl(viewUrl);
             if (res.data.file_name) setResolvedFileName(res.data.file_name);
           }
         }
       } catch (err) {
         if (isMounted) {
-          // If view-url endpoint fails, check if fallback directUrl exists
-          if (directUrl) {
-            setResolvedUrl(directUrl);
+          // Only fall back to directUrl if it is a genuinely resolvable URL (not a raw S3 key)
+          if (safeDirectUrl) {
+            setResolvedUrl(safeDirectUrl);
           } else {
             setError(getErrorMessage(err, "Gagal memuat dokumen."));
           }
@@ -117,8 +122,15 @@ export function DocumentPreviewModal({
   }, [fileId, fileType, directUrl]);
 
   const isImage = (url?: string | null, name?: string) => {
-    const str = (url || name || "").toLowerCase().split("?")[0];
-    return str.endsWith(".png") || str.endsWith(".jpg") || str.endsWith(".jpeg") || str.endsWith(".webp");
+    const cleanUrl = (url || "").toLowerCase().split("?")[0];
+    const cleanName = (name || "").toLowerCase();
+    return /\.(png|jpe?g|webp|gif)$/.test(cleanUrl) || /\.(png|jpe?g|webp|gif)$/.test(cleanName);
+  };
+
+  const isOfficeDoc = (url?: string | null, name?: string) => {
+    const cleanUrl = (url || "").toLowerCase().split("?")[0];
+    const cleanName = (name || "").toLowerCase();
+    return /\.(docx?|xlsx?|csv)$/.test(cleanUrl) || /\.(docx?|xlsx?|csv)$/.test(cleanName);
   };
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 25, 200));
@@ -294,6 +306,26 @@ export function DocumentPreviewModal({
                     alt={title}
                     className="max-h-full max-w-full rounded-xl object-contain shadow-md border border-slate-200 bg-white"
                   />
+                ) : isOfficeDoc(resolvedUrl, resolvedFileName) ? (
+                  <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">
+                    <FileText size={36} className="mx-auto mb-3 text-[#0a4d8c]" />
+                    <h3 className="text-sm font-bold text-slate-800">{resolvedFileName}</h3>
+                    <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">
+                      Format dokumen Office/Spreadsheet tidak dapat dirender langsung oleh browser. Silakan unduh atau buka di aplikasi terkait.
+                    </p>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                      <a
+                        href={resolvedUrl}
+                        download={resolvedFileName}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#0a4d8c] px-4 py-2 text-xs font-semibold text-white hover:bg-[#083c6d] transition-colors"
+                      >
+                        <Download size={14} />
+                        Unduh Berkas
+                      </a>
+                    </div>
+                  </div>
                 ) : (
                   <iframe
                     src={`${resolvedUrl}#toolbar=1&navpanes=0`}
