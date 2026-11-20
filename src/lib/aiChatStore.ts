@@ -34,15 +34,41 @@ const STORAGE_KEY = "prima_ai_chat_sessions_v1";
 // is seamlessly consumed when redirecting to /dashboard/onboarding/chat/[chatId]
 const pendingSessionFiles = new Map<string, File>();
 
+// Last uploaded file in chat so user can 1-click route it to Document Validation or Guarantee OCR without re-uploading
+let lastChatUploadedFile: File | null = null;
+let pendingSmartRoutedFile: File | null = null;
+
 export function setPendingChatAttachment(chatId: string, file: File): void {
   pendingSessionFiles.set(chatId, file);
+  lastChatUploadedFile = file;
 }
 
 export function consumePendingChatAttachment(chatId: string): File | null {
   const f = pendingSessionFiles.get(chatId) ?? null;
   if (f) {
     pendingSessionFiles.delete(chatId);
+    lastChatUploadedFile = f;
   }
+  return f;
+}
+
+export function rememberChatUploadedFile(file: File | null | undefined): void {
+  if (file) {
+    lastChatUploadedFile = file;
+  }
+}
+
+export function getLastChatUploadedFile(): File | null {
+  return lastChatUploadedFile;
+}
+
+export function stageFileForSmartUpload(file: File): void {
+  pendingSmartRoutedFile = file;
+}
+
+export function consumeSmartUploadFile(): File | null {
+  const f = pendingSmartRoutedFile;
+  pendingSmartRoutedFile = null;
   return f;
 }
 

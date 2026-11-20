@@ -25,6 +25,7 @@ import {
 } from "@/lib/query/hooks/procurement/useGuarantees";
 import type { GuaranteeItem, ProcurementAttachmentType } from "@/types";
 import { DocumentPreview } from "@/components/widgets/upload/DocumentPreview";
+import { consumeSmartUploadFile } from "@/lib/aiChatStore";
 import { formatRupiah, formatRequestCode } from "@/lib/utils";
 
 type UploadDocType =
@@ -119,6 +120,19 @@ export default function GuaranteeUploadPage() {
   });
 
   const requiresExtraction = documentType !== "Dokumen Pendukung Lain";
+
+  useEffect(() => {
+    const routedFile = consumeSmartUploadFile();
+    if (routedFile) {
+      setFile(routedFile);
+      toast.info(
+        `Berkas "${routedFile.name}" dimuat otomatis dari Diskusi AI dan sedang diekstrak OCR...`
+      );
+      if (requiresExtraction) {
+        runOcrExtraction(routedFile, aiTier);
+      }
+    }
+  }, []);
 
   const requestOptions = useMemo(
     () => [

@@ -18,6 +18,7 @@ import { getDeadlineTiming } from "@/lib/deadlineUtils";
 import { formatDateIndo } from "@/lib/utils";
 
 interface ProcurementTimelineProps {
+  requestId?: string;
   stage?: string;
   currentStep?: string;
   milestones: ProcurementMilestone[];
@@ -29,6 +30,7 @@ interface ProcurementTimelineProps {
   onEditSla: (id: string) => void;
   onOpenDocsTab?: () => void;
   onManageStages?: () => void;
+  onValidateStageDocument?: (stepName: string) => void;
 }
 
 export function ProcurementTimeline({
@@ -43,6 +45,7 @@ export function ProcurementTimeline({
   onEditSla,
   onOpenDocsTab,
   onManageStages,
+  onValidateStageDocument,
 }: ProcurementTimelineProps) {
   const [previewDoc, setPreviewDoc] = React.useState<{ id: string; title: string } | null>(null);
 
@@ -148,7 +151,18 @@ export function ProcurementTimeline({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {onValidateStageDocument && !isDone && (
+                      <button
+                        type="button"
+                        onClick={() => onValidateStageDocument(milestone.step)}
+                        className="inline-flex items-center gap-1 rounded-full border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2.5 py-0.5 text-[11px] font-medium text-[#0a4d8c] transition hover:bg-[#dcebfa]"
+                        title={`Unggah & validasi dokumen dengan AI untuk tahap "${milestone.step}"`}
+                      >
+                        <Sparkles size={10} />
+                        <span>Validasi Dokumen Tahap Ini</span>
+                      </button>
+                    )}
                     {isCurrent && (
                       <button
                         type="button"

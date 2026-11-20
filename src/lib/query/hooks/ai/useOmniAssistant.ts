@@ -7,6 +7,7 @@ export interface OmniAssistantMutationInput {
   query: string;
   history?: OmniChatHistoryTurnDto[];
   file?: File | null;
+  pageContext?: string | null;
 }
 
 export function useOmniAssistant() {
@@ -15,8 +16,10 @@ export function useOmniAssistant() {
       const query = typeof input === "string" ? input : input.query;
       const history = typeof input === "string" ? [] : input.history;
       const file = typeof input === "string" ? null : input.file;
+      const pageContext =
+        typeof input === "string" ? null : input.pageContext;
       return aiAssistantApi
-        .queryOmniAssistant(query, history, file)
+        .queryOmniAssistant(query, history, file, pageContext)
         .then((res) => res.data);
     },
   });

@@ -34,6 +34,7 @@ import {
   normalizeWeightsTo100,
 } from "@/components/widgets/documents/ChecklistEditor";
 import { formatRequestCode } from "@/lib/utils";
+import { consumeSmartUploadFile } from "@/lib/aiChatStore";
 import { DOCUMENT_KIND_OPTIONS } from "./templateConstants";
 import type { AiTier, ChecklistRuleItem, ValidationProfile } from "@/types/validation";
 
@@ -120,10 +121,27 @@ export default function DocumentUploadPage() {
       setSelectedRequestId(reqId);
     }
 
+    // Consume smart-routed file from Diskusi AI if available (Prioritas #4)
+    const routedFile = consumeSmartUploadFile();
+    if (routedFile) {
+      setFile(routedFile);
+      toast.info(
+        `Berkas "${routedFile.name}" dimuat otomatis dari Diskusi AI.`
+      );
+    }
+
     if (profiles.length > 0 && !hasInitializedProfile) {
       const profId = params.get("profileId");
+      const targetStepParam = params.get("targetStep");
       const targetProfile =
         (profId ? profiles.find((p) => p.id === profId) : null) ||
+        (targetStepParam
+          ? profiles.find(
+              (p) =>
+                p.target_stage_to_clear?.toLowerCase() ===
+                targetStepParam.toLowerCase()
+            )
+          : null) ||
         profiles.find((p) => p.is_default) ||
         profiles[0];
 
@@ -133,6 +151,9 @@ export default function DocumentUploadPage() {
       } else {
         setCriteriaMode("custom");
         setShowCriteriaEditor(true);
+      }
+      if (targetStepParam) {
+        setNewTemplateStage(targetStepParam);
       }
       setHasInitializedProfile(true);
     } else if (!isLoadingProfiles && profiles.length === 0 && !hasInitializedProfile) {

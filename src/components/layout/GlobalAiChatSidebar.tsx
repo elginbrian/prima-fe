@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sparkles,
   Zap,
@@ -10,6 +10,7 @@ import {
   X,
   ChevronDown,
   MessageSquare,
+  MapPin,
 } from "lucide-react";
 import {
   type AiChatSession,
@@ -20,25 +21,26 @@ import {
   upsertChatSession,
   generateMessageId,
   buildTitleFromPrompt,
+  rememberChatUploadedFile,
 } from "@/lib/aiChatStore";
 import { useOmniAssistant } from "@/lib/query/hooks/ai/useOmniAssistant";
 import { useCurrentUser } from "@/lib/query/hooks/auth/useCurrentUser";
-import { useDeadlines } from "@/lib/query/hooks/procurement/useProcurement";
+import {
+  useDeadlines,
+  useProcurements,
+  useDocuments,
+} from "@/lib/query/hooks/procurement/useProcurement";
+import { useValidationLogs } from "@/lib/query/hooks/procurement/useValidation";
 import { useSettings } from "@/lib/query/hooks/settings/useSettings";
 import { useProcurement } from "@/context/ProcurementContext";
 import { getDeadlineTiming } from "@/lib/deadlineUtils";
+import { formatRequestCode, formatRupiah } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/api/errors";
 import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
 import { ChatMessageBubble } from "@/components/pages/onboarding/chat/ChatMessageBubble";
 import { ChatInputBar } from "@/components/pages/onboarding/chat/ChatInputBar";
 import type { DeadlineItem } from "@/types";
 import type { OmniChatHistoryTurnDto } from "@/lib/api";
-
-const QUICK_PROMPTS = [
-  "Ringkas status pekerjaan & SLA saat ini",
-  "Dokumen mana yang skor AI-nya perlu perbaikan?",
-  "Warkat jaminan apa yang hampir expired?",
-];
 
 interface GlobalAiChatSidebarProps {
   isOpen: boolean;
@@ -50,13 +52,42 @@ export function GlobalAiChatSidebar({
   onClose,
 }: GlobalAiChatSidebarProps) {
   const router = useRouter();
+  const pathname = usePathname() || "";
+  const [urlQuery, setUrlQuery] = useState<{ id: string; lens: string }>({
+    id: "",
+    lens: "",
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncUrlParams = () => {
+      const p = new URLSearchParams(window.location.search);
+      setUrlQuery({
+        id: p.get("id") || "",
+        lens: p.get("lens") || "",
+      });
+    };
+    syncUrlParams();
+    window.addEventListener("popstate", syncUrlParams);
+    window.addEventListener("prima-lens-change", syncUrlParams);
+    return () => {
+      window.removeEventListener("popstate", syncUrlParams);
+      window.removeEventListener("prima-lens-change", syncUrlParams);
+    };
+  }, [pathname, isOpen]);
   const { state } = useProcurement();
   const { data: currentUser } = useCurrentUser();
+  const { data: serverRequests = [] } = useProcurements();
+  const { data: serverDocs = [] } = useDocuments();
+  const { data: validationLogs = [] } = useValidationLogs();
   const { data: serverDeadlines = [] } = useDeadlines();
   const { data: settings } = useSettings();
   const omniAssistant = useOmniAssistant();
 
   const slaWarningDays = settings?.slaWarningDays ?? 3;
+  const requests =
+    serverRequests.length > 0 ? serverRequests : state.requests;
+  const documents = serverDocs.length > 0 ? serverDocs : state.documents;
   const deadlines =
     serverDeadlines.length > 0 ? serverDeadlines : state.deadlines;
 
@@ -70,6 +101,178 @@ export function GlobalAiChatSidebar({
       };
     });
   }, [deadlines, slaWarningDays]);
+
+  // ── Page-Aware AI Context Detection (Prioritas #1) ──────────────────────
+  const activePageContext = useMemo(() => {
+    // 1. Detail Pekerjaan (/dashboard/overview/[id])
+    const jobMatch = pathname.match(/^\/dashboard\/overview\/([^/]+)$/);
+    if (jobMatch && jobMatch[1] !== "guarantees") {
+      const reqId = decodeURIComponent(jobMatch[1]);
+      const req = requests.find((r) => r.id === reqId);
+      const jobSlas = enrichedDeadlines.filter((d) => d.requestId === reqId);
+      const overdueCount = jobSlas.filter((d) => d.status === "Overdue").length;
+
+      return {
+        badgeLabel: req
+          ? `${formatRequestCode(req.id)} · ${req.title}`
+          : `Pekerjaan ${formatRequestCode(reqId)}`,
+        contextDescription: req
+          ? `Pengguna sedang membuka halaman Detail Pekerjaan ID="${req.id}", Judul="${req.title}", Tahap="${req.stage}" (${req.currentStep}), Metode="${req.procurementMethod || "Tender Terbuka"}", Nilai=${formatRupiah(req.amount)}, PIC="${req.pic.name}", Status Operasional="${req.operationalStatus}", Total SLA=${jobSlas.length} (${overdueCount} Overdue).`
+          : `Pengguna sedang membuka Detail Pekerjaan ID="${reqId}".`,
+        quickPrompts: [
+          `Apa saja langkah berikutnya dan status SLA untuk pekerjaan ${formatRequestCode(reqId)} ini?`,
+          `Apakah ada dokumen atau risiko keterlambatan pada pekerjaan ini?`,
+          `Pindahkan tahap pekerjaan ini atau perbarui statusnya`,
+        ],
+      };
+    }
+
+    // 2. Hasil Pemeriksaan Dokumen (/dashboard/documents/result?id=...)
+    if (pathname.startsWith("/dashboard/documents/result")) {
+      const valId = urlQuery.id;
+      const log = validationLogs.find(
+        (l) => l.id === valId || l.document_id === valId
+      );
+      const doc = documents.find((d) => d.id === valId);
+      const docTitle = log?.document_name || doc?.name || valId || "Dokumen";
+
+      return {
+        badgeLabel: `Hasil Analisis: ${docTitle}`,
+        contextDescription: log
+          ? `Pengguna sedang membuka halaman Hasil Pemeriksaan AI untuk Dokumen ID="${log.id}", Nama="${log.document_name}", Template="${log.profile_name || "-"}", Skor=${Math.round(log.overall_score)}/100, Status="${log.compliance_status}".`
+          : `Pengguna sedang melihat Hasil Pemeriksaan Dokumen ID="${valId}" (${docTitle}).`,
+        quickPrompts: [
+          `Jelaskan poin kriteria yang perlu diperbaiki pada dokumen ${docTitle} ini`,
+          `Buatkan ringkasan rekomendasi tindak lanjut untuk dokumen ini`,
+          `Apakah dokumen ini sudah layak diterbitkan ke pekerjaan?`,
+        ],
+      };
+    }
+
+    // 3. Kelola Tahapan (/dashboard/documents/stages)
+    if (pathname.startsWith("/dashboard/documents/stages")) {
+      return {
+        badgeLabel: "Kelola Metode & Tahapan Pekerjaan",
+        contextDescription:
+          "Pengguna sedang berada di halaman Kelola Metode & Tahapan Pekerjaan (/dashboard/documents/stages).",
+        quickPrompts: [
+          "Rekomendasikan urutan tahapan dan SLA untuk metode Tender Cepat",
+          "Pekerjaan mana saja yang saat ini mengalami keterlambatan tahapan?",
+          "Bagaimana hubungan standar SLA tahapan dengan jadwal pekerjaan?",
+        ],
+      };
+    }
+
+    // 4. Pustaka Template Kriteria (/dashboard/documents/templates)
+    if (pathname.startsWith("/dashboard/documents/templates")) {
+      return {
+        badgeLabel: "Pustaka Template Kriteria Standar",
+        contextDescription:
+          "Pengguna sedang berada di halaman Pustaka Template Kriteria Standar (/dashboard/documents/templates).",
+        quickPrompts: [
+          "Template standar apa saja yang aktif beserta ambang batas skornya?",
+          "Kriteria wajib apa yang sebaiknya ada pada template KAK?",
+          "Buka halaman validasi dokumen baru",
+        ],
+      };
+    }
+
+    // 5. Daftar Pemeriksaan Dokumen (/dashboard/documents)
+    if (pathname.startsWith("/dashboard/documents")) {
+      return {
+        badgeLabel: "Pemeriksaan Dokumen",
+        contextDescription:
+          "Pengguna sedang berada di halaman Pemeriksaan Dokumen (/dashboard/documents).",
+        quickPrompts: [
+          "Dokumen mana saja yang skor AI-nya di bawah ambang lulus?",
+          "Ringkas hasil pemeriksaan dokumen terbaru hari ini",
+          "Buka halaman unggah & validasi dokumen baru",
+        ],
+      };
+    }
+
+    // 6. Overview Lenses (Warkat Jaminan / SLA / Analitik / Daftar Pekerjaan)
+    if (pathname.startsWith("/dashboard/overview")) {
+      const lens = urlQuery.lens || "jobs";
+      if (lens === "guarantees" || pathname.includes("guarantees")) {
+        return {
+          badgeLabel: "Manajemen Warkat Jaminan",
+          contextDescription:
+            "Pengguna sedang berada di tampilan Manajemen Warkat Jaminan (/dashboard/overview?lens=guarantees).",
+          quickPrompts: [
+            "Warkat jaminan mana yang sudah expired atau mendekati jatuh tempo?",
+            "Berapa total nilai jaminan pelaksanaan yang sedang aktif?",
+            "Buka halaman unggah & OCR warkat jaminan baru",
+          ],
+        };
+      }
+      if (lens === "sla-actions") {
+        return {
+          badgeLabel: "SLA & Tindak Lanjut Prioritas",
+          contextDescription:
+            "Pengguna sedang berada di tampilan SLA & Tindak Lanjut Prioritas (/dashboard/overview?lens=sla-actions).",
+          quickPrompts: [
+            "SLA mana yang paling kritis dan perlu dieskalasi ke manajer?",
+            "Jalankan evaluasi dan sinkronisasi seluruh SLA sekarang",
+            "Tampilkan rencana mitigasi untuk SLA yang terlambat",
+          ],
+        };
+      }
+      if (lens === "analytics") {
+        return {
+          badgeLabel: "Analitik & Performa Pengadaan",
+          contextDescription:
+            "Pengguna sedang berada di tampilan Analitik & Performa Pengadaan (/dashboard/overview?lens=analytics).",
+          quickPrompts: [
+            "Ringkas performa kepatuhan SLA dan beban kerja departemen saat ini",
+            "Tahapan mana yang paling sering menjadi bottleneck pengadaan?",
+            "Berapa total nilai anggaran pengadaan yang sedang berjalan?",
+          ],
+        };
+      }
+      return {
+        badgeLabel: "Daftar Pekerjaan Pengadaan",
+        contextDescription:
+          "Pengguna sedang berada di halaman Daftar Pekerjaan Pengadaan (/dashboard/overview).",
+        quickPrompts: [
+          "Ringkas status seluruh pekerjaan pengadaan yang sedang berjalan",
+          "Pekerjaan mana yang berstatus Urgent atau memiliki SLA terlambat?",
+          "Buatkan paket pekerjaan pengadaan baru",
+        ],
+      };
+    }
+
+    // 7. Pusat Notifikasi
+    if (pathname.startsWith("/dashboard/notifications")) {
+      return {
+        badgeLabel: "Pusat Notifikasi",
+        contextDescription:
+          "Pengguna sedang berada di halaman Pusat Notifikasi (/dashboard/notifications).",
+        quickPrompts: [
+          "Apa saja tindak lanjut paling mendesak yang perlu saya selesaikan hari ini?",
+          "Ringkas temuan validasi AI dan peringatan SLA terbaru",
+          "Jalankan sinkronisasi SLA sekarang",
+        ],
+      };
+    }
+
+    return {
+      badgeLabel: "Ruang Kerja PRIMA",
+      contextDescription: `Pengguna sedang berada di halaman ${pathname}.`,
+      quickPrompts: [
+        "Ringkas status pekerjaan & SLA saat ini",
+        "Dokumen mana yang skor AI-nya perlu perbaikan?",
+        "Warkat jaminan apa yang hampir expired?",
+      ],
+    };
+  }, [
+    pathname,
+    urlQuery,
+    requests,
+    enrichedDeadlines,
+    validationLogs,
+    documents,
+  ]);
 
   const [sessions, setSessions] = useState<AiChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<AiChatSession | null>(
@@ -137,6 +340,10 @@ export function GlobalAiChatSidebar({
   ) => {
     if (!currentSession || omniAssistant.isPending) return;
 
+    if (attachmentFile) {
+      rememberChatUploadedFile(attachmentFile);
+    }
+
     const userMsg: AiChatMessage = {
       id: generateMessageId(),
       role: "user",
@@ -187,6 +394,7 @@ export function GlobalAiChatSidebar({
         query: text,
         history: historyTurns,
         file: attachmentFile,
+        pageContext: activePageContext.contextDescription,
       });
 
       const completedMsg: AiChatMessage = {
@@ -362,6 +570,22 @@ export function GlobalAiChatSidebar({
           </div>
         </div>
 
+        {/* Page-Aware Active Context Banner (Prioritas #1) */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-[#f4f8fd] px-3.5 py-2 shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <MapPin size={12} className="shrink-0 text-[#0a4d8c]" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 shrink-0">
+              Konteks:
+            </span>
+            <span
+              className="truncate text-[11px] font-semibold text-[#0a4d8c]"
+              title={activePageContext.badgeLabel}
+            >
+              {activePageContext.badgeLabel}
+            </span>
+          </div>
+        </div>
+
         {/* Scrollable Message Stream */}
         <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 scrollbar-thin">
           {currentSession && currentSession.messages.length > 0 ? (
@@ -382,19 +606,23 @@ export function GlobalAiChatSidebar({
               />
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 px-3 text-center">
+            <div className="flex flex-col items-center justify-center py-8 px-3 text-center">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e8f2fc] text-[#0a4d8c] mb-3">
                 <Sparkles size={18} />
               </div>
               <p className="text-xs font-semibold text-slate-800">
-                Asisten AI PRIMA Siap Membantu
+                Asisten AI Kontekstual
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
-                Tanyakan data dokumen, pekerjaan, warkat, atau perintahkan aksi langsung dari halaman ini.
+                AI memahami bahwa Anda sedang membuka{" "}
+                <strong className="font-semibold text-[#0a4d8c]">
+                  {activePageContext.badgeLabel}
+                </strong>
+                .
               </p>
 
               <div className="mt-4 w-full space-y-1.5">
-                {QUICK_PROMPTS.map((q, idx) => (
+                {activePageContext.quickPrompts.map((q, idx) => (
                   <button
                     key={idx}
                     type="button"

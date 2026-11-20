@@ -52,12 +52,16 @@ export const aiAssistantApi = {
   queryOmniAssistant: (
     query: string,
     history?: OmniChatHistoryTurnDto[],
-    file?: File | null
+    file?: File | null,
+    pageContext?: string | null
   ) => {
     if (file) {
       const formData = new FormData();
       formData.append("query", query);
       formData.append("history", JSON.stringify(history ?? []));
+      if (pageContext) {
+        formData.append("page_context", pageContext);
+      }
       formData.append("file", file);
       return apiFetch<OmniAssistantResponseDto>("/ai/omni-assistant", {
         method: "POST",
@@ -67,7 +71,11 @@ export const aiAssistantApi = {
 
     return apiFetch<OmniAssistantResponseDto>("/ai/omni-assistant", {
       method: "POST",
-      body: JSON.stringify({ query, history: history ?? [] }),
+      body: JSON.stringify({
+        query,
+        history: history ?? [],
+        page_context: pageContext || undefined,
+      }),
     });
   },
 };

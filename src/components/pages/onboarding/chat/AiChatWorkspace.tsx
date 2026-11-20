@@ -19,6 +19,7 @@ import {
   generateMessageId,
   buildTitleFromPrompt,
   consumePendingChatAttachment,
+  rememberChatUploadedFile,
 } from "@/lib/aiChatStore";
 import { useOmniAssistant } from "@/lib/query/hooks/ai/useOmniAssistant";
 import {
@@ -219,6 +220,10 @@ export default function AiChatWorkspace({ chatId }: AiChatWorkspaceProps) {
 
   const handleSendMessage = (text: string, attachmentFile?: File | null) => {
     if (!currentSession || omniAssistant.isPending) return;
+
+    if (attachmentFile) {
+      rememberChatUploadedFile(attachmentFile);
+    }
 
     const userMsg: AiChatMessage = {
       id: generateMessageId(),

@@ -11,9 +11,15 @@ import {
   AlertTriangle,
   CornerDownRight,
   Paperclip,
+  FileSearch,
+  ShieldCheck,
 } from "lucide-react";
 import type { OmniCommandDto, OmniReferencedItemDto } from "@/lib/api";
-import type { AiChatMessage } from "@/lib/aiChatStore";
+import {
+  type AiChatMessage,
+  getLastChatUploadedFile,
+  stageFileForSmartUpload,
+} from "@/lib/aiChatStore";
 import {
   useUpdateDeadline,
   useEscalateDeadline,
@@ -232,18 +238,62 @@ export function ChatMessageBubble({
   };
 
   if (isUser) {
+    const canRouteFile =
+      Boolean(message.attachment) &&
+      getLastChatUploadedFile()?.name === message.attachment?.name;
+
+    const handleSmartRouteToValidation = () => {
+      const f = getLastChatUploadedFile();
+      if (!f) return;
+      stageFileForSmartUpload(f);
+      router.push("/dashboard/documents/upload?fromChat=1");
+    };
+
+    const handleSmartRouteToGuarantee = () => {
+      const f = getLastChatUploadedFile();
+      if (!f) return;
+      stageFileForSmartUpload(f);
+      router.push("/dashboard/overview/guarantees/upload?fromChat=1");
+    };
+
     return (
       <div className="flex items-start justify-end gap-3">
-        <div className="max-w-[82%] sm:max-w-[72%] rounded-2xl rounded-tr-xs bg-[#0a4d8c] px-4 py-3 text-xs sm:text-[13px] leading-relaxed text-white shadow-2xs space-y-2">
-          {message.attachment && (
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1 text-[11px] font-medium text-blue-50">
-              <Paperclip size={12} className="shrink-0" />
-              <span className="truncate max-w-[220px]">
-                {message.attachment.name}
-              </span>
+        <div className="max-w-[82%] sm:max-w-[75%] space-y-1.5">
+          <div className="rounded-2xl rounded-tr-xs bg-[#0a4d8c] px-4 py-3 text-xs sm:text-[13px] leading-relaxed text-white shadow-2xs space-y-2">
+            {message.attachment && (
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1 text-[11px] font-medium text-blue-50">
+                <Paperclip size={12} className="shrink-0" />
+                <span className="truncate max-w-[220px]">
+                  {message.attachment.name}
+                </span>
+              </div>
+            )}
+            <p className="whitespace-pre-line">{message.content}</p>
+          </div>
+
+          {/* Smart Attachment Routing Buttons (Prioritas #4) */}
+          {canRouteFile && (
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={handleSmartRouteToValidation}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-[#0a4d8c] shadow-2xs transition hover:border-[#0a4d8c]/40 hover:bg-[#f4f8fd]"
+                title="Bawa berkas ini ke form Validasi Checklist AI tanpa perlu upload ulang"
+              >
+                <FileSearch size={11} />
+                <span>Validasi Checklist Resmi</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSmartRouteToGuarantee}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:border-[#0a4d8c]/40 hover:bg-[#f4f8fd] hover:text-[#0a4d8c]"
+                title="Bawa berkas ini ke form OCR Warkat Jaminan tanpa perlu upload ulang"
+              >
+                <ShieldCheck size={11} />
+                <span>Simpan sbg Warkat Jaminan</span>
+              </button>
             </div>
           )}
-          <p className="whitespace-pre-line">{message.content}</p>
         </div>
         <div className="shrink-0 mt-0.5">
           <UserAvatar name={userName} avatarUrl={userAvatarUrl} size="sm" />

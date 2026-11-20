@@ -559,6 +559,7 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
       {/* TAB 1: TIMELINE & SLA (Directly visible without redundant warning boxes above) */}
       {activeTab === "timeline" && (
         <ProcurementTimeline
+          requestId={requestId}
           stage={request?.stage}
           currentStep={request?.currentStep}
           milestones={milestones}
@@ -570,6 +571,13 @@ export default function TrackerDetailPage({ requestId }: { requestId: string }) 
           onEditSla={(id) => setEditingDeadlineId(id)}
           onOpenDocsTab={() => setActiveTab("docs-guarantees")}
           onManageStages={handleOpenManageStages}
+          onValidateStageDocument={(stepName) =>
+            router.push(
+              `/dashboard/documents/upload?requestId=${encodeURIComponent(
+                requestId
+              )}&targetStep=${encodeURIComponent(stepName)}`
+            )
+          }
         />
       )}
 

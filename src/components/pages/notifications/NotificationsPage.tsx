@@ -18,17 +18,23 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from "@/lib/query/hooks/procurement/useNotifications";
-import type { NotificationType } from "@/types";
+import { useDeadlines } from "@/lib/query/hooks/procurement/useProcurement";
+import { SLAActionModal } from "@/components/widgets/modals/SLAActionModal";
+import type { NotificationType, DeadlineItem } from "@/types";
 import { Skeleton } from "@/components/ui";
 import { formatRelativeTimeIndo, formatRequestCode } from "@/lib/utils";
 
 export default function NotificationsPage() {
   const router = useRouter();
   const { data: notifications = [], isLoading } = useNotifications();
+  const { data: deadlines = [] } = useDeadlines();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const [activeTab, setActiveTab] = useState<"All" | "Unread">("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSlaModal, setSelectedSlaModal] = useState<DeadlineItem | null>(
+    null
+  );
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -225,8 +231,8 @@ export default function NotificationsPage() {
                     {notif.description}
                   </p>
 
-                  {(notif.actionUrl || notif.requestId) && (
-                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {(notif.actionUrl || notif.requestId || notif.type === "deadline" || notif.title.toLowerCase().includes("sla")) && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
                       {notif.actionUrl && (
                         <button
                           type="button"
@@ -235,10 +241,39 @@ export default function NotificationsPage() {
                             if (!notif.isRead) markAsRead(notif.id);
                             router.push(notif.actionUrl!);
                           }}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-[#0a4d8c] hover:underline focus:outline-none"
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2.5 py-1 text-xs font-medium text-[#0a4d8c] transition hover:bg-[#dcebfa] focus:outline-none"
                         >
                           <span>Lihat Hasil Analisis AI</span>
                           <ArrowRight size={12} />
+                        </button>
+                      )}
+                      {(notif.type === "deadline" ||
+                        notif.title.toLowerCase().includes("sla")) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!notif.isRead) markAsRead(notif.id);
+                            const matchedDeadline = deadlines.find(
+                              (d) =>
+                                (notif.requestId &&
+                                  d.requestId === notif.requestId) ||
+                                notif.title
+                                  .toLowerCase()
+                                  .includes(d.taskName.toLowerCase())
+                            );
+                            if (matchedDeadline) {
+                              setSelectedSlaModal(matchedDeadline);
+                            } else {
+                              router.push(
+                                "/dashboard/overview?lens=sla-actions"
+                              );
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#0a4d8c]/20 bg-[#e8f2fc] px-2.5 py-1 text-xs font-medium text-[#0a4d8c] transition hover:bg-[#dcebfa] focus:outline-none"
+                        >
+                          <Clock size={12} />
+                          <span>Tindak Lanjuti SLA</span>
                         </button>
                       )}
                       {notif.requestId && (
@@ -253,7 +288,7 @@ export default function NotificationsPage() {
                               )}`
                             );
                           }}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-[#0a4d8c] hover:underline focus:outline-none"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:border-[#0a4d8c]/40 hover:text-[#0a4d8c] focus:outline-none"
                         >
                           <span>
                             Buka Pekerjaan ({formatRequestCode(notif.requestId)})
@@ -269,6 +304,13 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
+
+      {selectedSlaModal && (
+        <SLAActionModal
+          deadline={selectedSlaModal}
+          onClose={() => setSelectedSlaModal(null)}
+        />
+      )}
     </div>
   );
 }
